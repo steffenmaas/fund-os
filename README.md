@@ -16,12 +16,34 @@ The same skill bundle runs in Claude Desktop (Cowork), Claude Code, and the Clau
 
 ### Prerequisites
 
-- **Claude Desktop** (Mac or Windows) with Cowork, **or** **Claude Code** (CLI) — make sure you're on the latest version (see troubleshooting below if commands aren't recognised)
+- **Claude Desktop** (Mac or Windows) with Cowork, **or** **Claude Code** (CLI)
 - A GitHub account with access to this private repo (ask Ocean One Ventures to add you as a collaborator)
 
 ---
 
-### Step 1 — Authenticate to GitHub
+### Step 1 — Update Claude to the latest version
+
+Plugin and skill support requires an up-to-date Claude. If you skip this and see "I don't recognise that command", come back here first.
+
+**Claude Desktop**
+
+Check for updates under the app menu (Claude → Check for Updates) and install if prompted.
+
+**Claude Code (CLI)**
+
+```bash
+# via Homebrew
+brew upgrade claude-code
+
+# via npm
+npm install -g @anthropic-ai/claude-code@latest
+```
+
+Confirm your version with `claude --version`.
+
+---
+
+### Step 2 — Authenticate to GitHub
 
 The installer pulls skill files from this private repo, so Claude needs a GitHub credential.
 
@@ -45,7 +67,7 @@ export GITHUB_TOKEN=your_token_here   # add to ~/.zshrc to persist
 
 ---
 
-### Step 2 — Install the plugin
+### Step 3 — Install the plugin
 
 **Claude Code (CLI)**
 
@@ -78,7 +100,7 @@ Plugin installation in Cowork is done through the UI — slash commands are not 
 
 ---
 
-### Step 3 — Configure MCP servers (optional but recommended)
+### Step 4 — Configure MCP servers (optional but recommended)
 
 MCP gives skills live access to your fund's tools. Without it, skills still work — Claude will ask you to paste data manually instead of reading it automatically.
 
@@ -117,7 +139,7 @@ Full capability list and alternative vendors: [`plugins/fund-os/.mcp.json.exampl
 
 ---
 
-### Step 4 — Set up knowledge folders
+### Step 5 — Set up knowledge folders
 
 Create four folders in your fund's Google Drive or Notion wiki and add them to your Claude project context (Claude Desktop → Project → Add Knowledge, or drag folders into a Claude Code project):
 
@@ -132,7 +154,7 @@ Skills both read from and write to these folders — health checks update `Fund-
 
 ---
 
-### Step 5 — Run your first skill
+### Step 6 — Run your first skill
 
 Type a trigger phrase in Claude:
 
@@ -147,22 +169,6 @@ Triage this inbound pitch deck against our thesis
 ```
 
 Claude activates the matching skill, requests any missing inputs, and walks you through the human-in-the-loop approval steps before producing output.
-
----
-
-### Troubleshooting
-
-**"I don't recognise that command"** — your Claude is out of date. Update:
-
-```bash
-# Claude Code via Homebrew
-brew upgrade claude-code
-
-# Claude Code via npm
-npm install -g @anthropic-ai/claude-code@latest
-```
-
-For Claude Desktop, check for updates under the app menu.
 
 ## What's in this repo
 
