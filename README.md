@@ -16,14 +16,14 @@ The same skill bundle runs in Claude Desktop (Cowork), Claude Code, and the Clau
 
 ### Prerequisites
 
-- **Claude Desktop** (Mac or Windows) with the **Cowork** plugin enabled, **or** **Claude Code** (CLI). Both support plugins and MCP.
-- A GitHub account that has been granted access to this private repo. Ask Ocean One Ventures to add you as a collaborator if you haven't been already.
+- **Claude Desktop** (Mac or Windows) with Cowork, **or** **Claude Code** (CLI) — make sure you're on the latest version (see troubleshooting below if commands aren't recognised)
+- A GitHub account with access to this private repo (ask Ocean One Ventures to add you as a collaborator)
 
 ---
 
 ### Step 1 — Authenticate to GitHub
 
-The plugin installer pulls skill files directly from this private GitHub repo, so Claude needs a valid GitHub credential.
+The installer pulls skill files from this private repo, so Claude needs a GitHub credential.
 
 **Option A — GitHub CLI (recommended)**
 
@@ -31,61 +31,64 @@ The plugin installer pulls skill files directly from this private GitHub repo, s
 gh auth login
 ```
 
-Follow the prompts (browser-based OAuth). Once done, `gh auth status` should show your account.
+Follow the browser OAuth prompts. Confirm with `gh auth status`.
 
 **Option B — Personal Access Token**
 
-1. Go to GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens
-2. Create a token with **Contents: Read** access scoped to this repo (`steffenmaas/fund-os`)
-3. Set it in your environment:
+1. GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens
+2. Create a token with **Contents: Read** scoped to `steffenmaas/fund-os`
+3. Export it:
 
 ```bash
-export GITHUB_TOKEN=your_token_here
+export GITHUB_TOKEN=your_token_here   # add to ~/.zshrc to persist
 ```
-
-Add that line to your `~/.zshrc` or `~/.bashrc` so it persists across sessions.
 
 ---
 
-### Step 2 — Add the marketplace
+### Step 2 — Install the plugin
 
-Open Claude (Desktop/Cowork or Code) and type in the chat:
+**Claude Code (CLI)**
 
 ```
 /plugin marketplace add steffenmaas/fund-os
+/plugin install fund-os@steffenmaas-fund-os
 ```
 
-This registers the marketplace so Claude knows where to find Fund OS. You only need to do this once per machine.
+The first command registers the marketplace; the second installs Fund OS from it. Both only need to be run once.
 
----
-
-### Step 3 — Install the plugin
-
-```
-/plugin install fund-os
-```
-
-Claude will download all 35 skill files. You should see a confirmation listing the skills. To verify:
+To verify:
 
 ```
 /plugin list
 ```
 
-`fund-os` should appear with version `1.5.0`.
+`fund-os` should appear at version `1.5.0`.
+
+**Claude Desktop (Cowork)**
+
+Plugin installation in Cowork is done through the UI — slash commands are not supported there:
+
+1. Open Claude Desktop and switch to the **Cowork** tab
+2. Click **Customize** in the left sidebar
+3. Open the **Marketplace** section
+4. Search for **Fund OS** and click **Install**
+5. Review permissions and authorise
+
+> If Fund OS doesn't appear in the Marketplace search, your organisation admin needs to add `steffenmaas/fund-os` as a private marketplace source under Organisation Settings → Plugins first.
 
 ---
 
-### Step 4 — Configure MCP servers (optional but recommended)
+### Step 3 — Configure MCP servers (optional but recommended)
 
-MCP servers give skills live access to your fund's tools. Skills work without MCP — they'll ask you to paste data manually — but MCP enables full automation.
+MCP gives skills live access to your fund's tools. Without it, skills still work — Claude will ask you to paste data manually instead of reading it automatically.
 
-Copy the example config to your project root:
+Copy the example config into your project:
 
 ```bash
 cp plugins/fund-os/.mcp.json.example .mcp.json
 ```
 
-Then edit `.mcp.json` and replace the placeholder values with your actual servers and API keys:
+Edit `.mcp.json` and fill in your actual keys:
 
 ```json
 {
@@ -99,7 +102,7 @@ Then edit `.mcp.json` and replace the placeholder values with your actual server
       "command": "npx",
       "args": ["-y", "@bunch/mcp-server"],
       "env": { "BUNCH_API_KEY": "your-key-here" },
-      "_note": "Read-only access only — never give write access to fund admin."
+      "_note": "Read-only — never grant write access to fund admin."
     },
     "meeting-intelligence": {
       "command": "npx",
@@ -110,26 +113,26 @@ Then edit `.mcp.json` and replace the placeholder values with your actual server
 }
 ```
 
-Full capability list and alternative vendors are documented in [`plugins/fund-os/.mcp.json.example`](./plugins/fund-os/.mcp.json.example). You only need to configure the servers relevant to the skills you use — leave out anything you don't have.
+Full capability list and alternative vendors: [`plugins/fund-os/.mcp.json.example`](./plugins/fund-os/.mcp.json.example). Only configure the servers you actually use — everything else can be left out.
 
 ---
 
-### Step 5 — Set up knowledge folders
+### Step 4 — Set up knowledge folders
 
-Skills read from four folders in your fund's drive or wiki. Create them and add the path to your Claude project context (Claude Desktop → Project Settings → Knowledge, or add them as context files in Claude Code):
+Create four folders in your fund's Google Drive or Notion wiki and add them to your Claude project context (Claude Desktop → Project → Add Knowledge, or drag folders into a Claude Code project):
 
-| Folder | What goes in here |
+| Folder | Contents |
 |---|---|
 | `Fund-Framework/` | Investment thesis, scoring rubric, DD framework, impact framework |
-| `Fund-Templates/` | Memo template, health-check template, LP report template, capital-call template |
-| `Fund-Portfolio/` | One subfolder per portfolio company with KPIs, updates, cap table |
-| `Fund-Market/` | External market intel, competitor maps, sector reports |
+| `Fund-Templates/` | Memo, health-check, LP report, capital-call templates |
+| `Fund-Portfolio/` | One subfolder per portfolio company — KPIs, updates, cap table |
+| `Fund-Market/` | Market intel, competitor maps, sector reports |
 
-These folders are written to by skills as well as read from — the portfolio health check updates `Fund-Portfolio/`, the market scanner keeps `Fund-Market/` fresh.
+Skills both read from and write to these folders — health checks update `Fund-Portfolio/`, the market scanner refreshes `Fund-Market/`.
 
 ---
 
-### Step 6 — Run your first skill
+### Step 5 — Run your first skill
 
 Type a trigger phrase in Claude:
 
@@ -137,13 +140,29 @@ Type a trigger phrase in Claude:
 /deal-flow-triage
 ```
 
-or naturally:
+or in plain language:
 
 ```
 Triage this inbound pitch deck against our thesis
 ```
 
-Claude will activate the matching skill, ask for any missing inputs, and walk you through the human-in-the-loop steps before producing output.
+Claude activates the matching skill, requests any missing inputs, and walks you through the human-in-the-loop approval steps before producing output.
+
+---
+
+### Troubleshooting
+
+**"I don't recognise that command"** — your Claude is out of date. Update:
+
+```bash
+# Claude Code via Homebrew
+brew upgrade claude-code
+
+# Claude Code via npm
+npm install -g @anthropic-ai/claude-code@latest
+```
+
+For Claude Desktop, check for updates under the app menu.
 
 ## What's in this repo
 
