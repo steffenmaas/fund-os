@@ -1,84 +1,70 @@
-# Fund OS Marketplace
+# Fund OS
 
-Private Claude plugin marketplace maintained by Ocean One Ventures.
+Fund OS is the operating system that lets a small fund team run a complete venture-capital fund at the operational depth of a much larger institution — built on Claude Skills, MCP and the Claude Agent SDK.
 
-## What's in here
+## How it works
 
-| Plugin | Skills | Description |
-|---|---|---|
-| [`fund-os`](./plugins/fund-os/) | 35 | VC fund operations - sourcing to wind-down |
+Each recurring fund task is a **Claude Skill**: a small, version-controlled unit of methodology with explicit instructions, inputs, outputs, knowledge references and a human-in-the-loop policy. Skills are grouped into **8 lifecycle phases** (fundraising to wind-down) and compose into **18 cross-skill workflows** that cover the recurring rhythms — weekly deal digest, monthly portfolio health check, quarterly LP report, capital calls.
 
-## Quick install
+Skills connect to the fund's actual tools through **MCP capabilities** (CRM, fund administration, meeting intelligence, productivity suite, wiki, calendar, email, web search, market data). The capability names are vendor-neutral; the fund maps each one to the actual MCP server in its `.mcp.json`.
 
-In Claude Code or Cowork:
+**Human-in-the-loop is a design property, not a setting.** Every regulated artefact (LP reports, capital calls, legal documents, audit-trail entries) requires explicit human sign-off before delivery. Claude prepares, drafts and aggregates — the GP signs off.
+
+The same skill bundle runs in Claude Desktop (Cowork), Claude Code, and the Claude Agent SDK for scheduled or headless runs. No re-implementation when switching hosts.
+
+## Installation
+
+**Requirements:** Claude Desktop with Cowork, or Claude Code.
+
+**1. Add the marketplace**
 
 ```
 /plugin marketplace add steffenmaas/fund-os
+```
+
+Private repo access requires GitHub authentication (`gh auth login` or a PAT with `repo` scope).
+
+**2. Install the plugin**
+
+```
 /plugin install fund-os
 ```
 
-Private repo access requires your client to be authenticated to GitHub (`gh auth login` or a PAT with `repo` scope).
+**3. Configure MCP servers**
 
----
+Copy `.mcp.json.example` to your project's `.mcp.json` and map each capability to your fund's actual MCP server (Attio for CRM, Bunch for fund admin, Granola for meeting intel, etc.).
 
-## Fund OS Concept
+**4. Point skills at your knowledge folders**
 
-Fund OS is the operating system that lets a small fund team run a complete venture-capital fund — sourcing, due diligence, portfolio support, LP reporting and compliance — at the operational depth of a much larger institution.
+Create four folders in your fund's drive or wiki and configure the paths in your Claude project:
 
-It is built on **Claude Skills**: small, portable, version-controlled units of methodology and behaviour, hosted in Claude Desktop, Claude Code and the Claude Agent SDK, and connected to the fund's actual tools (CRM, fund administration, meeting intelligence, productivity suite, wiki) through MCP.
+- `Fund-Framework/` — thesis, scoring rubric, DD framework, impact framework
+- `Fund-Templates/` — memo, health-check, LP report, capital-call templates
+- `Fund-Portfolio/` — one subfolder per portfolio company
+- `Fund-Market/` — external market intel kept fresh by sourcing skills
 
-**Key facts**
+## What's in this repo
 
-- **35 skills** organised across **8 lifecycle phases** — from LP fundraising through to fund wind-down
-- **18 cross-skill workflows** orchestrate the recurring rhythms: weekly digest, monthly health check, quarterly LP report, capital call
-- **Three host options** out of the box: Claude Desktop (Cowork mode) for the non-technical team, Claude Code for power users, the Claude Agent SDK for scheduled and headless runs
-- **Human-in-the-loop by design** — every regulated artefact carries a HITL step in its specification; this is a property of the skills, not an optional setting
-- **Compliance by design** — every skill writes to a shared Audit Trail referenced in LP-facing process documentation
-- **9 MCP capabilities** covering CRM, fund administration, meeting intelligence, knowledge management, calendar, email, web search, drive, and market data
-- **Fund-side scope only** — skills that help portfolio companies do their own work (GTM, hiring, founder finance) are explicitly out of scope and will ship as a separate Founder OS bundle
-
-**The 8 lifecycle phases**
-
-| Phase | Focus |
+| Path | Contents |
 |---|---|
-| 01 Fundraising & LP | LP scouting, outreach, data room, pipeline, fund grants |
-| 02 Sourcing & Market Watch | Outbound scouting, deal triage, thesis scoring, market intelligence |
-| 03 Due Diligence | Pitch analysis, market mapping, reference checks, memos, IC packs |
-| 04 Portfolio Monitoring | KPI collection, health checks, fund-view aggregation, early warnings |
-| 05 Reporting & Impact | Capital calls, impact assessment, quarterly LP reports |
-| 06 Legal & Compliance | Legal drafting, cap tables, contracts, regulatory deadlines, audit trail |
-| 07 Ecosystem & Outreach | LP newsletter, public content, events, partnerships |
-| 08 Exit & Wind-Down | Exit preparation, buyer mapping, distribution, fund closure |
-
-Full implementation blueprint: `Fund_OS_Implementation_Concept_v1.5` — available on the shared Drive (Ocean One Ventures internal).
-
----
+| [`plugins/fund-os/`](./plugins/fund-os/) | Plugin root — 35 SKILL.md files across 8 phases, plugin manifest, MCP config example |
+| [`plugins/fund-os/README.md`](./plugins/fund-os/README.md) | Full skill inventory, 18 workflows, installation details |
+| [`plugins/fund-os/Fund_OS_Dashboard.html`](./plugins/fund-os/Fund_OS_Dashboard.html) | Interactive periodic table of all skills — open in any browser |
+| [`.claude-plugin/marketplace.json`](./.claude-plugin/marketplace.json) | Marketplace manifest |
 
 ## Dashboard
 
-The **Fund OS Dashboard** is a standalone HTML file that visualises the complete skill library as an interactive periodic table. Open it in any browser — no server required.
+Open [`plugins/fund-os/Fund_OS_Dashboard.html`](./plugins/fund-os/Fund_OS_Dashboard.html) in any browser. No server required.
 
-**Three views**
-
-| View | What it shows |
-|---|---|
-| Periodic Table | All 35 skills arranged by lifecycle phase, colour-coded, with abbreviation codes |
-| Lifecycle Flow | Skills mapped along the fund lifecycle from fundraising to exit |
-| Workflows | The 18 cross-skill workflows and the skills they orchestrate |
-
-A search/filter panel lets you find skills by name, slug, MCP capability, or trigger phrase.
-
-`Fund_OS_Dashboard.html` — available on the shared Drive (Ocean One Ventures internal).
-
----
+Three views: **Periodic Table** (skills by phase, colour-coded), **Lifecycle Flow** (skills along the fund lifecycle), **Workflows** (the 18 orchestrated flows). A search panel lets you filter by skill name, slug, MCP capability or trigger phrase.
 
 ## Versioning
 
-Single source of truth: [`plugins/fund-os/.claude-plugin/plugin.json`](./plugins/fund-os/.claude-plugin/plugin.json). Bump on every change and push to `main`.
+Single source of truth: [`plugins/fund-os/.claude-plugin/plugin.json`](./plugins/fund-os/.claude-plugin/plugin.json). Bump the version on every change and push to `main`. Clients with `autoUpdate: true` in their marketplace settings pick up changes automatically.
 
 ## How this repo is built
 
-The marketplace is generated from a single `skills-data.js` data file in the Fund OS upstream repo. Do not edit `SKILL.md` files directly — they are regenerated by `build-marketplace.js`.
+Skill files are generated from a single `skills-data.js` in the Fund OS upstream repo. Do not edit `SKILL.md` files directly — they are regenerated by `build-marketplace.js`.
 
 ## License
 
