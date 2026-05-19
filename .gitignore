@@ -1,0 +1,17 @@
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Editor scratchpads
+*.swp
+*~
+.idea/
+.vscode/
+
+# Local MCP credentials - never commit
+.mcp.json
+.env
+.env.local
+
+# Node modules (if anything ends up here)
+node_modules/

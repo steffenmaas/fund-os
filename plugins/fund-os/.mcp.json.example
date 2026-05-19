@@ -1,0 +1,51 @@
+{
+  "mcpServers": {
+    "crm": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@example/affinity-mcp"
+      ],
+      "env": {
+        "AFFINITY_API_KEY": "${AFFINITY_API_KEY}"
+      },
+      "_comment": "Affinity or Attio - both expose CRM. Pick one."
+    },
+    "fund-admin": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@example/bunch-mcp"
+      ],
+      "env": {
+        "BUNCH_API_KEY": "${BUNCH_API_KEY}"
+      },
+      "_comment": "Bunch / Carta / Allvue - READ-ONLY mode required."
+    },
+    "meeting-intelligence": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@example/granola-mcp"
+      ],
+      "env": {
+        "GRANOLA_API_KEY": "${GRANOLA_API_KEY}"
+      }
+    },
+    "productivity-suite": {
+      "url": "https://your-google-workspace-mcp.example.com/mcp",
+      "_comment": "Google Workspace or Microsoft 365"
+    },
+    "market-data": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@example/dealroom-mcp"
+      ],
+      "env": {
+        "DEALROOM_API_KEY": "${DEALROOM_API_KEY}"
+      },
+      "_comment": "Dealroom / PitchBook / Specter / Crunchbase. Pick one or several."
+    }
+  }
+}
