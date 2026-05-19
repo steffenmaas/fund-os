@@ -3,57 +3,18 @@
   "displayName": "Fund OS",
   "version": "1.5.0",
   "description": "35 Claude Skills for VC fund operations across 8 lifecycle phases. Built on the open VC-Skills.md community convention. Fund-side scope only - Founder OS coaching skills are a separate bundle.",
-  "author": "Ocean One Ventures",
+  "author": {
+    "name": "Ocean One Ventures"
+  },
   "homepage": "https://github.com/steffenmaas/fund-os",
   "license": "Proprietary",
-  "skills": [
-    "lp-database-prospector",
-    "network-intro-mapper",
-    "lp-outreach-composer",
-    "data-room-builder",
-    "lp-pipeline-manager",
-    "fund-grant-scout",
-    "outbound-startup-scout",
-    "deal-flow-triage",
-    "thesis-fit-scorer",
-    "market-intelligence-scanner",
-    "startups-to-watch-curator",
-    "co-investor-syndicator",
-    "pitch-deck-analyzer",
-    "market-and-competitor-mapper",
-    "reference-check-orchestrator",
-    "investment-memo-drafter",
-    "ic-pack-builder",
-    "portfolio-kpi-collector",
-    "portfolio-health-check",
-    "fund-view-aggregator",
-    "early-warning-signaler",
-    "capital-call-generator",
-    "impact-assessor",
-    "lp-quarterly-reporter",
-    "legal-document-drafter",
-    "cap-table-modeler",
-    "contract-and-signature-manager",
-    "regulatory-deadline-watcher",
-    "audit-trail-writer",
-    "lp-newsletter-composer",
-    "public-content-composer",
-    "event-orchestrator",
-    "partnership-manager",
-    "exit-scenario-modeler",
-    "secondary-market-scanner"
-  ],
-  "mcpServers": {
-    "_recommended": [
-      "crm",
-      "fund-admin (read-only)",
-      "meeting-intelligence",
-      "productivity-suite",
-      "wiki",
-      "chat",
-      "market-data",
-      "b2b-database",
-      "e-signature"
-    ]
-  }
+  "keywords": [
+    "vc",
+    "fund-operations",
+    "fund-management",
+    "lp-management",
+    "due-diligence",
+    "portfolio-monitoring",
+    "venture-capital"
+  ]
 }
