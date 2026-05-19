@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fund OS Dashboard</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #fafafa; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+</style>
+</head>
+<body>
+<!-- Fund OS Dashboard v1.3 - true periodic-table layout, light cards, single number, domain strip -->
+<div id="fundos-root">
+<style>
+  :root { color-scheme: light; }
+  #fundos-root {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #111827;
+    background: #ffffff;
+    padding: 24px;
+    line-height: 1.5;
+  }
+  #fundos-root *, #fundos-root *::before, #fundos-root *::after { box-sizing: border-box; }
+
+  /* Hero */
+  .fos-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+    color: white;
+    padding: 28px 32px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .fos-hero::after {
+    content: ""; position: absolute; right: -30px; top: -30px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(59,130,246,0.4) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .fos-hero h1 { margin: 0 0 6px 0; font-size: 40px; font-weight: 800; letter-spacing: 4px; }
+  .fos-hero .sub { margin: 0 0 14px 0; font-size: 16px; color: #cbd5e1; font-weight: 400; }
+  .fos-hero .stats { display: flex; gap: 28px; margin-top: 14px; flex-wrap: wrap; position: relative; z-index: 1; }
+  .fos-hero .stat { display: flex; flex-direction: column; }
+  .fos-hero .stat .num { font-size: 28px; font-weight: 700; color: white; }
+  .fos-hero .stat .lbl { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* Topbar (tabs + filter button on one row) */
+  .fos-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* Tabs */
+  .fos-tabs {
+    display: flex; gap: 4px;
+    background: white;
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    width: fit-content;
+  }
+  .fos-tab {
+    padding: 8px 16px; background: transparent; border: none; border-radius: 6px;
+    cursor: pointer; font-size: 13px; font-weight: 500; color: #6b7280;
+    transition: all 0.15s;
+  }
+  .fos-tab:hover { color: #111827; }
+  .fos-tab.active { background: #111827; color: white; }
+
+  /* Toolbar (legacy outer wrapper removed; search now inside the filter panel) */
+  .fos-toolbar { display: none; }
+  .fos-filter-search {
+    flex-basis: 100%;
+    margin-bottom: 4px;
+  }
+  .fos-search {
+    width: 100%;
+    padding: 9px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: white;
+    font-size: 13px;
+    outline: none;
+    transition: border 0.15s;
+  }
+  .fos-search:focus { border-color: #3b82f6; }
+  .fos-filter-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 14px;
+    border: 1px solid #e5e7eb;
+    background: white;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 500; color: #4b5563;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .fos-filter-toggle:hover { border-color: #9ca3af; }
+  .fos-filter-toggle .chev {
+    display: inline-block;
+    transition: transform 0.15s;
+    font-size: 10px;
+    color: #9ca3af;
+  }
+  .fos-filter-toggle.open .chev { transform: rotate(180deg); }
+  .fos-filter-toggle .badge {
+    background: #2563eb; color: white;
+    border-radius: 999px;
+    font-size: 10px; font-weight: 700;
+    padding: 1px 7px;
+    margin-left: 2px;
+  }
+  .fos-filter-toggle .badge.hidden { display: none; }
+  .fos-filter-panel {
+    display: none;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+    padding: 10px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+  }
+  .fos-filter-panel.open { display: flex; }
+  .fos-filter {
+    padding: 7px 12px; border-radius: 999px;
+    border: 1px solid #e5e7eb; background: white; cursor: pointer;
+    font-size: 12px; font-weight: 500; color: #4b5563;
+    transition: all 0.15s; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .fos-filter .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .fos-filter:hover { border-color: #9ca3af; }
+  .fos-filter.active { background: #111827; color: white; border-color: #111827; }
+
+  /* ===== PERIODIC TABLE - true periodic-table grid ===== */
+  .fos-pt-wrap { overflow-x: auto; padding-bottom: 8px; }
+  .fos-pt {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(120px, 1fr));
+    gap: 8px;
+    min-width: 980px;
+    align-items: end;  /* bottom-align: columns share a uniform bottom edge */
+  }
+  .fos-pt-card {
+    background: var(--phase-light, #f3f4f6);
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: 10px;
+    padding: 8px 6px 8px 8px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s;
+    aspect-ratio: 0.95 / 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .fos-pt-card::after {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--phase-color, #6b7280);
+    border-radius: 10px 0 0 10px;
+  }
+  .fos-pt-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    z-index: 5;
+  }
+  .fos-pt-card.dim { opacity: 0.15; pointer-events: none; }
+  .fos-pt-card .num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--phase-color, #6b7280);
+    opacity: 0.75;
+    line-height: 1;
+  }
+  .fos-pt-card .code {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--phase-color, #6b7280);
+    text-align: center;
+    line-height: 1;
+    margin: auto 0;
+    letter-spacing: -0.5px;
+  }
+  .fos-pt-card .name {
+    font-size: 9px;
+    font-weight: 700;
+    color: #1f2937;
+    text-align: center;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    margin-top: 4px;
+  }
+
+  /* Domain strip (one row at the bottom of the table) */
+  .fos-pt-domains {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(120px, 1fr));
+    gap: 8px;
+    min-width: 980px;
+    margin-top: 16px;
+  }
+  .fos-pt-domain {
+    text-align: center;
+    padding: 10px 6px 4px 6px;
+    border-top: 3px solid var(--phase-color, #6b7280);
+    color: var(--phase-color, #6b7280);
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    line-height: 1.25;
+  }
+
+  /* Modal */
+  .fos-modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    display: none; align-items: center; justify-content: center;
+    padding: 24px; z-index: 100;
+    backdrop-filter: blur(2px);
+  }
+  .fos-modal-bg.open { display: flex; }
+  .fos-modal {
+    background: white;
+    border-radius: 14px;
+    max-width: 760px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: auto;
+    padding: 26px 30px;
+    position: relative;
+    border-top: 6px solid var(--phase-color, #6b7280);
+  }
+  .fos-modal .close {
+    position: absolute; top: 14px; right: 14px;
+    background: #f3f4f6; border: none; border-radius: 8px;
+    width: 32px; height: 32px; cursor: pointer; font-size: 18px; color: #6b7280;
+  }
+  .fos-modal .close:hover { background: #e5e7eb; }
+  .fos-modal h2 { margin: 0; font-size: 22px; color: #111827; }
+  .fos-modal .slug-line {
+    margin-top: 4px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12px; color: #2563eb;
+  }
+  .fos-modal .phase {
+    display: inline-block;
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 600; margin-top: 6px;
+    background: var(--phase-light, #f3f4f6);
+    color: var(--phase-color, #4b5563);
+  }
+  .fos-modal .codepill {
+    display: inline-flex;
+    width: 44px; height: 44px;
+    background: var(--phase-color, #111827);
+    color: white; border-radius: 10px;
+    align-items: center; justify-content: center;
+    font-weight: 700; font-size: 18px;
+    margin-right: 12px; vertical-align: middle;
+  }
+  .fos-modal h3 {
+    margin: 22px 0 6px 0; font-size: 12px; font-weight: 700; color: #6b7280;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .fos-modal p, .fos-modal ul, .fos-modal ol {
+    font-size: 14px; line-height: 1.55; color: #374151; margin: 0 0 6px 0;
+  }
+  .fos-modal ul, .fos-modal ol { padding-left: 18px; }
+  .fos-modal ul li { margin-bottom: 3px; }
+  .fos-modal .pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .fos-modal .pill {
+    background: #f3f4f6; color: #374151;
+    border-radius: 6px; padding: 4px 10px; font-size: 12px;
+  }
+  .fos-modal pre.template {
+    background: #f5f7fa;
+    border-left: 4px solid var(--phase-color, #2E75B6);
+    padding: 14px 16px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12px; line-height: 1.55; color: #1f2937;
+    white-space: pre; margin: 6px 0 0 0;
+  }
+  .fos-modal .relevance { display: flex; gap: 14px; margin-top: 4px; }
+  .fos-modal .relevance .label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+  .fos-modal .stars { font-size: 15px; color: #f59e0b; letter-spacing: 1px; }
+  .fos-modal .stars .empty { color: #e5e7eb; }
+
+  /* Workflows view */
+  .fos-wf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+  .fos-wf {
+    background: white; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 16px 18px; cursor: pointer; transition: all 0.15s;
+  }
+  .fos-wf:hover { border-color: #3b82f6; box-shadow: 0 4px 10px rgba(0,0,0,0.06); }
+  .fos-wf .wf-id { font-size: 11px; font-weight: 700; color: #3b82f6; letter-spacing: 1.5px; }
+  .fos-wf .wf-name { font-size: 16px; font-weight: 700; margin-top: 2px; color: #111827; }
+  .fos-wf .wf-trig { font-size: 12px; color: #6b7280; margin-top: 6px; }
+  .fos-wf .wf-trig::before { content: "Trigger: "; font-weight: 600; }
+  .fos-wf .wf-desc { font-size: 13px; color: #374151; margin-top: 10px; line-height: 1.5; }
+  .fos-wf .wf-skills { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .fos-wf .wf-skill-pill {
+    font-size: 10px; font-weight: 700;
+    padding: 3px 6px; border-radius: 4px;
+    color: white; cursor: pointer;
+  }
+
+  /* Flow view */
+  .fos-flow { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; }
+  .fos-flow-row {
+    display: grid; grid-template-columns: 60px 1fr;
+    gap: 16px; align-items: start; margin-bottom: 22px; position: relative;
+  }
+  .fos-flow-row:not(:last-child)::after {
+    content: ""; position: absolute; left: 29px; top: 64px; bottom: -22px;
+    width: 2px; background: #e5e7eb;
+  }
+  .fos-flow-circle {
+    width: 60px; height: 60px; border-radius: 14px;
+    color: white; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px; z-index: 1; position: relative;
+  }
+  .fos-flow-body h4 { margin: 0; font-size: 16px; color: #111827; }
+  .fos-flow-body p { font-size: 13px; color: #6b7280; margin: 4px 0 10px 0; }
+  .fos-flow-skills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .fos-flow-mini {
+    padding: 5px 10px; background: #f9fafb; border: 1px solid #e5e7eb;
+    border-radius: 6px; font-size: 11px; color: #374151;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .fos-flow-mini:hover { background: white; border-color: var(--phase-color, #3b82f6); }
+  .fos-flow-mini b { color: var(--phase-color, #111827); font-weight: 700; margin-right: 4px; }
+
+  .fos-empty { text-align: center; color: #9ca3af; padding: 60px 20px; font-size: 14px; }
+  .fos-view { display: none; }
+  .fos-view.active { display: block; }
+
+  @media (max-width: 720px) {
+    .fos-hero h1 { font-size: 30px; letter-spacing: 2px; }
+  }
+</style>
+
+<div class="fos-hero">
+  <h1>FUND OS</h1>
+  <div class="sub">The Claude Skills periodic table for VC fund operations. Fund-side scope only - portfolio coaching (Founder OS) is a separate bundle planned later.</div>
+  <div class="stats">
+    <div class="stat"><div class="num">35</div><div class="lbl">Skills</div></div>
+    <div class="stat"><div class="num">18</div><div class="lbl">Workflows</div></div>
+    <div class="stat"><div class="num">8</div><div class="lbl">Lifecycle Phases</div></div>
+    <div class="stat"><div class="num">9</div><div class="lbl">MCP Capabilities</div></div>
+    <div class="stat"><div class="num">100%</div><div class="lbl">HITL on regulated artefacts</div></div>
+  </div>
+</div>
+
+<div class="fos-topbar">
+  <div class="fos-tabs" role="tablist">
+    <button class="fos-tab active" data-view="grid">Periodic Table</button>
+    <button class="fos-tab" data-view="flow">Lifecycle Flow</button>
+    <button class="fos-tab" data-view="wf">Workflows</button>
+  </div>
+  <button type="button" class="fos-filter-toggle" id="fos-filter-toggle" aria-expanded="false">
+    Filters <span class="badge hidden" id="fos-filter-badge">1</span><span class="chev">v</span>
+  </button>
+</div>
+<div class="fos-filter-panel" id="fos-phase-filters">
+  <div class="fos-filter-search">
+    <input type="search" class="fos-search" placeholder="Search skills, slugs, MCPs, triggers...">
+  </div>
+</div>
+
+<div id="view-grid" class="fos-view active">
+  <div class="fos-pt-wrap">
+    <div class="fos-pt" id="fos-pt"></div>
+    <div class="fos-pt-domains" id="fos-pt-domains"></div>
+  </div>
+</div>
+
+<div id="view-flow" class="fos-view">
+  <div class="fos-flow" id="fos-flow"></div>
+</div>
+
+<div id="view-wf" class="fos-view">
+  <div class="fos-wf-grid" id="fos-wf"></div>
+</div>
+
+<div class="fos-modal-bg" id="fos-modal-bg">
+  <div class="fos-modal" id="fos-modal">
+    <button class="close" id="fos-modal-close" aria-label="Close">x</button>
+    <div id="fos-modal-content"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const PHASES = [{"id":"fundraising","num":"01","name":"Fundraising & LP","color":"7C3AED","lightColor":"F1ECFE","desc":"Identify potential LPs, find paths to them, reach out, prepare a data room, manage commitment and KYC."},{"id":"sourcing","num":"02","name":"Sourcing & Market Watch","color":"2563EB","lightColor":"E6EEFE","desc":"Active scouting, inbound triage, thesis screening, market intelligence and co-investor sharing."},{"id":"diligence","num":"03","name":"Due Diligence","color":"0891B2","lightColor":"E2F6FB","desc":"Analyse opportunities, map markets, take references, write memos, assemble the IC pack."},{"id":"portfolio","num":"04","name":"Portfolio Monitoring","color":"059669","lightColor":"E0F5EC","desc":"Collect KPIs, run health checks, aggregate to fund view, flag early warnings."},{"id":"reporting","num":"05","name":"Reporting & Impact","color":"F59E0B","lightColor":"FEF3DA","desc":"Capital calls, impact assessments, quarterly LP reporting."},{"id":"legal","num":"06","name":"Legal & Compliance","color":"DC2626","lightColor":"FDE3E3","desc":"Draft legal documents, model cap tables, manage contracts and signatures, watch regulatory deadlines, write the audit trail."},{"id":"ecosystem","num":"07","name":"Ecosystem & Outreach","color":"DB2777","lightColor":"FCE3EE","desc":"LP newsletter, public content, events, partnerships."},{"id":"exit","num":"08","name":"Exit & Wind-Down","color":"525252","lightColor":"EDEDED","desc":"Model exit scenarios and watch the secondary market."}];
+  const SKILLS = [{"code":"Ld","num":1,"phase":"fundraising","slug":"lp-database-prospector","name":"LP Database Prospector","purpose":"Scan closed databases and news for new potential LPs matching the fund's LP thesis - family offices, fund-of-funds, DFIs, public news of impact-oriented investors.","triggers":["find LPs","scout LPs","new family offices","LP prospects","match LP database"],"inputs":["LP thesis (ticket, geography, focus)","exclusion list (passed / closed LPs)"],"outputs":["Ranked LP candidate list with rationale","source citation per candidate","handoff to network-intro-mapper"],"mcps":["Market Data (PitchBook LP-side, Preqin)","B2B Database (Apollo, Cognism)","Web Search","CRM"],"knowledge":["LP-Thesis","LP-Database","Family-Office-Registry"],"hitl":"Outreach decisions remain with humans; this skill only produces shortlists.","keyInstructions":["Pull from at least three independent sources per run (PitchBook LP-side + news + B2B database).","Reject anyone already in the LP-Database with status 'Passed' in the last 12 months.","Score each candidate against the LP thesis: ticket fit, thesis overlap, prior commitments to comparable funds.","Always hand off to network-intro-mapper rather than suggesting cold outreach."],"template":"# LP shortlist - week of 2026-05-19\n\n| Candidate          | Type        | Ticket fit | Thesis match | Path             |\n| Aurora Family Off. | Family Off  | EUR 0.5-2m | Strong (impact)| Warm via Partner X |\n| Helios Foundation  | Endowment   | EUR 1-3m   | Strong (impact)| Cold - via news    |\n| Beta Wealth GmbH   | Multi-FO    | EUR 0.5-1m | Medium         | Warm via Advisor Y |\n\nSources: PitchBook LP-side, EIF allocations Q1, LinkedIn news.","relevance":{"generalist":5,"impact":5}},{"code":"Nm","num":2,"phase":"fundraising","slug":"network-intro-mapper","name":"Network Intro Mapper","purpose":"Find the warmest path from the team's network to a target LP or person - who knows whom, last contact, suggested asker, intro template.","triggers":["warm intro to","who knows","network path","intro mapping"],"inputs":["Target name","target organisation"],"outputs":["Ranked intro paths with strength score","suggested asker","intro request draft"],"mcps":["CRM","Email","Web Search"],"knowledge":["Team-Network-Graph","LP-Database"],"hitl":"All intro requests reviewed by the named asker before send.","keyInstructions":["Rank paths by: connection strength (1-5), recency of contact, role seniority of the asker.","Never expose 1st-degree contacts of direct competitors to each other in the suggestion list.","Always include a one-sentence value proposition the intro can repeat.","Default to a single best path; surface the next two only if the user asks."],"template":"# Intro paths to Aurora FO\n\n1. Top: Asker = Partner X, strength 5/5, last contact 12d ago.\n   Ask: 'Would you intro me to Aurora FO for a 15-min Fund II call?\n   Thesis overlap with their impact mandate.'\n\n2. Fallback: Asker = Advisor Y, strength 3/5, last contact 90d ago.\n\nDraft DM filed at /Drafts/Intros/aurora-fo.md","relevance":{"generalist":5,"impact":5}},{"code":"Lo","num":3,"phase":"fundraising","slug":"lp-outreach-composer","name":"LP Outreach Composer","purpose":"Draft personalised first-touch and follow-up emails to LP prospects, calibrated to thesis fit and prior context.","triggers":["draft LP email","follow up with LP","LP outreach"],"inputs":["LP profile","campaign goal","previous touchpoints"],"outputs":["Draft email (subject + body)","send recommendation (timing, channel)"],"mcps":["CRM","Email","Meeting Intelligence"],"knowledge":["LP-Outreach-Playbook","Investment-Thesis"],"hitl":"Every outbound mail is reviewed before send - no auto-send under any circumstances.","keyInstructions":["Open with one concrete reason this LP fits, drawn from their public statements or prior thesis.","Maximum 130 words for first touch; maximum 80 words for follow-up.","Always include one specific ask (15-min call / forward to colleague / read the teaser).","Tone: peer-to-peer, no superlatives, no buzzwords. Cite numbers with sources."],"template":"Subject: Fund II - thesis overlap with Aurora's impact mandate\n\nHi Anna,\n\nI saw Aurora's recent commitment to <reference fund>. We are raising Fund II\non a similar thesis (<one-line thesis>) with EUR <X>m target and EUR <Y>m\nalready circled.\n\nWould a 15-minute call next week make sense? Happy to send the teaser ahead.\n\nBest,\n<Sender>\n\nSend: Tuesday 09:30 local. Follow-ups: D+7, D+14.","relevance":{"generalist":5,"impact":5}},{"code":"Dr","num":4,"phase":"fundraising","slug":"data-room-builder","name":"Data Room Builder","purpose":"Assemble and refresh the LP data room (Teaser, IM, Track Record, Legal) and keep it consistent with the live fund status.","triggers":["build data room","update data room","prepare LP package"],"inputs":["LP tier (anchor / standard / family office)","fund version"],"outputs":["Drive folder with versioned documents","data-room index","access log entry"],"mcps":["Drive","Wiki / DB"],"knowledge":["LP-Document-Templates","Fund-Master-Data"],"hitl":"Legal documents are read-only references; only humans publish new versions.","keyInstructions":["Fixed folder structure: 01_Teaser, 02_IM, 03_Track_Record, 04_Legal, 05_References.","Stamp every document with the data-room version and date on first page.","Anchor tier gets additional folders: 06_Cap_Table, 07_LP_Reference_Calls.","Always create a per-LP access record (who, when, which version) for the audit trail."],"template":"/LP-Data-Rooms/Aurora-FO/v2026.05/\n  01_Teaser/         Fund_II_Teaser_v2026.05.pdf\n  02_IM/             Fund_II_IM_v2026.05.pdf\n  03_Track_Record/   Fund_I_Track_Record_2026-Q1.xlsx\n  04_Legal/          LPA_v2026.05.pdf\n  05_References/     Founder_Reference_Letters/\n  INDEX.md           auto-generated table of contents\n  ACCESS.log         user, IP, timestamp per file view","relevance":{"generalist":5,"impact":5}},{"code":"Lp","num":5,"phase":"fundraising","slug":"lp-pipeline-manager","name":"LP Pipeline Manager","purpose":"Single skill for the entire LP record lifecycle: prospect -> engaged -> in DD -> committing -> onboarded. Maintains pipeline state, watches subscription / KYC / signature deadlines.","triggers":["track LP","update LP pipeline","LP status","KYC deadline","commitment status"],"inputs":["LP record updates","fund admin data (read-only)","signed term sheets"],"outputs":["CRM record update","stage transition log","aging report on KYC / subscription","escalation list"],"mcps":["CRM","Fund Admin (read-only)","Drive","Email"],"knowledge":["LP-Pipeline-Stages","KYC-Checklist","Subscription-Workflow"],"hitl":"Stage transition to 'Committed' or 'Closed' requires explicit human confirmation; never writes to fund admin.","keyInstructions":["Modes (auto-detected from input): prospect / engaged / in-DD / committing / onboarded.","Pipeline stages (canonical): Identified, Engaged, Pitched, In DD, Committing, Closed, Passed.","Surface anything older than: 7d for ID checks, 14d for AML, 21d for full subscription pack.","Always write an audit-trail entry on stage transitions and on KYC state changes."],"template":"# LP pipeline snapshot - 2026-05-19\n\nENGAGED (5):     Aurora FO, Helios, Gamma, Delta, Theta\nIN DD (3):       Beta Pension, Iota FO, Kappa Endowment\nCOMMITTING (2):  Lambda Wealth (EUR 1.5m, sig due 2026-05-22)\n                 Mu Family (EUR 0.8m, AML pending 14d - escalate)\nCLOSED Q2 (1):   Sigma FO (EUR 2.0m, onboarded 2026-05-18)\n\nAGING: Mu Family AML 14d (escalate today).","relevance":{"generalist":5,"impact":5}},{"code":"Gs","num":6,"phase":"fundraising","slug":"fund-grant-scout","name":"Fund Grant Scout","purpose":"Scout public funding programmes relevant to the FUND itself - regional fund-development grants (IFB, KfW), public LP / DFI programmes, FinTech / VC innovation funding the fund can apply to as a business.","triggers":["find fund grants","public funding for fund","IFB","KfW for fund","EIF programme"],"inputs":["Fund profile (jurisdiction, AuM, structure, registered KVG status)","exclusion list"],"outputs":["Fund-level funding programme shortlist","eligibility evidence","application skeleton"],"mcps":["Web Search","Drive","Market Data"],"knowledge":["Public-Funding-Registry","Fund-Profile"],"hitl":"Applications signed off by GP before submission.","keyInstructions":["Scope strictly: programmes the FUND can apply to as a business - never portfolio companies (those belong to a future Founder OS bundle).","Maintain the Public-Funding-Registry: programme, eligibility, ticket, deadline, success rate.","Filter strictly on fund eligibility (jurisdiction, KVG status, AuM bracket, focus area).","Application skeleton uses [OPEN: ...] placeholders for anything requiring GP / counsel input."],"template":"# Public funding scan - Fund II\n\nFund profile: Hamburg-domiciled, registered KVG, AuM target EUR 50m,\nFinTech-tech focus.\n\n| Programme                | Type             | Ticket          | Deadline    | Match |\n| IFB Hamburg InnoFinTech  | Non-repayable    | up to EUR 200k  | rolling     | YES   |\n| KfW ERP Innovation       | Soft loan        | up to EUR 5m    | rolling     | YES   |\n| EIF AMUF                 | DFI commitment   | EUR 5-25m       | rolling     | YES   |\n| Horizon EIC Accelerator  | Equity + grant   | EUR 2.5m+       | 2026-06-15  | NO    |\n\nIFB InnoFinTech skeleton: 6 pages, 4x [OPEN: ...] - ready for GP review.\nFiled: /Fund-Capital/Public-Funding/2026-05-scan.md","relevance":{"generalist":5,"impact":5}},{"code":"Os","num":7,"phase":"sourcing","slug":"outbound-startup-scout","name":"Outbound Startup Scout","purpose":"Source startups proactively from closed databases, accelerators, universities and events against the thesis filter.","triggers":["scout startups","outbound sourcing","find pre-seed in X"],"inputs":["Sector + stage + geography filter","cadence"],"outputs":["Ranked candidate list with rationale and contact path"],"mcps":["Market Data (Dealroom, Crunchbase, Specter, PitchBook)","B2B Database (Apollo)","Web Search"],"knowledge":["Sector-Map","Investment-Thesis","Source-Registry"],"hitl":"No outreach without approval - this skill only produces a shortlist.","keyInstructions":["Pull from at least three independent sources per run (closed database + accelerator + university or events).","Reject any candidate already touched by the fund in the last 90 days - cross-check the CRM.","For each surfaced startup: 1-line thesis match, founder name, contact path, latest funding event.","Never auto-send outreach. Output is a list with a recommended asker for warm intro."],"template":"# Outbound shortlist - week of 2026-05-19\n\n| Company    | Stage   | Why a fit                          | Path                |\n| Helios     | Pre-S   | IoT + EU + EUR 4m cap = thesis     | Warm via TUM        |\n| Resolutee  | Seed    | Legal AI, DACH, female co-founder  | Inbound likely      |\n| Nordwind   | Pre-S   | Climate data, Hamburg              | Cold from network   |\n\nSources: Dealroom DACH/Climate, Specter signals, TUM Venture Labs, Slush 2026.","relevance":{"generalist":5,"impact":5}},{"code":"Di","num":8,"phase":"sourcing","slug":"deal-flow-triage","name":"Deal Flow Triage","purpose":"Continuously triage the deal-flow inbox - classify, enrich, dedupe, route, suggest a reply.","triggers":["triage inbox","new deal","process pitch email"],"inputs":["Incoming email + attachments"],"outputs":["CRM record draft","suggested reply","priority tag (P1/P2/P3/Pass)"],"mcps":["Email","CRM"],"knowledge":["Investment-Thesis","Filing-Structure"],"hitl":"Replies drafted, never auto-sent.","keyInstructions":["Run the thesis fit check first (sector / stage / geo / ticket); a 'No' on any hard filter is an automatic Pass.","Dedupe across the last 18 months on company name, domain and founder email.","If the deck is missing, draft a polite reply asking for it; do not score until you have it.","Drop attachments into Drive folder /Deal-Flow-Inbox/<YYYY-MM>/<Company>/ before tagging in CRM."],"template":"# Deal triage card\n\nCompany:    Helios Sensors GmbH\nSource:     Inbound, 2026-05-19 08:14\nSector:     Industrial IoT\nStage:      Pre-seed (EUR 400k SAFE, EUR 4m cap)\nGeo:        Munich\nThesis fit: PASS on hard filters\nPriority:   P2 - moderate traction, technical team\nSuggested reply:\n  'Thanks - read it. Can you share latest financials and customer list\n  before we schedule a 30-min call?'\nFiles:      /Deal-Flow-Inbox/2026-05/Helios/Deck_v3.pdf","relevance":{"generalist":5,"impact":5}},{"code":"Tm","num":9,"phase":"sourcing","slug":"thesis-fit-scorer","name":"Thesis Fit Scorer","purpose":"Score any startup against the fund's investment thesis on a transparent rubric - pass / watch / proceed.","triggers":["score startup","thesis fit","first screen"],"inputs":["One-pager, deck, or public data"],"outputs":["Numerical score (0-100)","dimension breakdown","key gaps","recommended next step"],"mcps":["Web Search","Drive"],"knowledge":["Investment-Thesis","Scoring-Rubric"],"hitl":"Score is advisory; the IC decides.","keyInstructions":["Use the published scoring rubric verbatim - no extra dimensions, no skipped ones.","Every dimension score requires a one-line citation (deck slide, web source, founder statement).","If a dimension cannot be evidenced, mark it 'INSUFFICIENT DATA' rather than guessing.","End with one of three recommendations: PROCEED, WATCHLIST, PASS."],"template":"# Thesis fit score - Helios Sensors\n\nOverall: 71 / 100  -> WATCHLIST\n\nTeam           14 / 20  (technical founders, no commercial co-founder)\nMarket         16 / 20  (TAM ~ EUR 4bn, 12% CAGR; deck p.4)\nSolution       14 / 20  (sensor + SaaS, clear value prop)\nTech / moat    10 / 15  (patents pending)\nTraction        9 / 15  (3 paid pilots, EUR 18k MRR)\nBusiness model  8 / 10  (SaaS + hardware margin known)\n\nNext step: 30-min call; ask for commercial-hire plan.","relevance":{"generalist":5,"impact":5}},{"code":"Mi","num":10,"phase":"sourcing","slug":"market-intelligence-scanner","name":"Market Intelligence Scanner","purpose":"Continuous fund-wide market watch - new sector reports, M&A and funding events, regulatory changes, conferences and competitor moves - surfaced as a weekly digest with critical-alert breakouts.","triggers":["market intelligence","sector watch","new reports","new deals in","regulatory update"],"inputs":["Sector watchlist","thesis tags","competitor list"],"outputs":["Weekly intelligence digest","real-time alerts on critical events","report archive entries"],"mcps":["Market Data (Dealroom, Specter, PitchBook)","Web Search","Email (newsletters)","Chat"],"knowledge":["Sector-Map","Investment-Thesis","Regulation-Tracker","Competitor-Registry"],"hitl":"Critical alerts route to deal lead; digests are reviewed before LP / portfolio circulation.","keyInstructions":["Three streams: (1) new reports / studies / whitepapers, (2) new deals (fundings, M&A, partnerships), (3) new events / regulation / talent moves.","Critical-alert rules: regulation directly affecting a portfolio company; direct competitor funding > EUR 20m; M&A in the fund's exit-comp set.","Archive every cited report into Fund-Market/Reports/ with a 3-line summary and tags.","Weekly digest is max 12 items; rank by relevance to active thesis tags."],"template":"# Market intel - week of 2026-05-19\n\nREPORTS (3):\n- McKinsey 'European climate-tech deployment 2026' (climate)\n  ~ EUR 18bn into climate tech EU through 2027. CAGR 22%.\n- BCG 'AI in legal services' (legal-ai)\n  Big-law adoption tipping point reached; mid-market still open.\n\nDEALS (5):\n- Harvey raises USD 80m Series C (legal-ai, direct competitor) - ALERT\n- ContractPodAI acquired by Carlyle (legal-ai, exit comp)\n\nEVENTS / REGULATION (4):\n- EU AI Act high-risk effective 2026-06-01 - touches 2 portfolio cos.\n- Slush 2026: 14-15 Nov, Helsinki.\n\nAlerts sent to deal lead today: Harvey funding (Resolutee impact).","relevance":{"generalist":5,"impact":5}},{"code":"Sw","num":11,"phase":"sourcing","slug":"startups-to-watch-curator","name":"Startups-to-Watch Curator","purpose":"Weekly digest of qualified deal-flow signals, ready for the team Monday morning and as a co-investor share.","triggers":["weekly deal digest","startups to watch","Monday digest"],"inputs":["Last 7 days of triaged deals","market signals","network activity"],"outputs":["Email digest (internal)","co-investor digest variant","LinkedIn carousel draft"],"mcps":["Email","CRM","Wiki / DB"],"knowledge":["Investment-Thesis","Co-investor-Registry"],"hitl":"Co-investor share approved before send.","keyInstructions":["Cap the digest at 7 startups per week - quality over volume.","Each entry: 1 line on company, 1 line on why now, 1 line on what we are doing next.","Produce three variants: internal team, co-investors, public LinkedIn (no confidential details).","Never include companies in 'In DD' or later stages in any external variant."],"template":"# Monday Deal Digest - 2026-05-19\n\nInternal:\n1. Helios Sensors (pre-seed, Munich) - IoT, paid pilots. Next: founder call Thu.\n2. Resolutee (seed, Berlin) - legal AI. Next: term-sheet discussion.\n3. Nordwind (pre-seed, Hamburg) - climate data. Next: pass.\n\nLinkedIn carousel draft:\nSlide 1: 'Three companies we found this week'\nSlide 2-4: blurbs (public-info only)\nSlide 5: 'Reach out if your thesis overlaps'","relevance":{"generalist":5,"impact":5}},{"code":"Cy","num":12,"phase":"sourcing","slug":"co-investor-syndicator","name":"Co-Investor Syndicator","purpose":"Manage co-investor relationships, match deals to right co-investors, build syndicates, share thesis-aligned deal flow with personalised notes.","triggers":["share with co-investors","find co-investors","syndicate deal","co-investor for X"],"inputs":["Deal","target syndicate size","co-investor registry"],"outputs":["Co-investor shortlist","personalised share notes","syndicate proposal","share-tracking log"],"mcps":["CRM","Email","Wiki / DB"],"knowledge":["Co-Investor-Registry","Sharing-Playbook"],"hitl":"All shares reviewed before send.","keyInstructions":["Match by thesis overlap, stage focus, geography, prior co-investment history.","Maintain a 'do-not-share' list per deal (conflicts, prior pass).","Personalise the share note: 1 line on the deal, 1 line on why this co-investor specifically.","Track who saw the deal and outcome (pass / interested / committed) for the registry."],"template":"# Co-investor share - Resolutee (legal AI seed)\n\nRound:      EUR 3m at EUR 12m post. We lead with EUR 1.5m.\nAvailable:  EUR 1.5m (split into 2-4 tickets).\n\nShortlist (ranked by thesis fit):\n| Co-investor      | Fit  | Last co-invest    | Why now                |\n| Cherry Ventures  | 5/5  | 2025 Berlin SaaS  | Lead-on-lead history   |\n| Speedinvest      | 4/5  | 2024 DACH B2B     | Stage + geography fit  |\n| EIF              | 4/5  | -                 | Female-founder mandate |\n\n3 personalised notes drafted, all in review.\nDo-not-share: Atomico (passed similar deal 2025).","relevance":{"generalist":5,"impact":5}},{"code":"Pa","num":13,"phase":"diligence","slug":"pitch-deck-analyzer","name":"Pitch Deck Analyzer","purpose":"Score a pitch deck across 10 dimensions, output structured feedback for the IC and the founder.","triggers":["analyse deck","deck score","pitch deck review"],"inputs":["Deck PDF / PPTX"],"outputs":["Scorecard","strengths","gaps","founder feedback","IC recommendation"],"mcps":["Drive","Web Search"],"knowledge":["Investment-Thesis","Scoring-Rubric","Red-Flags"],"hitl":"Analysis only - no investment decision.","keyInstructions":["Dimensions (fixed): Team 20%, Market 15%, Problem-Solution 15%, Tech 15%, Model 10%, Traction 10%, Competition 10%, GTM 10%, Finance 5%, Exit 5%.","Score each 0-10; cite the slide(s) supporting the score.","Always end with a numeric overall (0-100) and a recommendation: INVEST / CONDITIONAL / WATCHLIST / PASS.","Founder feedback section: priority-ranked, with [CRITICAL] / [HIGH] / [MEDIUM] tags."],"template":"# Deck score - Resolutee\n\nOverall: 78 / 100  -> CONDITIONAL INVEST\n\n| Dim          | Wt | Score | %  |\n| Team         | 20 |  8.5  | 85 |\n| Market       | 15 |  7.5  | 75 |\n| Solution     | 15 |  8.0  | 80 |\n...\n\nCritical gaps:\n- [CRITICAL] No moat statement - asked but not answered (slide 9).\n- [HIGH] Exit slide vague; no comparables (slide 18).","relevance":{"generalist":5,"impact":5}},{"code":"Mc","num":14,"phase":"diligence","slug":"market-and-competitor-mapper","name":"Market & Competitor Mapper","purpose":"Per-deal market and competitor scan from closed databases - competitive landscape, exit comps, regulation, M&A signals.","triggers":["market map","competitor scan","TAM SAM SOM","exit comps"],"inputs":["Company description, sector"],"outputs":["Market map","competitor table","exit comps","regulation timeline"],"mcps":["Market Data (Dealroom, PitchBook, Specter, Crunchbase)","B2B Database (Apollo)","Web Search"],"knowledge":["Sector-Map","Comparable-Transactions"],"hitl":"Findings reviewed for accuracy by the deal lead.","keyInstructions":["Pull from closed databases first (Dealroom / PitchBook / Specter) before public web.","Always produce four artefacts: (1) competitor table, (2) market sizing TAM/SAM/SOM, (3) exit comps last 24 months, (4) regulation timeline.","Cite every competitor row with a primary source.","Flag any direct competitor already in the fund's portfolio."],"template":"# Competitor map - Resolutee (Legal AI)\n\nClosed-db pulls: Dealroom (sector filter), Specter (signal tracking).\n\n| Name        | HQ      | Stage    | Last round   | Differentiator        |\n| Harvey      | US      | Series C | $80m 2025    | Big-law, horizontal   |\n| Eve         | DE      | Seed     | EUR 4m 2026  | Litigation, narrow    |\n| <our co>    | DE      | Seed     | -            | Dispute resolution    |\n\nExit comps (24m): ContractPodAI -> Carlyle 2024.\n\nRegulation: EU AI Act high-risk effective 2026-02.","relevance":{"generalist":5,"impact":5}},{"code":"Rc","num":15,"phase":"diligence","slug":"reference-check-orchestrator","name":"Reference Check Orchestrator","purpose":"Plan, run and synthesise founder and customer reference calls - questions, scheduling, transcript synthesis.","triggers":["reference check","schedule references","synthesise refs"],"inputs":["Reference contacts","deal context"],"outputs":["Question set","calendar invites","synthesis with signal strength"],"mcps":["Calendar","Email","Meeting Intelligence"],"knowledge":["Reference-Question-Bank"],"hitl":"Humans run the calls; agent only prepares and synthesises.","keyInstructions":["Minimum 3 references: 1 customer, 1 ex-colleague, 1 prior investor (if any).","Tailor 5-7 questions per reference category; do not reuse generic question lists.","Synthesis must include: confirmed strengths, soft signals, red flags, things to verify elsewhere.","If a reference declines, log it explicitly - silence is a signal."],"template":"# Reference synthesis - Resolutee\n\nCalls completed: 3 / 3\n\nCustomer (DAX-30 GC): 'They saved us EUR 200k in litigation prep last quarter.'\n  Signal: STRONG positive.\n\nEx-colleague (former head of legal): 'Anna is decisive; sometimes pushes\n  too hard on speed.'  Signal: MIXED.\n\nPrior investor (angel): No concerns. Clean cap table.  Signal: STRONG.\n\nRed flags: None confirmed. To verify: founder vesting after seed.","relevance":{"generalist":5,"impact":5}},{"code":"Im","num":16,"phase":"diligence","slug":"investment-memo-drafter","name":"Investment Memo Drafter","purpose":"Generate the first draft of any investment memo - initial, follow-on, or exit - from deal data, deck, meeting notes and market research, in the fund's template.","triggers":["draft memo","write IC memo","investment memo","draft follow-on memo","exit memo"],"inputs":["Company file, deck, prior notes, market scan","memo mode (initial / follow-on / exit)"],"outputs":["Memo draft with citations and clearly marked open fields","follow-on rationale + reserve simulation in follow-on mode"],"mcps":["Drive","Meeting Intelligence","CRM","Web Search"],"knowledge":["Memo-Template","Investment-Thesis","DD-Framework","Reserve-Strategy"],"hitl":"Memo is a draft; partners write the recommendation.","keyInstructions":["Modes (auto-detect from trigger and context): initial / follow-on / exit. Same template, different emphasis.","Initial: Snapshot - Team - Market - Product - Model - Traction - Risks - Terms - Open Questions.","Follow-on: appends 'Follow-on rationale' + reserve simulation (pro-rata / super-pro-rata / pass).","Every number gets a source citation in brackets. Mark unverified with [OPEN: ...].","Never write a recommendation. End the memo with the Open Questions list."],"template":"# Investment Memo - Resolutee (initial, draft v0.1)\n\n## Snapshot\nAI platform for commercial dispute resolution. Seed: EUR 3m @ EUR 12m post.\n\n## Team\nAnna B. (CEO), Bjorn K. (CTO).\n[OPEN: commercial / head of sales hire]\n\n(...sections...)\n\n## Open Questions\n1. Customer concentration - top customer % of MRR?\n2. CAC and payback at current ARR.\n\n# Follow-on mode addendum\n## Follow-on rationale\nNew Tier-1 lead at EUR 35m post. Mark-up 2.9x.\n## Reserve simulation\n| Option        | Cheque   | Outcome                   |\n| Pro-rata      | EUR 1.75m| Maintain 5% stake         |\n| Super-pro-rata| EUR 2.80m| Move to 7%, signal        |\n| Pass          | EUR 0    | Diluted to ~3.6%          |","relevance":{"generalist":5,"impact":5}},{"code":"Ic","num":17,"phase":"diligence","slug":"ic-pack-builder","name":"IC Pack Builder","purpose":"Assemble the IC pack - deck, memo, market map, references, term sheet, cap table - and brief participants.","triggers":["prep IC","investment committee pack","IC briefing"],"inputs":["Deal record, memo, all DD artefacts"],"outputs":["IC pack (PDF + Drive folder)","1-page briefing","agenda"],"mcps":["Drive","Calendar","CRM"],"knowledge":["IC-Process","Memo-Template"],"hitl":"All material reviewed by deal lead before circulation.","keyInstructions":["IC pack order: 1-page briefing / Memo / Deck / Market map / Reference summary / Term sheet / Cap table.","Always include the deal lead's three open questions on the briefing page.","Lock the pack as PDF before sending; never circulate editable artefacts.","Calendar invite must include the link to the data-room folder and an explicit RSVP deadline."],"template":"# IC briefing - Resolutee - 2026-05-26 10:00\n\nDeal lead: Partner X\nRecommendation requested: Approve EUR 1.5m at EUR 12m post (5% stake).\n\nThree open questions for IC:\n1. Comfortable with single-jurisdiction (Germany) at this stage?\n2. Lead vs follow - is EUR 12m post defensible?\n3. Reserves: EUR 0.5m or EUR 1m for follow-on?\n\nPack: /Deals/Resolutee/IC_Pack_v1.0.pdf (45 pages)","relevance":{"generalist":5,"impact":5}},{"code":"Kc","num":18,"phase":"portfolio","slug":"portfolio-kpi-collector","name":"Portfolio KPI Collector","purpose":"Coordinate the monthly KPI request to portfolio companies, parse PDFs / XLSX, normalise into the central dashboard.","triggers":["collect KPIs","monthly KPI run","remind portfolio"],"inputs":["Reporting schedule","company list"],"outputs":["Sent reminders","parsed metrics","exception list"],"mcps":["Email","Spreadsheet","Wiki / DB"],"knowledge":["KPI-Standards","Reporting-Standards"],"hitl":"Tracker updates flagged for human sign-off.","keyInstructions":["Send reminders on D+0, D+3, D+7 - escalate to partner contact on D+10.","Always parse to the fund's canonical schema; reject submissions missing required fields.","Use the same column names everywhere: MRR, ARR, NRR, GRR, Cash, Runway, Headcount, NPS.","Maintain a per-company late-submission tally for the fund-view aggregator."],"template":"# May 2026 KPI run - status\n\nCompanies:   14\nSubmitted:   11 (on time)\nLate D+3-7:   2\nEscalation:   1 (Helios, 14d late, 3rd month)\n\nExceptions:\n- Resolutee: NRR field missing - request resend.\n- Nordwind:  Cash differs from fund-admin by EUR 80k - reconcile.","relevance":{"generalist":5,"impact":5}},{"code":"Hc","num":19,"phase":"portfolio","slug":"portfolio-health-check","name":"Portfolio Health Check","purpose":"Run the monthly / quarterly health check per company - pre-load data, ask only about real gaps, populate the tracker.","triggers":["health check","portfolio review","company status"],"inputs":["Company folder","last review","current KPI tracker"],"outputs":["Updated tracker","gap list","warning signals","follow-up tasks"],"mcps":["Drive","Wiki / DB","Email","Form Fields"],"knowledge":["Health-Check-Template","KPI-Standards"],"hitl":"Lead reviews findings before LP communication.","keyInstructions":["Pre-load: last 12 months of KPIs, last health-check, last board minutes, most recent investor update.","Ask the founder only about KPIs that are missing or stale (>30 days).","Always produce a 'changed since last review' summary at the top.","Flag any signal that meets a Red-Flag rule (cash runway < 6m, NRR < 80%, founder churn, customer concentration > 30%)."],"template":"# Health check - Resolutee - 2026-05-19\n\nSince last review (60d ago):\n+ MRR: EUR 32k -> EUR 41k (+28%)\n+ Headcount: 6 -> 9\n+ Cash runway: 14m -> 16m\n~ NRR: 102% (stable)\n- Top customer concentration: 24% -> 31% [WARNING]\n\nGaps asked of founder:\n1. CAC trend last quarter?    pending\n2. Sales hire ETA?            pending\n\nFollow-up: 30-min call re. customer concentration.","relevance":{"generalist":5,"impact":5}},{"code":"Fv","num":20,"phase":"portfolio","slug":"fund-view-aggregator","name":"Fund View Aggregator","purpose":"Aggregate portfolio data into a fund-level view - outliers, trends, sector concentration, fund-level early warnings.","triggers":["fund view","portfolio summary","concentration risk"],"inputs":["All health checks","KPI tracker"],"outputs":["Fund dashboard","narrative summary","watch list"],"mcps":["Spreadsheet","Wiki / DB","Drive"],"knowledge":["KPI-Standards","Benchmarks-by-Stage"],"hitl":"Numbers are sense-checked before LP reporting.","keyInstructions":["Three views: aggregate KPIs, sector concentration, watch list.","Benchmark each company's KPIs against stage benchmarks; mark below-median yellow, below-25th-pct red.","Concentration risks to call out: sector >30%, single company >15% of fund value, geography >60%.","Narrative summary: 5 lines, plain English, partner-ready."],"template":"# Fund view - 2026 Q1\n\nAggregate (14 companies):\n  Weighted-avg ARR growth: 78% YoY\n  Median NRR: 108%\n  Median runway: 14 months\n\nConcentration:\n  Sector: 35% DACH B2B SaaS - ABOVE 30% threshold, monitor.\n  Top NAV: Resolutee at 11% of fund value - OK.\n\nWatch list:\n  - Helios (3rd consecutive late submission)\n  - Cobalt AI (NRR 102% -> 88% in Q1)","relevance":{"generalist":5,"impact":5}},{"code":"Ew","num":21,"phase":"portfolio","slug":"early-warning-signaler","name":"Early Warning Signaler","purpose":"Continuously scan portfolio for negative signals - missed KPI, runway shrinking, founder churn, press risk - and surface follow-on triggers (round signal, mark-up, milestone).","triggers":["early warning","portfolio risk","alert me if","follow-on trigger"],"inputs":["KPI tracker","news feeds","meeting notes","reserve plan"],"outputs":["Prioritised alerts with intervention recommendation","follow-on trigger shortlist (hands off to investment-memo-drafter)"],"mcps":["Web Search","Meeting Intelligence","Chat","Spreadsheet"],"knowledge":["Risk-Signal-Library","Reserve-Strategy"],"hitl":"Critical alerts go to humans, not to founders.","keyInstructions":["Negative-signal rules: runway < 6m, NRR < 80%, founder departure, negative press, regulatory action.","Follow-on trigger rules: 2x ARR in 12m, new lead investor at higher mark, regulatory milestone hit.","Alert priority: P1 (within hours), P2 (within 24h), P3 (weekly digest).","On follow-on trigger, prepare a brief and hand off to investment-memo-drafter in follow-on mode."],"template":"# Alerts - 2026-05-19\n\nP1 (within hours):\n  Cobalt AI - press article 6h ago re CEO conflict. Action: call founder today.\n\nP2 (24h):\n  Helios - cash runway dropped 9m -> 6m. Bridge financing convo by EOW.\n\nFOLLOW-ON TRIGGER:\n  Resolutee - new Tier-1 lead at EUR 35m post (2.9x mark-up).\n  Handed off to investment-memo-drafter (follow-on mode).\n\nP3 weekly:\n  Three companies with NRR softening.","relevance":{"generalist":5,"impact":5}},{"code":"Cc","num":22,"phase":"reporting","slug":"capital-call-generator","name":"Capital Call Generator","purpose":"Compute the call quota per LP, draft the call notices and chase open commitments through to receipt.","triggers":["capital call","draw down","call notice"],"inputs":["Fund plan","LP commitments","NAV"],"outputs":["Call notices per LP","payment tracker"],"mcps":["Fund Admin (read)","Email","Drive"],"knowledge":["Capital-Call-Template","Subscription-Workflow"],"hitl":"All capital calls signed off by GP.","keyInstructions":["Compute quota strictly from the subscription agreement - never derive a quota from anywhere else.","Each notice carries: call number, percent of commitment, EUR amount, due date, bank details, fund admin contact.","Always send via the registered LP email of record - cross-check against the fund admin contact register.","Track receipts daily until 100%; escalate to GP on day 5 after due date."],"template":"# Capital Call #4 - Fund II\n\nCall: 8% of commitments. Due: 2026-06-02.\n\n| LP            | Commit       | Call (8%)   | Status       |\n| Aurora FO     | EUR 2.0m     | EUR 160k    | Notice sent  |\n| Beta Pension  | EUR 5.0m     | EUR 400k    | Notice sent  |\n| Gamma Capital | EUR 1.5m     | EUR 120k    | Notice sent  |\n\nBank: <fund admin masters this>; Ref: Fund-II-CC04-<LP-id>.","relevance":{"generalist":5,"impact":5}},{"code":"Ia","num":23,"phase":"reporting","slug":"impact-assessor","name":"Impact Assessor","purpose":"Run a 5-dimension impact assessment, produce IC slides, deep dive and one-pager from a single data source.","triggers":["impact assessment","5 dimensions","IRL level"],"inputs":["DD data","health check","founder interview"],"outputs":["Impact scorecard","IC slides","deep dive","one-pager"],"mcps":["Drive","Canvas"],"knowledge":["Impact-Framework","IRL-Levels","IC-Templates"],"hitl":"Impact lead reviews before publication.","keyInstructions":["Dimensions (5): What, Who, How much, Contribution, Risk - the IMP convention.","Score each dimension 1-5; require source evidence per score.","IRL level: derive from the framework; do not invent levels.","Always produce the same three outputs from one data source - never re-state numbers differently."],"template":"# Impact assessment - Nordwind (climate data)\n\nDimensions (IMP):\n  WHAT         5/5  emissions visibility for SMEs\n  WHO          4/5  underserved SME segment, EU\n  HOW MUCH     3/5  240 SMEs, EUR 4M CO2 tracked\n  CONTRIBUTION 4/5  no equivalent at this tier\n  RISK         3/5  data-quality risk\n\nIRL: 3 of 5 ('Initial outcomes documented')\n\nOutputs: IC slides v1 + deep dive v1 + one-pager v1.","relevance":{"generalist":2,"impact":5}},{"code":"Qr","num":24,"phase":"reporting","slug":"lp-quarterly-reporter","name":"LP Quarterly Reporter","purpose":"Produce the quarterly LP report - performance, portfolio updates, NAV bridge, narrative, ready for partner sign-off.","triggers":["quarterly report","Q1 LP report","investor update"],"inputs":["Fund admin financials","Fund View","health checks","impact data"],"outputs":["Quarterly report draft","per-LP cover note","distribution list"],"mcps":["Fund Admin (read)","Drive","Email"],"knowledge":["LP-Reporting-Template","Narrative-Style-Guide"],"hitl":"Numbers and narrative reviewed before send.","keyInstructions":["Fixed structure: Highlights / NAV Bridge / Portfolio Updates / Pipeline / Operations / Outlook.","Highlights section: max 5 bullets, all numeric (no adjectives without numbers).","Per-LP cover note: 3 sentences, personal-but-not-overdone, one specific reference to that LP's prior question.","All financial figures pulled from fund admin verbatim - skill never recomputes NAV."],"template":"# Fund II - Q1 2026 LP report (draft)\n\n## Highlights\n- NAV: EUR 38.2m (+EUR 2.1m vs Q4 2025).\n- Two new investments: Resolutee (EUR 1.5m), Nordwind (EUR 0.7m).\n- Three follow-ons; one mark-up at +60%.\n- Deployed: EUR 22.3m (58% of committed).\n- OpEx on plan; 28% of budget consumed.\n\n## NAV Bridge\nOpening 36.1  + Investments 2.2  + Mark-ups 2.0  - Fees 0.2  - FX 0.1\nClosing 38.2\n\nPer-LP cover note for Aurora FO:\n'As you asked last quarter, we added a sector breakdown on page 6.'","relevance":{"generalist":5,"impact":5}},{"code":"Lg","num":25,"phase":"legal","slug":"legal-document-drafter","name":"Legal Document Drafter","purpose":"Draft term sheets, SPAs, SHAs, NDAs and side letters from the fund's clause library, adapted to deal terms and jurisdiction.","triggers":["draft term sheet","draft SPA","draft NDA","draft side letter","draft SHA"],"inputs":["Deal terms (ticket, valuation, founders, jurisdiction)","document type"],"outputs":["Draft legal document with deal-specific clauses","redline against fund standard","flagged open items"],"mcps":["Drive","Web Search"],"knowledge":["Clause-Library","Legal-Templates","Jurisdiction-Rules"],"hitl":"All legal docs reviewed by external counsel; no execution by skill.","keyInstructions":["Draft from the fund's clause library; never invent clauses.","Show a redline vs. fund standard for any deviation; flag deviations to the deal lead.","Jurisdiction rules drive: governing law, dispute resolution, language, signing requirements.","End with an [OPEN: counsel review] note - this is never the final document."],"template":"# Term sheet draft - Resolutee Seed Round v0.1\n\nDeal lead: Partner X. Jurisdiction: Germany.\nStandard: Fund Standard Term Sheet v2026.03.\n\nDEAL TERMS (filled):\n- Round size:       EUR 3m\n- Pre-money:        EUR 9m\n- Investor:         Fund II\n- Investment:       EUR 1.5m (50% of round)\n- Liq pref:         1x non-participating (FUND STANDARD)\n\nDEVIATIONS FROM STANDARD:\n- ESOP top-up:      12% post-money (standard: 10%) - founder request\n- Anti-dilution:    Broad-based weighted (no deviation)\n\n[OPEN: counsel review for German market]\n[OPEN: founder vesting acceleration on change of control]","relevance":{"generalist":5,"impact":5}},{"code":"Ct","num":26,"phase":"legal","slug":"cap-table-modeler","name":"Cap Table Modeler","purpose":"Model cap tables across rounds, run dilution scenarios, calculate waterfall outcomes.","triggers":["model cap table","calculate dilution","waterfall","cap table for X"],"inputs":["Current cap table","planned round terms","exit assumption"],"outputs":["Cap table file (XLSX)","dilution table","waterfall scenarios"],"mcps":["Spreadsheet","Drive"],"knowledge":["Cap-Table-Schema","Waterfall-Standards"],"hitl":"Numbers checked by GP before circulation to founder.","keyInstructions":["Always show pre-round, post-round, and post-ESOP-replenishment states.","Waterfall: clearly model liquidation preferences (1x non-part vs participating vs senior to other prefs).","Anti-dilution: state the formula used (broad-based weighted is default; flag any other).","Save the XLSX into Drive at /Fund-Portfolio/[Company]/CapTable/ with version."],"template":"# Cap table - Resolutee (post-seed)\n\nPre-seed:\n  Founders         85.00%   (Anna 45%, Bjorn 40%)\n  ESOP             10.00%\n  Angels            5.00%\n\nSeed (EUR 3m @ EUR 12m post):\n  Investors enter at 25% (Fund II 12.5%, co-invs 12.5%).\n  ESOP topped up to 12% post-round.\n\nPOST-SEED:\n  Founders         60.00%\n  ESOP             12.00%\n  Angels            3.75%\n  Investors        25.00%\n\nExit at 5x: Fund II nets EUR 7.5m on EUR 1.5m.\nFile: /Fund-Portfolio/Resolutee/CapTable/v2026.05_seed.xlsx","relevance":{"generalist":5,"impact":5}},{"code":"Cm","num":27,"phase":"legal","slug":"contract-and-signature-manager","name":"Contract & Signature Manager","purpose":"Track SPAs, SHAs, NDAs, side letters - version, watch deadlines, surface obligations - AND manage e-signature flows from send through receipt.","triggers":["contract","NDA","SHA","side letter","send for signature","track signature"],"inputs":["Contract files","signing parties","deadlines"],"outputs":["Versioned register","obligation calendar","alerts","signature workflow status"],"mcps":["Drive","Calendar","E-Signature (DocuSign, HelloSign, Adobe Sign)"],"knowledge":["Contract-Register-Schema","Signature-Workflow"],"hitl":"All execution sign-offs require human; signatures auto-tracked but not auto-completed.","keyInstructions":["Register schema: id, party_a, party_b, type, executed_date, term, deadlines[], owner.","For signature: send via the integrated e-signature MCP, track status, escalate at T+3d.","Auto-create calendar entries for every deadline at T-30 and T-7.","Never modify executed contract files - new versions become new register entries."],"template":"# Contract register - 2026-05-19\n\nEXECUTED (12 active):\n  CT-2026-058  Side letter Aurora FO - Fund II   2026-04-12  Active\n  CT-2026-052  SPA Resolutee - Fund II           2026-04-08  Active\n\nIN SIGNATURE FLOW (3):\n  CT-2026-061  SHA Helios          Sent 2026-05-15  2 of 3 signed\n  CT-2026-060  Side letter Beta    Sent 2026-05-12  Pending Beta counsel (4d - alert)\n\nDEADLINES (next 30d):\n  2026-05-22  CT-2026-061 signature deadline\n  2026-06-30  CT-2026-058 Aurora first MFN check","relevance":{"generalist":5,"impact":5}},{"code":"Rd","num":28,"phase":"legal","slug":"regulatory-deadline-watcher","name":"Regulatory Deadline Watcher","purpose":"Watch the fund's regulatory deadlines (BaFin / AIFMD / SFDR / annual reports) and surface anything within 30 / 14 / 3 days.","triggers":["compliance deadline","regulatory filing","BaFin / AIFMD"],"inputs":["Deadline calendar","regulatory updates"],"outputs":["Tiered alerts","suggested filing pack"],"mcps":["Calendar","Web Search"],"knowledge":["Regulatory-Deadlines","Filing-Templates"],"hitl":"Filings always reviewed by compliance officer.","keyInstructions":["Three tiers: T-30 (preparation), T-14 (escalation), T-3 (red).","Always link the alert to the filing template and the responsible officer.","Re-check the regulator's website weekly for date changes; surface diffs immediately.","Never auto-submit any filing - this skill produces alerts and prep packs only."],"template":"# Compliance watch - 2026-05-19\n\nT-3 (RED):\n  BaFin half-yearly AIF report due 2026-05-22. Owner: <CompO>.\n  Pack: /Compliance/2026-H1/BaFin/.\n\nT-14:\n  SFDR Article 8 periodic disclosure due 2026-06-02.\n\nT-30:\n  Annual ESMA reporting due 2026-06-18 - start data pull now.","relevance":{"generalist":5,"impact":4}},{"code":"At","num":29,"phase":"legal","slug":"audit-trail-writer","name":"Audit Trail Writer","purpose":"Capture every regulated action (decision, communication, KYC step) with timestamp, actor, rationale into an immutable log. Called from every other regulated skill.","triggers":["log decision","audit trail","compliance log"],"inputs":["Event source (skill output or human action)"],"outputs":["Append-only log entry referenced by all other skills"],"mcps":["Drive","Wiki / DB","Audit-Log store"],"knowledge":["Audit-Trail-Schema"],"hitl":"System-of-record; humans cannot edit, only annotate.","keyInstructions":["Schema: timestamp_utc, actor, actor_type (human/skill), skill_version, action, input_hash, output_ref, rationale.","Append-only. Never overwrite. New corrections create a new entry referencing the old one.","Reject entries missing any required field - prefer 'unknown' to silence.","Daily summary: count entries by skill, by actor, by category - export to /audit/daily/."],"template":"# Audit log entry\n\ntimestamp_utc:  2026-05-19T11:32:18Z\nactor:          partner.x@<fund>\nactor_type:     human\nskill_version:  investment-memo-drafter@1.3.0\naction:         memo_draft_approved\ninput_hash:     sha256:8e2a...4b\noutput_ref:     /Deals/Resolutee/IC_Pack_v1.0.pdf\nrationale:      'IC approved EUR 1.5m at EUR 12m post. Reserves EUR 0.5m.'","relevance":{"generalist":5,"impact":4}},{"code":"Nl","num":30,"phase":"ecosystem","slug":"lp-newsletter-composer","name":"LP Newsletter Composer","purpose":"Draft the monthly LP newsletter - portfolio highlights, fund news, sector view - personalised by LP profile. Drafts filed under /Drafts/ for partner review before send.","triggers":["LP newsletter","monthly update","LP letter","draft newsletter"],"inputs":["Last 30 days of portfolio events","fund milestones"],"outputs":["Newsletter draft filed under /Drafts/LP-Newsletter/<YYYY-MM>/","per-LP personalisation hints","send-ready distribution list"],"mcps":["Email","Wiki / DB","Drive"],"knowledge":["Narrative-Style-Guide","LP-Database"],"hitl":"Newsletter approved before mass send; draft sits in /Drafts/ until then.","keyInstructions":["Max 350 words total. No fluff, no superlatives.","Section order: 1 fund news / 2-3 portfolio highlights / 1 sector observation / 1 ask.","Personalisation hint per LP: optional add-on paragraph - 1-2 lines max.","Always file the draft into /Drafts/LP-Newsletter/<YYYY-MM>/ and emit an audit-trail entry; never auto-send."],"template":"# LP letter - May 2026 (DRAFT, /Drafts/LP-Newsletter/2026-05/)\n\nQuick update from Fund II.\n\nThis month:\n- Resolutee closed an oversubscribed seed at EUR 12m post.\n- Cobalt AI navigating a leadership transition.\n\nSector watch:\n- EU AI Act 'high-risk' classifications effective this month.\n\nAsk:\n- Fund III conversations starting end of Q3.\n\nPersonalisation:\n  Aurora FO -> mention their recent <comp impact fund> commitment.\n  Beta Pension -> reference their follow-on policy question from March.","relevance":{"generalist":5,"impact":5}},{"code":"Pc","num":31,"phase":"ecosystem","slug":"public-content-composer","name":"Public Content Composer","purpose":"Draft public-facing content - LinkedIn posts, blog articles, op-eds, sector reports - in the fund's voice.","triggers":["draft LinkedIn post","draft blog","sector report","op-ed","public content"],"inputs":["Topic","mode (short / long / report)","source material"],"outputs":["Draft content piece with style notes","image / carousel briefs","filed under /Drafts/Public-Content/"],"mcps":["Drive","Web Search","Canvas"],"knowledge":["Brand-Voice-Guide","Content-Calendar","Sector-Map"],"hitl":"Every piece reviewed by partner before publishing.","keyInstructions":["Modes: short (LinkedIn post, max 200w), long (blog / op-ed, 400-1200w), report (multi-page).","Voice: confident, specific, no superlatives, no 'thought leadership' language.","Cite numbers; pull data from market-intelligence-scanner archive when applicable.","File drafts under /Drafts/Public-Content/<YYYY-MM>/ - never publish directly."],"template":"# LinkedIn post draft (short mode) - 2026-05-19\n\nThe legal AI funding pile-up just hit USD 80m in one round (Harvey, Series C).\n\nThree things we are watching:\n1. Big-law is no longer the only buyer - mid-market is now budget-ready.\n2. The moat is not the model; it is the workflow integration.\n3. Exit landscape favours strategic acquirers, not IPO.\n\nWe are pre-seed/seed in legal AI - closed our second investment last week.\n\nFiled: /Drafts/Public-Content/2026-05/linkedin-legal-ai.md","relevance":{"generalist":5,"impact":5}},{"code":"Ev","num":32,"phase":"ecosystem","slug":"event-orchestrator","name":"Event Orchestrator","purpose":"Plan, run and follow up on fund-hosted events, conference presence, founder and LP dinners.","triggers":["plan event","founder dinner","prep for","post-event follow-up","AGM"],"inputs":["Event type","date","attendee list","agenda"],"outputs":["Event plan","per-attendee briefing","logistics checklist","follow-up plan"],"mcps":["Calendar","Email","CRM","Drive"],"knowledge":["Event-Templates","Attendee-Briefing-Format"],"hitl":"GP reviews invitee list and external comms.","keyInstructions":["Event types: founder dinner, LP dinner, conference attendance, fund-hosted demo day, AGM.","Always produce four artefacts: attendee list, agenda, per-attendee briefing, follow-up plan.","Briefings: 1 paragraph per attendee, focused on relevance + one personal hook.","Follow-up: every external attendee gets a 1-line thank-you within 48h; tracked in CRM."],"template":"# Event plan - Founder Dinner, 2026-06-12 Berlin\n\nType:      Founder dinner (portfolio + select prospects)\nAttendees: 8 portfolio founders + 4 deal-flow prospects + 2 GPs\nVenue:     <restaurant>, private room, 19:00-22:00\nAgenda:\n  19:00 Drinks\n  19:30 Three founder lightning shares (5 min each)\n  20:15 Open discussion (topic: hiring senior talent 2026)\n  21:30 Goodbye drink\n\nBriefings: 12 written.\nLogistics: dietary preferences, name cards, paid.\nFollow-up: thank-you within 24h; prospects -> 1:1 within 1 week.","relevance":{"generalist":5,"impact":5}},{"code":"Pn","num":33,"phase":"ecosystem","slug":"partnership-manager","name":"Partnership Manager","purpose":"Track partnerships with accelerators, universities, corporate VCs, other funds, and operations partners; maintain check-in cadence.","triggers":["partnership","check-in with","track partner","new partner"],"inputs":["Partner profile","partnership type","last touchpoint"],"outputs":["Partnership register","check-in plan","partnership health score"],"mcps":["CRM","Calendar","Email"],"knowledge":["Partner-Registry","Partnership-Cadence"],"hitl":"New partnership commitments require partner sign-off.","keyInstructions":["Partner types: accelerator, university, corporate VC, co-investing fund, operations partner (legal, accounting).","Cadence: monthly check-in for active deal-flow partners, quarterly for relationship-only.","Partnership health: low / medium / high based on touchpoint recency + deal-flow contribution.","Surface stale partnerships (>90d quiet) for partner attention."],"template":"# Partnership register - 2026-05-19\n\nACCELERATORS (4 active):\n  Techstars Maritime    Last 2026-04-22  3 intros Q1     HIGH\n  Lloyd's Lab           Last 2026-03-10  0 - STALE       LOW\n\nUNIVERSITIES (2 active):\n  TUM Venture Labs      Last 2026-05-02  2 intros Q1     MEDIUM\n\nCO-INVESTING FUNDS (3 active):\n  Cherry Ventures       Last 2026-05-15  2 deals         HIGH\n\nCHECK-IN PLAN (next 30d):\n  Lloyd's Lab    revive call, propose new collaboration angle\n  TUM            invite to founder dinner 2026-06-12","relevance":{"generalist":5,"impact":5}},{"code":"Es","num":34,"phase":"exit","slug":"exit-scenario-modeler","name":"Exit Scenario Modeler","purpose":"Model exit scenarios per company and at fund level - IPO, M&A, secondary, write-off - with NAV / TVPI impact.","triggers":["exit scenario","exit model","TVPI sensitivity"],"inputs":["Cap table","fund model","market comps"],"outputs":["Scenario table with NAV / TVPI / DPI deltas"],"mcps":["Spreadsheet","Web Search"],"knowledge":["Exit-Comps","Fund-Model"],"hitl":"Scenarios are advisory; GP decides on action.","keyInstructions":["Four scenarios: bear / base / bull / write-off - always all four.","Reference at least two comparable transactions per scenario; cite source and date.","Show fund-level impact: NAV change, TVPI delta, DPI delta.","Never pick a winning scenario - present the math, let the GP decide."],"template":"# Exit scenarios - Resolutee\n\nHolding: 5% post EUR 12m post-money.\n\n| Scenario   | Trigger              | Multiple | NAV   | TVPI delta |\n| Write-off  | Failed Series A      | 0x       | 0     | -0.07x     |\n| Bear       | Strategic acq EUR 25m| 1.5x     | 1.25m | +0.01x     |\n| Base       | Series B EUR 80m     | 3.3x     | 2.5m  | +0.07x     |\n| Bull       | IPO EUR 300m         | 12.5x    | 8.0m  | +0.32x     |\n\nComps cited: ContractPodAI (acq 2024), Harvey (Series C 2025).","relevance":{"generalist":4,"impact":4}},{"code":"Sm","num":35,"phase":"exit","slug":"secondary-market-scanner","name":"Secondary Market Scanner","purpose":"Watch the secondary market - LP secondaries, direct secondaries, NAV bids - and flag opportunities for both fund and LPs.","triggers":["secondary market","LP secondaries","NAV bid"],"inputs":["Portfolio","broker feeds","public deals"],"outputs":["Opportunity list with bid range and recommended action"],"mcps":["Web Search","Email"],"knowledge":["Secondary-Pricing-Reference"],"hitl":"All offers reviewed by GP.","keyInstructions":["Two streams: LP-secondary (LP wants to sell interest) and direct-secondary (per-company bids).","Always show bid as % of NAV and as absolute EUR figure.","Recommend one of: accept, negotiate, decline, pass-through to LPs.","Never share LP-level information across LPs."],"template":"# Secondary scan - 2026-05-19\n\nDirect secondaries:\n  Resolutee: brokered bid 80% NAV (EUR 2.0m for 1% from angel).\n    Recommendation: decline - implied mark below recent primary.\n\nLP secondaries:\n  Beta Pension exploring partial sale of EUR 1.5m commitment.\n    Recommendation: pass-through to two FOs in queue at par.","relevance":{"generalist":3,"impact":3}}];
+  const WORKFLOWS = [{"id":"WF-01","name":"Weekly Deal Flow Digest","trigger":"Mon 8:00","phases":["sourcing"],"skills":["Os","Di","Tm","Mi","Sw"],"desc":"Scout outbound, triage inbound, score, layer in fresh market intel, ship the Monday digest."},{"id":"WF-02","name":"Co-Investor Share","trigger":"Mon 14:00","phases":["sourcing"],"skills":["Sw","Cy"],"desc":"After the Monday digest, share qualified deals with relevant co-investors with personalised notes."},{"id":"WF-03","name":"DD Kickoff","trigger":"New deal form / IC nomination","phases":["diligence","legal"],"skills":["Pa","Mc","Rc","Im","Ic","Ct"],"desc":"From qualified deal to IC pack: deck analysis, market map, references, memo draft, cap-table model, IC briefing."},{"id":"WF-04","name":"Deal Closing","trigger":"IC approval","phases":["legal"],"skills":["Lg","Ct","Cm","At"],"desc":"Draft term sheet & SPA/SHA, finalise cap table, send for e-signature, write audit-trail."},{"id":"WF-05","name":"Monthly Health Check","trigger":"1st of month","phases":["portfolio"],"skills":["Kc","Hc","Fv","Ew"],"desc":"Collect KPIs, run health checks, aggregate to fund view, flag warnings."},{"id":"WF-06","name":"Quarterly LP Reporting","trigger":"Quarter close - 15 days","phases":["portfolio","reporting","legal"],"skills":["Fv","Ia","Qr","At"],"desc":"Aggregate performance, synthesise impact, compose report, write audit-trail entry, send personalised."},{"id":"WF-07","name":"Impact Assessment Pipeline","trigger":"DD-go decision","phases":["diligence","reporting"],"skills":["Ia"],"desc":"5-dimension assessment plus IC slides plus deep dive plus one-pager from a single data source."},{"id":"WF-08","name":"LP Onboarding","trigger":"Subscription signed","phases":["fundraising","legal"],"skills":["Lp","At"],"desc":"Drive KYC closure, welcome comms, system access, audit-trail entries."},{"id":"WF-09","name":"LP Outbound Sourcing","trigger":"Weekly Wed 9:00","phases":["fundraising"],"skills":["Ld","Lp","Nm"],"desc":"Scout new LPs from closed databases, file new candidates into the pipeline, request intro paths."},{"id":"WF-10","name":"Quarterly Finance Review","trigger":"Quarter close","phases":["portfolio"],"skills":["Kc","Hc","Fv"],"desc":"Pull financials, sense-check, benchmark against stage, update tracker, surface outliers."},{"id":"WF-11","name":"Market Intelligence Alert","trigger":"Continuous","phases":["sourcing","portfolio"],"skills":["Mi","Ew"],"desc":"Continuous competitive / regulatory scan; immediate critical alerts; weekly digest."},{"id":"WF-12","name":"Follow-on Trigger","trigger":"Event-driven","phases":["portfolio","diligence"],"skills":["Ew","Im","Ct"],"desc":"Early Warning catches a follow-on trigger, hands to Investment Memo Drafter (follow-on mode), cap-table updated."},{"id":"WF-13","name":"Capital Call","trigger":"Per fund plan","phases":["reporting","legal"],"skills":["Cc","At"],"desc":"Compute call quotas per LP, draft notices, track receipts, log to audit trail."},{"id":"WF-14","name":"Compliance Watch","trigger":"Daily","phases":["legal"],"skills":["Rd","Cm","At"],"desc":"Deadline scan, contract obligations, audit-trail health-check."},{"id":"WF-15","name":"Fund Grant Pipeline","trigger":"Quarterly","phases":["fundraising"],"skills":["Gs"],"desc":"Annual / quarterly scan of public funding programmes the fund qualifies for; draft application skeletons for review."},{"id":"WF-16","name":"Public Content Pipeline","trigger":"Weekly Fri 14:00","phases":["sourcing","ecosystem"],"skills":["Mi","Pc","Nl"],"desc":"Turn the weekly market intel into a LinkedIn post or blog draft; queue the LP newsletter once per month."},{"id":"WF-17","name":"Event Cycle","trigger":"Per event","phases":["ecosystem"],"skills":["Ev","Pn"],"desc":"Plan an event, run attendee briefings, capture follow-ups, update partnership register."},{"id":"WF-18","name":"Exit Review","trigger":"Per company / annually","phases":["exit"],"skills":["Es","Sm"],"desc":"Scenario modelling and secondary-market opportunity scan; output feeds the LPAC discussion."}];
+
+  const phaseById = Object.fromEntries(PHASES.map(p => [p.id, p]));
+  const skillByCode = Object.fromEntries(SKILLS.map(s => [s.code, s]));
+
+  let activePhase = "all";
+  let activeView = "grid";
+  let query = "";
+
+  function esc(s) { return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+  const star = (n) => "*".repeat(n) + '<span class="empty">' + "*".repeat(5 - n) + "</span>";
+
+  // Filters (collapsible panel)
+  const filterRoot = document.getElementById("fos-phase-filters");
+  const filterToggle = document.getElementById("fos-filter-toggle");
+  const filterBadge = document.getElementById("fos-filter-badge");
+  function updateFilterBadge() {
+    if (activePhase === "all") filterBadge.classList.add("hidden");
+    else filterBadge.classList.remove("hidden");
+  }
+  const mkFilter = (id, label, color) => {
+    const btn = document.createElement("button");
+    btn.className = "fos-filter" + (id === activePhase ? " active" : "");
+    btn.innerHTML = (color ? '<span class="dot" style="background:#' + color + '"></span>' : "") + esc(label);
+    btn.onclick = () => {
+      activePhase = id;
+      document.querySelectorAll("#fos-phase-filters .fos-filter").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      updateFilterBadge();
+      render();
+    };
+    filterRoot.appendChild(btn);
+  };
+  mkFilter("all", "All", null);
+  PHASES.forEach(p => mkFilter(p.id, p.num + " " + p.name, p.color));
+  filterToggle.onclick = () => {
+    const open = filterRoot.classList.toggle("open");
+    filterToggle.classList.toggle("open", open);
+    filterToggle.setAttribute("aria-expanded", open ? "true" : "false");
+  };
+
+  // Periodic table: build column-by-column, cards stacked top-down in chronological order.
+  // Each column is a flexbox stacked container, placed in a grid cell.
+  function renderGrid() {
+    const g = document.getElementById("fos-pt");
+    const dom = document.getElementById("fos-pt-domains");
+    g.innerHTML = "";
+    dom.innerHTML = "";
+
+    PHASES.forEach((ph, phIdx) => {
+      const skills = SKILLS.filter(s => s.phase === ph.id);
+      const dimColumn = (activePhase !== "all" && activePhase !== ph.id);
+
+      // Column container - a flex stack of cards in chronological order (top = first)
+      const colWrap = document.createElement("div");
+      colWrap.style.display = "flex";
+      colWrap.style.flexDirection = "column";
+      colWrap.style.gap = "8px";
+
+      skills.forEach(s => {
+        const m = matches(s);
+        const card = document.createElement("div");
+        card.className = "fos-pt-card" + ((m && !dimColumn) ? "" : " dim");
+        card.style.setProperty("--phase-color", "#" + ph.color);
+        card.style.setProperty("--phase-light", "#" + ph.lightColor);
+        card.innerHTML =
+          '<div class="num">' + String(s.num).padStart(2, "0") + '</div>' +
+          '<div class="code">' + esc(s.code) + '</div>' +
+          '<div class="name">' + esc(s.name) + '</div>';
+        card.onclick = () => openModal(s);
+        colWrap.appendChild(card);
+      });
+
+      g.appendChild(colWrap);
+
+      // Domain label cell
+      const d = document.createElement("div");
+      d.className = "fos-pt-domain";
+      d.style.setProperty("--phase-color", "#" + ph.color);
+      if (dimColumn) d.style.opacity = "0.35";
+      d.textContent = ph.name;
+      dom.appendChild(d);
+    });
+  }
+
+  // Lifecycle flow view
+  function renderFlow() {
+    const f = document.getElementById("fos-flow");
+    f.innerHTML = "";
+    PHASES.forEach(ph => {
+      if (activePhase !== "all" && activePhase !== ph.id) return;
+      const skills = SKILLS.filter(s => s.phase === ph.id && matches(s));
+      const row = document.createElement("div");
+      row.className = "fos-flow-row";
+      row.innerHTML =
+        '<div class="fos-flow-circle" style="background:#' + ph.color + '">' + esc(ph.num) + '</div>' +
+        '<div class="fos-flow-body">' +
+          '<h4 style="color:#' + ph.color + '">' + esc(ph.name) + '</h4>' +
+          '<p>' + esc(ph.desc) + '</p>' +
+          '<div class="fos-flow-skills"></div>' +
+        '</div>';
+      const wrap = row.querySelector(".fos-flow-skills");
+      skills.forEach(s => {
+        const mini = document.createElement("div");
+        mini.className = "fos-flow-mini";
+        mini.style.setProperty("--phase-color", "#" + ph.color);
+        mini.innerHTML = "<b>" + esc(s.code) + "</b>" + esc(s.name);
+        mini.onclick = () => openModal(s);
+        wrap.appendChild(mini);
+      });
+      f.appendChild(row);
+    });
+  }
+
+  // Workflows view
+  function renderWf() {
+    const w = document.getElementById("fos-wf");
+    w.innerHTML = "";
+    WORKFLOWS.forEach(wf => {
+      const wfSkills = wf.skills.map(c => skillByCode[c]).filter(Boolean);
+      const wfPhases = [...new Set(wfSkills.map(s => s.phase))];
+      if (activePhase !== "all" && !wfPhases.includes(activePhase)) return;
+      const qmatch = !query ||
+        wf.id.toLowerCase().includes(query) ||
+        wf.name.toLowerCase().includes(query) ||
+        wf.desc.toLowerCase().includes(query) ||
+        wf.skills.some(c => (skillByCode[c] && skillByCode[c].name.toLowerCase().includes(query)));
+      if (!qmatch) return;
+
+      const card = document.createElement("div");
+      card.className = "fos-wf";
+      card.innerHTML =
+        '<div class="wf-id">' + esc(wf.id) + '</div>' +
+        '<div class="wf-name">' + esc(wf.name) + '</div>' +
+        '<div class="wf-trig">' + esc(wf.trigger) + '</div>' +
+        '<div class="wf-desc">' + esc(wf.desc) + '</div>' +
+        '<div class="wf-skills"></div>';
+      const sk = card.querySelector(".wf-skills");
+      wfSkills.forEach(s => {
+        const ph = phaseById[s.phase];
+        const pill = document.createElement("span");
+        pill.className = "wf-skill-pill";
+        pill.style.background = "#" + ph.color;
+        pill.title = s.name;
+        pill.textContent = s.code + " - " + s.name;
+        pill.onclick = (e) => { e.stopPropagation(); openModal(s); };
+        sk.appendChild(pill);
+      });
+      w.appendChild(card);
+    });
+    if (w.children.length === 0) w.innerHTML = '<div class="fos-empty">No workflows match.</div>';
+  }
+
+  function matches(s) {
+    if (!query) return true;
+    const hay = [
+      s.code, s.name, s.slug, s.purpose, s.mcps.join(" "), s.knowledge.join(" "),
+      s.triggers.join(" "), s.inputs.join(" "), s.outputs.join(" "), (s.keyInstructions||[]).join(" ")
+    ].join(" ").toLowerCase();
+    return hay.includes(query);
+  }
+
+  // Modal
+  const modalBg = document.getElementById("fos-modal-bg");
+  const modalContent = document.getElementById("fos-modal-content");
+  const modalEl = document.getElementById("fos-modal");
+
+  function openModal(s) {
+    const ph = phaseById[s.phase];
+    modalEl.style.setProperty("--phase-color", "#" + ph.color);
+    modalEl.style.setProperty("--phase-light", "#" + ph.lightColor);
+    const instructionsList = (s.keyInstructions || []).map(k => '<li>' + esc(k) + '</li>').join("");
+    modalContent.innerHTML =
+      '<div style="display:flex;align-items:flex-start;">' +
+        '<span class="codepill" style="background:#' + ph.color + '">' + esc(s.code) + '</span>' +
+        '<div style="flex:1">' +
+          '<h2>' + esc(s.name) + '</h2>' +
+          '<div class="slug-line">' + esc(s.slug) + '</div>' +
+          '<span class="phase">Phase ' + esc(ph.num) + ' - ' + esc(ph.name) + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<h3>Purpose</h3><p>' + esc(s.purpose) + '</p>' +
+      '<h3>Key instructions</h3><ul>' + instructionsList + '</ul>' +
+      '<h3>Trigger phrases</h3><div class="pill-row">' + s.triggers.map(t => '<span class="pill">"' + esc(t) + '"</span>').join("") + '</div>' +
+      '<h3>Inputs</h3><div class="pill-row">' + s.inputs.map(x => '<span class="pill">' + esc(x) + '</span>').join("") + '</div>' +
+      '<h3>Outputs</h3><div class="pill-row">' + s.outputs.map(x => '<span class="pill">' + esc(x) + '</span>').join("") + '</div>' +
+      '<h3>MCP capabilities</h3><div class="pill-row">' + s.mcps.map(x => '<span class="pill">' + esc(x) + '</span>').join("") + '</div>' +
+      '<h3>Knowledge</h3><div class="pill-row">' + s.knowledge.map(x => '<span class="pill">' + esc(x) + '</span>').join("") + '</div>' +
+      '<h3>Human-in-the-loop</h3><p>' + esc(s.hitl) + '</p>' +
+      '<h3>Example output / template</h3>' +
+      '<pre class="template" style="border-left-color:#' + ph.color + '">' + esc(s.template) + '</pre>' +
+      '<h3>Relevance by fund profile</h3>' +
+      '<div class="relevance">' +
+        '<div><div class="label">Generalist VC</div><div class="stars">' + star(s.relevance.generalist) + '</div></div>' +
+        '<div><div class="label">Impact / ESG</div><div class="stars">' + star(s.relevance.impact) + '</div></div>' +
+      '</div>';
+    modalBg.classList.add("open");
+  }
+  document.getElementById("fos-modal-close").onclick = () => modalBg.classList.remove("open");
+  modalBg.onclick = (e) => { if (e.target === modalBg) modalBg.classList.remove("open"); };
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") modalBg.classList.remove("open"); });
+
+  // Tabs
+  document.querySelectorAll(".fos-tab").forEach(t => {
+    t.onclick = () => {
+      document.querySelectorAll(".fos-tab").forEach(b => b.classList.remove("active"));
+      t.classList.add("active");
+      document.querySelectorAll(".fos-view").forEach(v => v.classList.remove("active"));
+      activeView = t.dataset.view;
+      document.getElementById("view-" + activeView).classList.add("active");
+      render();
+    };
+  });
+
+  // Search (input is hidden; keep the hook in case it gets re-added later)
+  const searchEl = document.querySelector(".fos-search");
+  if (searchEl) {
+    searchEl.addEventListener("input", (e) => {
+      query = e.target.value.trim().toLowerCase();
+      render();
+    });
+  }
+
+  function render() {
+    if (activeView === "grid") renderGrid();
+    else if (activeView === "flow") renderFlow();
+    else if (activeView === "wf") renderWf();
+  }
+  render();
+})();
+</script>
+</div>
+
+</body>
+</html>

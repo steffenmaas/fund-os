@@ -8,6 +8,10 @@ Fund OS turns the operating model of a small VC team into a portable Claude plug
 
 **Scope:** Fund-side operations only. Founder coaching / portfolio-company helper skills (GTM, hiring, founder finance) are out of scope here and will ship as a separate **Founder OS** bundle later.
 
+## Dashboard
+
+Open [`Fund_OS_Dashboard.html`](./Fund_OS_Dashboard.html) in any browser for an interactive view of all skills — periodic table, lifecycle flow and workflow map.
+
 ## Skill inventory
 
 ### Phase 01 — Fundraising & LP
