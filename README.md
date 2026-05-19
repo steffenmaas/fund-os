@@ -94,7 +94,7 @@ To verify:
 
 `fund-os` should appear at version `1.5.0`.
 
-**Claude Desktop (Cowork)**
+**Claude Desktop (Cowork) — individual install**
 
 Plugin installation in Cowork is done through the UI — slash commands are not supported there:
 
@@ -104,7 +104,27 @@ Plugin installation in Cowork is done through the UI — slash commands are not 
 4. Search for **Fund OS** and click **Install**
 5. Review permissions and authorise
 
-> If Fund OS doesn't appear in the Marketplace search, your organisation admin needs to add `steffenmaas/fund-os` as a private marketplace source under Organisation Settings → Plugins first.
+**Claude Teams / Enterprise — org-wide install via admin console**
+
+This pushes Fund OS to your entire team without anyone having to install it manually.
+
+1. Go to **`claude.ai/admin-settings/`** (requires Owner or Admin role on a Teams or Enterprise plan)
+2. Navigate to **Organisation settings → Plugins / Marketplace**
+3. Click **Add private marketplace** and enter the repo URL:
+   ```
+   https://github.com/steffenmaas/fund-os.git
+   ```
+4. Once added, find **Fund OS** in the marketplace and set its install mode:
+
+   | Mode | Effect |
+   |---|---|
+   | **Available** | Visible in the catalog — team members install themselves |
+   | **Installed by default** | Auto-installed for all members, can be removed |
+   | **Required** | Force-installed for all members, cannot be removed |
+
+5. On **Enterprise plans** you can also scope this per group — e.g. auto-install for the investment team, hide from everyone else (Organisation settings → Groups → assign plugin policy per group)
+
+> **Don't see Organisation settings?** You're either not on a Teams/Enterprise plan or don't have Owner/Admin role. Contact [Anthropic sales](https://www.anthropic.com/contact-sales) to upgrade.
 
 ---
 
