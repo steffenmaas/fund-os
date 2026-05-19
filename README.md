@@ -54,6 +54,8 @@ Create four folders in your fund's drive or wiki and configure the paths in your
 
 ## Dashboard
 
+[![Fund OS Dashboard](./plugins/fund-os/dashboard-preview.png)](./plugins/fund-os/Fund_OS_Dashboard.html)
+
 Open [`plugins/fund-os/Fund_OS_Dashboard.html`](./plugins/fund-os/Fund_OS_Dashboard.html) in any browser. No server required.
 
 Three views: **Periodic Table** (skills by phase, colour-coded), **Lifecycle Flow** (skills along the fund lifecycle), **Workflows** (the 18 orchestrated flows). A search panel lets you filter by skill name, slug, MCP capability or trigger phrase.
