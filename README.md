@@ -16,67 +16,75 @@ The same skill bundle runs in Claude Desktop (Cowork), Claude Code, and the Clau
 
 ### Prerequisites
 
-- **Claude Desktop** (Mac or Windows) with Cowork, **or** **Claude Code** (CLI)
+- Mac or Windows with a terminal
 - A GitHub account with access to this private repo (ask Ocean One Ventures to add you as a collaborator)
 
 ---
 
-### Step 1 — Update Claude to the latest version
+### Step 1 — Install Claude Code
 
-Plugin and skill support requires an up-to-date Claude. If you skip this and see "I don't recognise that command", come back here first.
-
-**Claude Desktop**
-
-Check for updates under the app menu (Claude → Check for Updates) and install if prompted.
-
-**Claude Code (CLI)**
+If you haven't already:
 
 ```bash
-# via Homebrew
-brew upgrade claude-code
+# via Homebrew (recommended on Mac)
+brew install claude-code
 
 # via npm
 npm install -g @anthropic-ai/claude-code@latest
 ```
 
-Confirm your version with `claude --version`.
+If Claude Code is already installed, make sure it's up to date — plugin support requires a recent version:
+
+```bash
+brew upgrade claude-code
+# or
+npm install -g @anthropic-ai/claude-code@latest
+```
 
 ---
 
-### Step 2 — Authenticate to GitHub
+### Step 2 — Start Claude in the terminal
 
-The installer pulls skill files from this private repo, so Claude needs a GitHub credential.
+```bash
+claude
+```
 
-**Option A — GitHub CLI (recommended)**
+This opens the Claude Code interactive session. All `/plugin` commands below are typed inside this session.
+
+---
+
+### Step 3 — Install the GitHub CLI
+
+The plugin installer needs `gh` to authenticate with the private GitHub repo.
+
+```bash
+brew install gh
+```
+
+Then authenticate:
 
 ```bash
 gh auth login
 ```
 
-Follow the browser OAuth prompts. Confirm with `gh auth status`.
-
-**Option B — Personal Access Token**
-
-1. GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens
-2. Create a token with **Contents: Read** scoped to `steffenmaas/fund-os`
-3. Export it:
+Follow the browser OAuth prompts. Confirm it worked:
 
 ```bash
-export GITHUB_TOKEN=your_token_here   # add to ~/.zshrc to persist
+gh auth status
 ```
 
 ---
 
-### Step 3 — Install the plugin
+### Step 4 — Add the marketplace and install the plugin
 
-**Claude Code (CLI)**
+Inside the Claude Code session:
 
 ```
-/plugin marketplace add steffenmaas/fund-os
-/plugin install fund-os@steffenmaas-fund-os
+/plugin marketplace add https://github.com/steffenmaas/fund-os.git
+/plugin install fund-os@fund-os-marketplace
 ```
 
-The first command registers the marketplace; the second installs Fund OS from it. Both only need to be run once.
+The first command registers the marketplace from the repo; the second installs Fund OS from it. Both only need to be run once.
 
 To verify:
 
@@ -100,7 +108,7 @@ Plugin installation in Cowork is done through the UI — slash commands are not 
 
 ---
 
-### Step 4 — Configure MCP servers (optional but recommended)
+### Step 5 — Configure MCP servers (optional but recommended)
 
 MCP gives skills live access to your fund's tools. Without it, skills still work — Claude will ask you to paste data manually instead of reading it automatically.
 
@@ -139,7 +147,7 @@ Full capability list and alternative vendors: [`plugins/fund-os/.mcp.json.exampl
 
 ---
 
-### Step 5 — Set up knowledge folders
+### Step 6 — Set up knowledge folders
 
 Create four folders in your fund's Google Drive or Notion wiki and add them to your Claude project context (Claude Desktop → Project → Add Knowledge, or drag folders into a Claude Code project):
 
@@ -154,7 +162,7 @@ Skills both read from and write to these folders — health checks update `Fund-
 
 ---
 
-### Step 6 — Run your first skill
+### Step 7 — Run your first skill
 
 Type a trigger phrase in Claude:
 
