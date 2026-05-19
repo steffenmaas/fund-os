@@ -19,6 +19,59 @@ In Claude Code or Cowork:
 
 Private repo access requires your client to be authenticated to GitHub (`gh auth login` or a PAT with `repo` scope).
 
+---
+
+## Fund OS Concept
+
+Fund OS is the operating system that lets a small fund team run a complete venture-capital fund — sourcing, due diligence, portfolio support, LP reporting and compliance — at the operational depth of a much larger institution.
+
+It is built on **Claude Skills**: small, portable, version-controlled units of methodology and behaviour, hosted in Claude Desktop, Claude Code and the Claude Agent SDK, and connected to the fund's actual tools (CRM, fund administration, meeting intelligence, productivity suite, wiki) through MCP.
+
+**Key facts**
+
+- **35 skills** organised across **8 lifecycle phases** — from LP fundraising through to fund wind-down
+- **18 cross-skill workflows** orchestrate the recurring rhythms: weekly digest, monthly health check, quarterly LP report, capital call
+- **Three host options** out of the box: Claude Desktop (Cowork mode) for the non-technical team, Claude Code for power users, the Claude Agent SDK for scheduled and headless runs
+- **Human-in-the-loop by design** — every regulated artefact carries a HITL step in its specification; this is a property of the skills, not an optional setting
+- **Compliance by design** — every skill writes to a shared Audit Trail referenced in LP-facing process documentation
+- **9 MCP capabilities** covering CRM, fund administration, meeting intelligence, knowledge management, calendar, email, web search, drive, and market data
+- **Fund-side scope only** — skills that help portfolio companies do their own work (GTM, hiring, founder finance) are explicitly out of scope and will ship as a separate Founder OS bundle
+
+**The 8 lifecycle phases**
+
+| Phase | Focus |
+|---|---|
+| 01 Fundraising & LP | LP scouting, outreach, data room, pipeline, fund grants |
+| 02 Sourcing & Market Watch | Outbound scouting, deal triage, thesis scoring, market intelligence |
+| 03 Due Diligence | Pitch analysis, market mapping, reference checks, memos, IC packs |
+| 04 Portfolio Monitoring | KPI collection, health checks, fund-view aggregation, early warnings |
+| 05 Reporting & Impact | Capital calls, impact assessment, quarterly LP reports |
+| 06 Legal & Compliance | Legal drafting, cap tables, contracts, regulatory deadlines, audit trail |
+| 07 Ecosystem & Outreach | LP newsletter, public content, events, partnerships |
+| 08 Exit & Wind-Down | Exit preparation, buyer mapping, distribution, fund closure |
+
+Full implementation blueprint: `Fund_OS_Implementation_Concept_v1.5` — available on the shared Drive (Ocean One Ventures internal).
+
+---
+
+## Dashboard
+
+The **Fund OS Dashboard** is a standalone HTML file that visualises the complete skill library as an interactive periodic table. Open it in any browser — no server required.
+
+**Three views**
+
+| View | What it shows |
+|---|---|
+| Periodic Table | All 35 skills arranged by lifecycle phase, colour-coded, with abbreviation codes |
+| Lifecycle Flow | Skills mapped along the fund lifecycle from fundraising to exit |
+| Workflows | The 18 cross-skill workflows and the skills they orchestrate |
+
+A search/filter panel lets you find skills by name, slug, MCP capability, or trigger phrase.
+
+`Fund_OS_Dashboard.html` — available on the shared Drive (Ocean One Ventures internal).
+
+---
+
 ## Versioning
 
 Single source of truth: [`plugins/fund-os/.claude-plugin/plugin.json`](./plugins/fund-os/.claude-plugin/plugin.json). Bump on every change and push to `main`.
