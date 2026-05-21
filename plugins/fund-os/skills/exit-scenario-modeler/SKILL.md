@@ -22,6 +22,7 @@ Run this skill when the user says any of:
 2. Reference at least two comparable transactions per scenario; cite source and date.
 3. Show fund-level impact: NAV change, TVPI delta, DPI delta.
 4. Never pick a winning scenario - present the math, let the GP decide.
+5. Valuation multiple reference (SaaS, 2025): median 6–7× ARR; high-growth >40% YoY commands 7–10×; NRR >120% commands 11–12×; NRR <90% falls to 1–2×. Rule of 40 achievers add ~1.1× per 10 points above 40. State explicitly which bucket the company falls in and whether current metrics support or discount the applied multiple.
 
 ## Inputs
 
@@ -66,6 +67,11 @@ Holding: 5% post EUR 12m post-money.
 
 Comps cited: ContractPodAI (acq 2024), Harvey (Series C 2025).
 ```
+
+## Community skill references
+
+Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) community knowledge base (375 skills, curator: Luis Schmitz):
+- [`vercel-saas-financial-projections`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/financial_modeling/vercel-saas-financial-projections) — 2025/26 valuation multiples by growth rate and NRR tier, Rule of 40 premium, exit scenario framework
 
 ## Audit trail
 

@@ -75,6 +75,11 @@ P3 weekly:
   Three companies with NRR softening.
 ```
 
+## Community skill references
+
+Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) community knowledge base (375 skills, curator: Luis Schmitz):
+- [`skillsmp-product-market-fit`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/skillsmp-product-market-fit) — Leading indicators (organic growth rate, DAU/MAU ratio, NPS trend) and lagging indicators (NRR, LTV:CAC, churn trajectory) as systematic early warning signals
+
 ## Audit trail
 
 After successful execution, emit an entry via the `audit-trail-writer` skill:

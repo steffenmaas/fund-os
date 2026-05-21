@@ -72,6 +72,13 @@ Critical gaps:
 - [HIGH] Exit slide vague; no comparables (slide 18).
 ```
 
+## Community skill references
+
+Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) community knowledge base (375 skills, curator: Luis Schmitz):
+- [`ailabs-startup-validator`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/ailabs-startup-validator) — Systematic market and competitive validation framework for cross-checking deck claims
+- [`skillsmp-product-market-fit`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/skillsmp-product-market-fit) — PMF indicators for Traction dimension scoring (retention curves, NRR, DAU/MAU)
+- [`vc-skills-market-sizing`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/market_research/vc-skills-market-sizing) — Bottom-up TAM/SAM/SOM for Market dimension cross-check
+
 ## Audit trail
 
 After successful execution, emit an entry via the `audit-trail-writer` skill:

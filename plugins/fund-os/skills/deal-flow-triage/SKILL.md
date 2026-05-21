@@ -69,6 +69,12 @@ Suggested reply:
 Files:      /Deal-Flow-Inbox/2026-05/Helios/Deck_v3.pdf
 ```
 
+## Community skill references
+
+Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) community knowledge base (375 skills, curator: Luis Schmitz):
+- [`kwp-nda-triage`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/kwp-nda-triage) — GREEN/YELLOW/RED NDA classification when inbound deal includes an NDA request
+- [`skillsmp-analyzing-funding-landscape`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/investment_analysis/skillsmp-analyzing-funding-landscape) — Funding landscape context for deal routing (stage fit, active investors in sector)
+
 ## Audit trail
 
 After successful execution, emit an entry via the `audit-trail-writer` skill:

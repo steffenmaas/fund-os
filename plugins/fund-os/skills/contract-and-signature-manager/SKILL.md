@@ -25,6 +25,7 @@ Run this skill when the user says any of:
 2. For signature: send via the integrated e-signature MCP, track status, escalate at T+3d.
 3. Auto-create calendar entries for every deadline at T-30 and T-7.
 4. Never modify executed contract files - new versions become new register entries.
+5. NDA triage: classify every incoming NDA as GREEN (standard, approve via delegation of authority), YELLOW (counsel review needed — one or more non-standard clauses present), or RED (full legal review required — embedded non-compete / exclusivity / overbroad residuals / wrong directionality). Never self-approve a RED-classified NDA.
 
 ## Inputs
 
@@ -75,6 +76,13 @@ DEADLINES (next 30d):
   2026-05-22  CT-2026-061 signature deadline
   2026-06-30  CT-2026-058 Aurora first MFN check
 ```
+
+## Community skill references
+
+Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) community knowledge base (375 skills, curator: Luis Schmitz):
+- [`kwp-nda-triage`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/kwp-nda-triage) — GREEN/YELLOW/RED NDA classification with 10-point checklist (source: `anthropics/knowledge-work-plugins`)
+- [`kwp-contract-review`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/kwp-contract-review) — Playbook-based clause analysis with severity classification
+- [`kwp-legal-risk-assessment`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/kwp-legal-risk-assessment) — Legal risk scoring framework
 
 ## Audit trail
 

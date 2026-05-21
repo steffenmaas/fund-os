@@ -78,6 +78,11 @@ Exit at 5x: Fund II nets EUR 7.5m on EUR 1.5m.
 File: /Fund-Portfolio/Resolutee/CapTable/v2026.05_seed.xlsx
 ```
 
+## Community skill references
+
+Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) community knowledge base (375 skills, curator: Luis Schmitz):
+- [`vercel-saas-financial-projections`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/financial_modeling/vercel-saas-financial-projections) — SaaS unit economics formulas (LTV, CAC, CAC payback, MRR projection model) as reference for exit assumption calibration
+
 ## Audit trail
 
 After successful execution, emit an entry via the `audit-trail-writer` skill:
