@@ -23,6 +23,7 @@ Run this skill when the user says any of:
 2. Always produce four artefacts: (1) competitor table, (2) market sizing TAM/SAM/SOM, (3) exit comps last 24 months, (4) regulation timeline.
 3. Cite every competitor row with a primary source.
 4. Flag any direct competitor already in the fund's portfolio.
+5. TAM/SAM/SOM: use ARPC decomposition — Market Size = Customer Count × ARPC × Penetration Rate, where ARPC = Volume/Customer/Year × Price/Unit. Segment into 3–8 mutually exclusive groups. Run a parallel top-down estimate from industry reports; if bottom-up and top-down diverge >3×, flag as 'MARKET SIZE: DISPUTED' before publishing.
 
 ## Inputs
 
@@ -70,6 +71,13 @@ Exit comps (24m): ContractPodAI -> Carlyle 2024.
 
 Regulation: EU AI Act high-risk effective 2026-02.
 ```
+
+## Community skill references
+
+Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) community knowledge base (375 skills, curator: Luis Schmitz):
+- [`vc-skills-market-sizing`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/market_research/vc-skills-market-sizing) — ARPC bottom-up TAM/SAM/SOM with top-down sanity check
+- [`skillsmp-analyzing-funding-landscape`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/investment_analysis/skillsmp-analyzing-funding-landscape) — Investor landscape, M&A activity, and funding round benchmarking templates
+- [`sundial-competitive-intelligence`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/market_research/sundial-competitive-intelligence) — Competitive intelligence framework
 
 ## Audit trail
 

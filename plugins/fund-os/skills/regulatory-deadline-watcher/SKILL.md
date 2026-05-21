@@ -22,6 +22,7 @@ Run this skill when the user says any of:
 2. Always link the alert to the filing template and the responsible officer.
 3. Re-check the regulator's website weekly for date changes; surface diffs immediately.
 4. Never auto-submit any filing - this skill produces alerts and prep packs only.
+5. Data compliance calendar: include GDPR/CCPA/UK GDPR events alongside fund-specific deadlines — 72-hour breach notification window, data subject request deadlines (GDPR: 30 days; CCPA: 45 days), DPA review triggers when onboarding a new processor. Tag each item with responsible officer and applicable regulation.
 
 ## Inputs
 
@@ -66,6 +67,12 @@ T-14:
 T-30:
   Annual ESMA reporting due 2026-06-18 - start data pull now.
 ```
+
+## Community skill references
+
+Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) community knowledge base (375 skills, curator: Luis Schmitz):
+- [`kwp-compliance`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/kwp-compliance) — GDPR / CCPA / LGPD obligation timelines, DPA review checklist, data subject request handling (source: `anthropics/knowledge-work-plugins`)
+- [`kwp-audit-support`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/kwp-audit-support) — Audit preparation and compliance support framework
 
 ## Audit trail
 

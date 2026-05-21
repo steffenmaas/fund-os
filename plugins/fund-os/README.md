@@ -140,7 +140,24 @@ Point the host at four folders in your fund's drive / wiki:
 
 ## Updates
 
-Skill versions live in `plugin.json` (currently `1.5.0`). When you bump the version and push, installed clients will see an update prompt. Enable auto-update by setting `autoUpdate: true` in the marketplace entry of your `~/.claude/settings.json`.
+Skill versions live in `plugin.json` (currently `1.6.0`). When you bump the version and push, installed clients will see an update prompt. Enable auto-update by setting `autoUpdate: true` in the marketplace entry of your `~/.claude/settings.json`.
+
+## VC-Skills.md Community Integration
+
+Fund OS builds on the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) open community knowledge base — a database of 375 VC-relevant skills curated by Luis Schmitz with contributions from the VC community. Where the community has developed deeper methodology in a specific area, Fund OS skills reference those community skills directly rather than rebuilding from scratch.
+
+| Fund OS Skill | Community Source | What's Reused |
+|---|---|---|
+| `market-and-competitor-mapper` | `vc-skills-market-sizing` | ARPC bottom-up TAM/SAM/SOM with top-down sanity check |
+| `contract-and-signature-manager` | `kwp-nda-triage` | GREEN/YELLOW/RED NDA classification (10-point checklist) |
+| `portfolio-health-check` | `skillsmp-product-market-fit` | Sean Ellis 40% rule, Superhuman PMF Engine, retention curves |
+| `investment-memo-drafter` | `vercel-saas-financial-projections` | 2025/26 SaaS benchmark tables (growth, NRR, LTV:CAC, margins) |
+| `exit-scenario-modeler` | `vercel-saas-financial-projections` | Valuation multiples by growth rate and NRR tier |
+| `thesis-fit-scorer` | `ailabs-startup-validator` | Systematic startup validation workflow |
+| `regulatory-deadline-watcher` | `kwp-compliance` | GDPR/CCPA obligation timelines and DPA review checklist |
+| `market-intelligence-scanner` | `skillsmp-analyzing-funding-landscape` | Investor landscape, M&A tracking, funding round benchmarks |
+
+Each integrated skill carries a `## Community skill references` section with direct links to the source.
 
 ## License
 

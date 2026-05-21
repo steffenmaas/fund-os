@@ -24,6 +24,7 @@ Run this skill when the user says any of:
 2. Critical-alert rules: regulation directly affecting a portfolio company; direct competitor funding > EUR 20m; M&A in the fund's exit-comp set.
 3. Archive every cited report into Fund-Market/Reports/ with a 3-line summary and tags.
 4. Weekly digest is max 12 items; rank by relevance to active thesis tags.
+5. Quarterly funding landscape: once per quarter, generate an investor-landscape snapshot for each active thesis sector — top 5 investors by deal count, median round size, hottest sub-sectors, active acquirers with exit multiples. Output feeds lp-database-prospector (LP targeting) and co-investor-syndicator (co-investment sourcing).
 
 ## Inputs
 
@@ -80,6 +81,12 @@ EVENTS / REGULATION (4):
 
 Alerts sent to deal lead today: Harvey funding (Resolutee impact).
 ```
+
+## Community skill references
+
+Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) community knowledge base (375 skills, curator: Luis Schmitz):
+- [`skillsmp-analyzing-funding-landscape`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/investment_analysis/skillsmp-analyzing-funding-landscape) — Investor landscape analysis, M&A tracking, funding round benchmarking, and deal volume analysis templates
+- [`tradermonty-bubble-detector`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/investment_analysis/tradermonty-bubble-detector) — Market cycle and sector bubble detection for macro signal monitoring
 
 ## Audit trail
 

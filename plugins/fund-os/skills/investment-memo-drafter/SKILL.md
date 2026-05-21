@@ -25,6 +25,7 @@ Run this skill when the user says any of:
 3. Follow-on: appends 'Follow-on rationale' + reserve simulation (pro-rata / super-pro-rata / pass).
 4. Every number gets a source citation in brackets. Mark unverified with [OPEN: ...].
 5. Never write a recommendation. End the memo with the Open Questions list.
+6. SaaS benchmark validation: for any SaaS business validate key metrics against 2025 benchmarks before finalising — ARR growth (top quartile >70% at <$5m ARR), NRR (healthy >104%, best-in-class >115%), gross margin (healthy 70–75%, best-in-class 80%+), LTV:CAC (minimum 3:1, ideal 5–7:1), CAC payback (<12m SMB, <18m mid-market). Mark any metric below benchmark as [BELOW BENCHMARK: ...].
 
 ## Inputs
 
@@ -85,6 +86,13 @@ New Tier-1 lead at EUR 35m post. Mark-up 2.9x.
 | Super-pro-rata| EUR 2.80m| Move to 7%, signal        |
 | Pass          | EUR 0    | Diluted to ~3.6%          |
 ```
+
+## Community skill references
+
+Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) community knowledge base (375 skills, curator: Luis Schmitz):
+- [`vercel-saas-financial-projections`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/financial_modeling/vercel-saas-financial-projections) — 2025/26 SaaS benchmarks (ARR growth, NRR, unit economics, valuation multiples) and three-scenario projection framework
+- [`skillsmp-product-market-fit`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/skillsmp-product-market-fit) — PMF indicators for traction section assessment
+- [`vc-skills-market-sizing`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/market_research/vc-skills-market-sizing) — Bottom-up TAM/SAM/SOM for market section validation
 
 ## Audit trail
 

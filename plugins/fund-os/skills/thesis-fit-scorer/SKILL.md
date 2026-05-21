@@ -22,6 +22,7 @@ Run this skill when the user says any of:
 2. Every dimension score requires a one-line citation (deck slide, web source, founder statement).
 3. If a dimension cannot be evidenced, mark it 'INSUFFICIENT DATA' rather than guessing.
 4. End with one of three recommendations: PROCEED, WATCHLIST, PASS.
+5. Market cross-check: if the company claims a TAM, validate it using ARPC decomposition (Customer Count × ARPC × Penetration). If founder top-down and your bottom-up estimate diverge >3×, log as 'MARKET SIZE: DISPUTED' and do not score the Market dimension above 50% pending resolution.
 
 ## Inputs
 
@@ -68,6 +69,12 @@ Business model  8 / 10  (SaaS + hardware margin known)
 
 Next step: 30-min call; ask for commercial-hire plan.
 ```
+
+## Community skill references
+
+Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) community knowledge base (375 skills, curator: Luis Schmitz):
+- [`ailabs-startup-validator`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/ailabs-startup-validator) — Systematic startup validation workflow: market opportunity, competitive landscape, problem validation, trends, business model
+- [`vc-skills-market-sizing`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/market_research/vc-skills-market-sizing) — ARPC bottom-up market sizing for TAM cross-check
 
 ## Audit trail
 

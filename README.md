@@ -92,7 +92,7 @@ To verify:
 /plugin list
 ```
 
-`fund-os` should appear at version `1.5.0`.
+`fund-os` should appear at version `1.6.0`.
 
 **Claude Desktop (Cowork) — individual install**
 
@@ -218,6 +218,10 @@ Three views: **Periodic Table** (skills by phase, colour-coded), **Lifecycle Flo
 ## Versioning
 
 Single source of truth: [`plugins/fund-os/.claude-plugin/plugin.json`](./plugins/fund-os/.claude-plugin/plugin.json). Bump the version on every change and push to `main`. Clients with `autoUpdate: true` in their marketplace settings pick up changes automatically.
+
+## VC-Skills.md Community Integration
+
+Fund OS builds on the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) open community knowledge base — 375 VC-relevant skills indexed and curated by [Luis Schmitz](https://github.com/luisschmitzheadline). Where the community has developed deeper methodology (market sizing, NDA triage, PMF assessment, SaaS benchmarks), Fund OS skills reference and import that methodology rather than rebuilding from scratch. Each integrated skill carries a `## Community skill references` section with direct links to the source.
 
 ## How this repo is built
 

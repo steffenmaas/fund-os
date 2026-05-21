@@ -22,6 +22,7 @@ Run this skill when the user says any of:
 2. Ask the founder only about KPIs that are missing or stale (>30 days).
 3. Always produce a 'changed since last review' summary at the top.
 4. Flag any signal that meets a Red-Flag rule (cash runway < 6m, NRR < 80%, founder churn, customer concentration > 30%).
+5. PMF pulse (consumer and SMB SaaS only): include a PMF health row — Sean Ellis score (target ≥ 40% "very disappointed"), NRR trend (leading indicator), DAU/MAU ratio. Flag any "Leaky Bucket" retention pattern (continuously declining cohort curve with no flattening) as a WARNING signal.
 
 ## Inputs
 
@@ -74,6 +75,12 @@ Gaps asked of founder:
 
 Follow-up: 30-min call re. customer concentration.
 ```
+
+## Community skill references
+
+Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) community knowledge base (375 skills, curator: Luis Schmitz):
+- [`skillsmp-product-market-fit`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/skillsmp-product-market-fit) — Sean Ellis 40% rule, Superhuman PMF Engine, retention curve analysis, leading and lagging indicators
+- [`lenny-measuring-product-market-fit`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/lenny-measuring-product-market-fit) — PMF measurement and maintenance frameworks
 
 ## Audit trail
 
