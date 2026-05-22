@@ -1,8 +1,8 @@
 {
   "name": "fund-os",
   "displayName": "Fund OS",
-  "version": "1.6.0",
-  "description": "35 Claude Skills for VC fund operations across 8 lifecycle phases. Built on the open VC-Skills.md community convention. Fund-side scope only - Founder OS coaching skills are a separate bundle.",
+  "version": "1.7.0",
+  "description": "41 Claude Skills for VC fund operations across 8 lifecycle phases. Built on the open VC-Skills.md community convention. Fund-side scope only - Founder OS coaching skills are a separate bundle.",
   "author": {
     "name": "Ocean One Ventures"
   },

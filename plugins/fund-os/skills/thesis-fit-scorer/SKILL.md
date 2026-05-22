@@ -75,17 +75,18 @@ Next step: 30-min call; ask for commercial-hire plan.
 Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) community knowledge base (375 skills, curator: Luis Schmitz):
 - [`ailabs-startup-validator`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/ailabs-startup-validator) — Systematic startup validation workflow: market opportunity, competitive landscape, problem validation, trends, business model
 - [`vc-skills-market-sizing`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/market_research/vc-skills-market-sizing) — ARPC bottom-up market sizing for TAM cross-check
+- [`skillsmp-superforecaster`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/fund_operations/skillsmp-superforecaster) — Probabilistic scoring with calibrated confidence ranges; outside-view base rates and pre-mortem to guard against overconfidence in thesis fit verdicts
 
 ## Audit trail
 
 After successful execution, emit an entry via the `audit-trail-writer` skill:
 
 ```yaml
-skill_version: thesis-fit-scorer@1.5.0
+skill_version: thesis-fit-scorer@1.7.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of what changed>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 1.5.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 1.7.0. Do not edit directly — edit the source and rebuild.*

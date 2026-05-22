@@ -92,7 +92,7 @@ To verify:
 /plugin list
 ```
 
-`fund-os` should appear at version `1.6.0`.
+`fund-os` should appear at version `1.7.0`.
 
 **Claude Desktop (Cowork) — individual install**
 
@@ -202,7 +202,7 @@ Claude activates the matching skill, requests any missing inputs, and walks you 
 
 | Path | Contents |
 |---|---|
-| [`plugins/fund-os/`](./plugins/fund-os/) | Plugin root — 35 SKILL.md files across 8 phases, plugin manifest, MCP config example |
+| [`plugins/fund-os/`](./plugins/fund-os/) | Plugin root — 41 SKILL.md files across 8 phases, plugin manifest, MCP config example |
 | [`plugins/fund-os/README.md`](./plugins/fund-os/README.md) | Full skill inventory, 18 workflows, installation details |
 | [`plugins/fund-os/Fund_OS_Dashboard.html`](./plugins/fund-os/Fund_OS_Dashboard.html) | Interactive periodic table of all skills — open in any browser |
 | [`.claude-plugin/marketplace.json`](./.claude-plugin/marketplace.json) | Marketplace manifest |

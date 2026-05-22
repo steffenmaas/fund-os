@@ -1,6 +1,6 @@
 # Fund OS Plugin
 
-35 Claude Skills for VC fund operations across 8 lifecycle phases.
+41 Claude Skills for VC fund operations across 8 lifecycle phases.
 
 ## What it is
 
@@ -35,6 +35,7 @@ Active scouting, inbound triage, thesis screening, market intelligence and co-in
 - **Mi** [`market-intelligence-scanner`](./skills/market-intelligence-scanner/SKILL.md) — Market Intelligence Scanner
 - **Sw** [`startups-to-watch-curator`](./skills/startups-to-watch-curator/SKILL.md) — Startups-to-Watch Curator
 - **Cy** [`co-investor-syndicator`](./skills/co-investor-syndicator/SKILL.md) — Co-Investor Syndicator
+- **Ss** [`startup-scorecard`](./skills/startup-scorecard/SKILL.md) — Startup Scorecard
 
 ### Phase 03 — Due Diligence
 
@@ -45,6 +46,10 @@ Analyse opportunities, map markets, take references, write memos, assemble the I
 - **Rc** [`reference-check-orchestrator`](./skills/reference-check-orchestrator/SKILL.md) — Reference Check Orchestrator
 - **Im** [`investment-memo-drafter`](./skills/investment-memo-drafter/SKILL.md) — Investment Memo Drafter
 - **Ic** [`ic-pack-builder`](./skills/ic-pack-builder/SKILL.md) — IC Pack Builder
+- **Mb** [`meeting-briefer`](./skills/meeting-briefer/SKILL.md) — Meeting Briefer
+- **Cp** [`company-profiler`](./skills/company-profiler/SKILL.md) — Company Profiler
+- **Fm** [`financial-modeler`](./skills/financial-modeler/SKILL.md) — Financial Modeler
+- **Ca** [`comps-analyzer`](./skills/comps-analyzer/SKILL.md) — Comps Analyzer
 
 ### Phase 04 — Portfolio Monitoring
 
@@ -54,6 +59,7 @@ Collect KPIs, run health checks, aggregate to fund view, flag early warnings.
 - **Hc** [`portfolio-health-check`](./skills/portfolio-health-check/SKILL.md) — Portfolio Health Check
 - **Fv** [`fund-view-aggregator`](./skills/fund-view-aggregator/SKILL.md) — Fund View Aggregator
 - **Ew** [`early-warning-signaler`](./skills/early-warning-signaler/SKILL.md) — Early Warning Signaler
+- **Va** [`variance-analyzer`](./skills/variance-analyzer/SKILL.md) — Variance Analyzer
 
 ### Phase 05 — Reporting & Impact
 
@@ -140,7 +146,7 @@ Point the host at four folders in your fund's drive / wiki:
 
 ## Updates
 
-Skill versions live in `plugin.json` (currently `1.6.0`). When you bump the version and push, installed clients will see an update prompt. Enable auto-update by setting `autoUpdate: true` in the marketplace entry of your `~/.claude/settings.json`.
+Skill versions live in `plugin.json` (currently `1.7.0`). When you bump the version and push, installed clients will see an update prompt. Enable auto-update by setting `autoUpdate: true` in the marketplace entry of your `~/.claude/settings.json`.
 
 ## VC-Skills.md Community Integration
 
@@ -156,6 +162,13 @@ Fund OS builds on the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-s
 | `thesis-fit-scorer` | `ailabs-startup-validator` | Systematic startup validation workflow |
 | `regulatory-deadline-watcher` | `kwp-compliance` | GDPR/CCPA obligation timelines and DPA review checklist |
 | `market-intelligence-scanner` | `skillsmp-analyzing-funding-landscape` | Investor landscape, M&A tracking, funding round benchmarks |
+| `meeting-briefer` | `kwp-meeting-briefing` | 5-step briefing methodology, meeting-type classification, full briefing template |
+| `variance-analyzer` | `kwp-variance-analysis` | Price/Volume decomposition, materiality thresholds, waterfall bridge narrative |
+| `startup-scorecard` | `vasilyu-startup-idea-validation` | 9-dimension GO/NO-GO scorecard, Riskiest Assumption Test, Validation Ladder |
+| `startup-scorecard` | `skillsmp-yc-startup-fundamentals` | YC team/idea/MVP checklist, Frequency Filter |
+| `financial-modeler` | `alirezarezvani-financial-analyst` | DCF/WACC/CAPM, ratio taxonomy, materiality thresholds, SaaS adaptation |
+| `comps-analyzer` | `vercel-saas-financial-projections` | Valuation multiples by growth rate, NRR tier and Rule of 40 premium |
+| `company-profiler` | `antigravity-startup-analyst` | Structured team/product/traction/market analysis framework |
 
 Each integrated skill carries a `## Community skill references` section with direct links to the source.
 

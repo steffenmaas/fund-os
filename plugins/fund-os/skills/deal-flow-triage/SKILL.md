@@ -74,17 +74,18 @@ Files:      /Deal-Flow-Inbox/2026-05/Helios/Deck_v3.pdf
 Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) community knowledge base (375 skills, curator: Luis Schmitz):
 - [`kwp-nda-triage`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/kwp-nda-triage) — GREEN/YELLOW/RED NDA classification when inbound deal includes an NDA request
 - [`skillsmp-analyzing-funding-landscape`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/investment_analysis/skillsmp-analyzing-funding-landscape) — Funding landscape context for deal routing (stage fit, active investors in sector)
+- [`skillsmp-yc-startup-fundamentals`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/skillsmp-yc-startup-fundamentals) — YC team, idea and MVP checklist as a lightweight pre-filter before routing to full thesis-fit-scorer
 
 ## Audit trail
 
 After successful execution, emit an entry via the `audit-trail-writer` skill:
 
 ```yaml
-skill_version: deal-flow-triage@1.5.0
+skill_version: deal-flow-triage@1.7.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of what changed>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 1.5.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 1.7.0. Do not edit directly — edit the source and rebuild.*

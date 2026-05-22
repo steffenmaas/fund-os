@@ -73,11 +73,11 @@ Bank: <fund admin masters this>; Ref: Fund-II-CC04-<LP-id>.
 After successful execution, emit an entry via the `audit-trail-writer` skill:
 
 ```yaml
-skill_version: capital-call-generator@1.5.0
+skill_version: capital-call-generator@1.7.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of what changed>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 1.5.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 1.7.0. Do not edit directly — edit the source and rebuild.*

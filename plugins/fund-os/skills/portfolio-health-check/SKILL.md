@@ -81,17 +81,18 @@ Follow-up: 30-min call re. customer concentration.
 Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) community knowledge base (375 skills, curator: Luis Schmitz):
 - [`skillsmp-product-market-fit`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/skillsmp-product-market-fit) — Sean Ellis 40% rule, Superhuman PMF Engine, retention curve analysis, leading and lagging indicators
 - [`lenny-measuring-product-market-fit`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/lenny-measuring-product-market-fit) — PMF measurement and maintenance frameworks
+- [`kwp-variance-analysis`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/fund_operations/kwp-variance-analysis) — Budget-vs-actual variance decomposition to surface KPI misses during health check reviews
 
 ## Audit trail
 
 After successful execution, emit an entry via the `audit-trail-writer` skill:
 
 ```yaml
-skill_version: portfolio-health-check@1.5.0
+skill_version: portfolio-health-check@1.7.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of what changed>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 1.5.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 1.7.0. Do not edit directly — edit the source and rebuild.*
