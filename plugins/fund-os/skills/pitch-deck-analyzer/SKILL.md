@@ -78,17 +78,18 @@ Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadl
 - [`ailabs-startup-validator`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/ailabs-startup-validator) — Systematic market and competitive validation framework for cross-checking deck claims
 - [`skillsmp-product-market-fit`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/skillsmp-product-market-fit) — PMF indicators for Traction dimension scoring (retention curves, NRR, DAU/MAU)
 - [`vc-skills-market-sizing`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/market_research/vc-skills-market-sizing) — Bottom-up TAM/SAM/SOM for Market dimension cross-check
+- [`vasilyu-startup-idea-validation`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/vasilyu-startup-idea-validation) — 9-dimension weighted scorecard and Riskiest Assumption identification to complement deck dimension scoring
 
 ## Audit trail
 
 After successful execution, emit an entry via the `audit-trail-writer` skill:
 
 ```yaml
-skill_version: pitch-deck-analyzer@1.5.0
+skill_version: pitch-deck-analyzer@1.7.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of what changed>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 1.5.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 1.7.0. Do not edit directly — edit the source and rebuild.*

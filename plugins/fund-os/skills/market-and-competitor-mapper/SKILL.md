@@ -78,17 +78,18 @@ Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadl
 - [`vc-skills-market-sizing`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/market_research/vc-skills-market-sizing) — ARPC bottom-up TAM/SAM/SOM with top-down sanity check
 - [`skillsmp-analyzing-funding-landscape`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/investment_analysis/skillsmp-analyzing-funding-landscape) — Investor landscape, M&A activity, and funding round benchmarking templates
 - [`sundial-competitive-intelligence`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/market_research/sundial-competitive-intelligence) — Competitive intelligence framework
+- [`skillsmp-superforecaster`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/fund_operations/skillsmp-superforecaster) — Probabilistic market scenario framing; calibrated outside-view base rates for market share and growth forecasts
 
 ## Audit trail
 
 After successful execution, emit an entry via the `audit-trail-writer` skill:
 
 ```yaml
-skill_version: market-and-competitor-mapper@1.5.0
+skill_version: market-and-competitor-mapper@1.7.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of what changed>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 1.5.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 1.7.0. Do not edit directly — edit the source and rebuild.*

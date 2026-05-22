@@ -46,6 +46,73 @@
         "DEALROOM_API_KEY": "${DEALROOM_API_KEY}"
       },
       "_comment": "Dealroom / PitchBook / Specter / Crunchbase. Pick one or several."
+    },
+    "company-intelligence": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@octagon/mcp-server"
+      ],
+      "env": {
+        "OCTAGON_API_KEY": "${OCTAGON_API_KEY}"
+      },
+      "_comment": "Octagon AI — live company intelligence suite (funding rounds, investors, M&A). Used by company-profiler and comps-analyzer."
+    },
+    "web-scraper": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "firecrawl-mcp"
+      ],
+      "env": {
+        "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
+      },
+      "_comment": "Firecrawl — structured web scraping for company and market research. Used by company-profiler, market-intelligence-scanner and outbound-startup-scout."
+    },
+    "b2b-database": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@apollo/mcp-server"
+      ],
+      "env": {
+        "APOLLO_API_KEY": "${APOLLO_API_KEY}"
+      },
+      "_comment": "Apollo / LinkedIn MCP — people and company search for LP scouting and reference checks. Used by lp-database-prospector, network-intro-mapper and reference-check-orchestrator."
+    },
+    "financial-data": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@fmp/mcp-server"
+      ],
+      "env": {
+        "FMP_API_KEY": "${FMP_API_KEY}"
+      },
+      "_comment": "Financial Modeling Prep — public company financials and ratios for comps-analyzer and financial-modeler. Read-only."
+    },
+    "document-storage": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@egnyte/mcp-server"
+      ],
+      "env": {
+        "EGNYTE_DOMAIN": "${EGNYTE_DOMAIN}",
+        "EGNYTE_ACCESS_TOKEN": "${EGNYTE_ACCESS_TOKEN}"
+      },
+      "_comment": "Egnyte — secure document vault for fund admin files, legal docs and data room. Alternative to Google Drive for regulated environments."
+    },
+    "e-signature": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@boldsign/mcp-server"
+      ],
+      "env": {
+        "BOLDSIGN_API_KEY": "${BOLDSIGN_API_KEY}"
+      },
+      "_comment": "BoldSign — e-signature workflows. Used by contract-and-signature-manager and legal-document-drafter. Alternative: DocuSign, HelloSign."
     }
   }
 }
