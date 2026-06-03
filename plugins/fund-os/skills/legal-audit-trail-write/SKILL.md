@@ -18,7 +18,7 @@ Run this skill when the user says any of:
 
 ## Key instructions
 
-0. **User preferences:** Load preferences from the plugin: `~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json` (via Bash: `cat ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json 2>/dev/null`). Apply `tone` to all prose output and `outputStoragePath` as the default save location. Check `knowledgeManifest` for any relevant knowledge documents and load them from Google Drive. If the preferences file is absent, proceed normally — run `fund-os:setup` to create it.
+0. **User preferences:** Load preferences from the plugin: `~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json` (via Bash: `cat ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json 2>/dev/null`). Apply `brandGuidelines.tone` to all prose output. Use `storagePaths.outputs` as the default save location (or `storagePaths.deals`, `storagePaths.portfolio`, `storagePaths.lps` where applicable). Reference `systems.crm` and `systems.documentStorage` by their configured names in instructions. Check `knowledge.manifest` for any relevant knowledge documents and load them from Google Drive. If the preferences file is absent, proceed normally — run `fund-os:setup` to create it.
 
 1. Schema: timestamp_utc, actor, actor_type (human/skill), skill_version, action, input_hash, output_ref, rationale.
 2. Append-only. Never overwrite. New corrections create a new entry referencing the old one.
