@@ -57,16 +57,18 @@ In Claude, type:
 fund-os:setup
 ```
 
-The wizard asks four questions:
+The wizard walks through four sections in about 5 minutes:
 
-| Question | What to provide |
+| Section | What it collects |
 |---|---|
-| **Tone of voice** | Choose from Professional & direct / Friendly / Formal / Custom |
-| **Output storage path** | Where to save files, e.g. `Fund-Portfolio/` |
-| **Google Drive folder ID** | Optional — paste the ID of your shared knowledge folder (evaluation criteria, scoring rubric, tone guide, etc.) |
-| **Fund name** | Your fund's name as it should appear in documents |
+| **Master data** | Fund name, currency, stage focus, ticket range, sectors, team, market anchor (TAM summary) |
+| **Brand guidelines** | Tone of voice — Professional & direct / Friendly / Formal / Custom |
+| **Systems** | Which tool the fund uses for each capability: CRM, meeting notes, document storage, market data, people/LP search, fund admin, e-signature |
+| **Storage paths** | Where files are saved within your document system — outputs, deals, portfolio, LP records, drafts |
 
-After you answer, the wizard shows a **summary** of everything before saving. You can edit any field before confirming.
+A fifth optional step scans your Google Drive knowledge folder and maps your documents (investment thesis, scoring rubric, etc.) so every skill can load them automatically.
+
+After all sections, the wizard shows a **grouped summary** — you can edit any section before confirming.
 
 Your preferences are saved inside the plugin and **survive updates** — you will never have to reconfigure after an upgrade.
 
@@ -114,18 +116,23 @@ The most powerful customisation is connecting your fund's shared knowledge folde
 
 Skills load documents by their **filename** (without extension). Name your documents to match the keys below — starter templates for each are included in the plugin and can be shown to you by asking Claude:
 
-| Document name | What to put in it |
-|---|---|
-| `investment-thesis` | Fund overview, thesis statement, target sectors, ideal company profile, conviction questions. Used by all deal and screening skills. |
-| `evaluation-criteria` | Hard filters (auto-Pass), soft filters (routing), priority tags (P1/P2/P3), red flags, and response SLA. Used by deal sourcing and pitch analysis skills. |
-| `scoring-rubric` | Thesis scoring dimensions with weights, 0–10 scale definitions, verdict thresholds (PROCEED / WATCHLIST / PASS). Used by screening and scoring skills. |
-| `dd-framework` | DD workstreams and owners, timeline, data room checklist, IC memo requirements, reference check standard. Used by DD skills. |
-| `memo-template` | Investment memo structure with all required sections pre-formatted. Used by the investment memo skill. |
-| `tone-guide` | Fund voice principles, audience-specific tone (LP / founder / public), words to avoid, signature block. Used by all outreach and communications skills. |
-| `health-check-template` | Health check format with KPI table, red-flag checklist, PMF pulse, and follow-up action section. Used by the portfolio health check skill. |
-| `kpi-standards` | KPI definitions, stage benchmarks (pre-seed to Series A), red-flag thresholds, and collection cadence. Used by all portfolio monitoring skills. |
-| `lp-report-template` | LP quarterly report structure with fund snapshot, portfolio table, NAV bridge, and narrative sections. Used by the LP reporting skill. |
-| `newsletter-template` | LP newsletter format with opening, portfolio highlights, market observations, and team note. Used by the newsletter skill. |
+<table>
+<thead>
+<tr><th style="white-space:nowrap">Document name</th><th>What to put in it</th></tr>
+</thead>
+<tbody>
+<tr><td><code>investment-thesis</code></td><td>Fund overview, thesis statement, target sectors, ideal company profile, conviction questions. Used by all deal and screening skills.</td></tr>
+<tr><td><code>evaluation-criteria</code></td><td>Hard filters (auto-Pass), soft filters (routing), priority tags (P1/P2/P3), red flags, and response SLA. Used by deal sourcing and pitch analysis skills.</td></tr>
+<tr><td><code>scoring-rubric</code></td><td>Thesis scoring dimensions with weights, 0–10 scale definitions, verdict thresholds (PROCEED / WATCHLIST / PASS). Used by screening and scoring skills.</td></tr>
+<tr><td><code>dd-framework</code></td><td>DD workstreams and owners, timeline, data room checklist, IC memo requirements, reference check standard. Used by DD skills.</td></tr>
+<tr><td><code>memo-template</code></td><td>Investment memo structure with all required sections pre-formatted. Used by the investment memo skill.</td></tr>
+<tr><td><code>tone-guide</code></td><td>Fund voice principles, audience-specific tone (LP / founder / public), words to avoid, signature block. Used by all outreach and communications skills.</td></tr>
+<tr><td><code>health-check-template</code></td><td>Health check format with KPI table, red-flag checklist, PMF pulse, and follow-up action section. Used by the portfolio health check skill.</td></tr>
+<tr><td><code>kpi-standards</code></td><td>KPI definitions, stage benchmarks (pre-seed to Series A), red-flag thresholds, and collection cadence. Used by all portfolio monitoring skills.</td></tr>
+<tr><td><code>lp-report-template</code></td><td>LP quarterly report structure with fund snapshot, portfolio table, NAV bridge, and narrative sections. Used by the LP reporting skill.</td></tr>
+<tr><td><code>newsletter-template</code></td><td>LP newsletter format with opening, portfolio highlights, market observations, and team note. Used by the newsletter skill.</td></tr>
+</tbody>
+</table>
 
 Add the ones your team maintains — documents not in your folder are simply skipped. Start with `investment-thesis` and `evaluation-criteria`; they unlock the most skills immediately.
 

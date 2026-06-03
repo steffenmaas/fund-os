@@ -1,13 +1,50 @@
 {
-  "_note": "Fund OS user preferences. Copy this file to ~/.fund-os-prefs.json and fill in your values, or run the welcome wizard: fund-os:setup",
+  "_note": "Fund OS preferences — edit manually or re-run fund-os:setup to regenerate. Lives inside the plugin and is never overwritten by fund-os:update.",
   "version": "1.0",
-  "tone": "professional",
-  "toneCustom": "",
-  "outputStoragePath": "Fund-Portfolio/",
-  "driveKnowledgeFolderId": "",
-  "knowledgeManifest": {
-    "_comment": "Auto-populated by fund-os:setup. Keys are document names, values are Drive file IDs."
+
+  "masterData": {
+    "_comment": "Core fund identity used across all skills",
+    "fundName": "",
+    "currency": "EUR",
+    "stageFocus": "",
+    "ticketRange": "",
+    "sectors": [],
+    "team": [],
+    "marketAnchor": ""
   },
+
+  "brandGuidelines": {
+    "_comment": "Tone applied to all prose output. Set tone-guide in knowledge.manifest for detailed voice rules.",
+    "tone": "professional",
+    "toneCustom": ""
+  },
+
+  "systems": {
+    "_comment": "The actual tool used for each capability. Names are used in skill instructions and audit trails.",
+    "crm": "",
+    "meetingNotes": "",
+    "documentStorage": "",
+    "marketData": "",
+    "peopleLpSearch": "",
+    "fundAdmin": "",
+    "eSignature": ""
+  },
+
+  "storagePaths": {
+    "_comment": "Folder paths / locations within documentStorage where each type of artefact is saved.",
+    "outputs": "",
+    "deals": "",
+    "portfolio": "",
+    "lps": "",
+    "drafts": ""
+  },
+
+  "knowledge": {
+    "_comment": "Central Google Drive knowledge folder. Fund OS scans it once and maps document names to file IDs.",
+    "driveFolderId": "",
+    "manifest": {}
+  },
+
   "configured": false,
   "configuredAt": ""
 }
