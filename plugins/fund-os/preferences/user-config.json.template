@@ -1,0 +1,13 @@
+{
+  "_note": "Fund OS user preferences. Copy this file to ~/.fund-os-prefs.json and fill in your values, or run the welcome wizard: fund-os:setup",
+  "version": "1.0",
+  "tone": "professional",
+  "toneCustom": "",
+  "outputStoragePath": "Fund-Portfolio/",
+  "driveKnowledgeFolderId": "",
+  "knowledgeManifest": {
+    "_comment": "Auto-populated by fund-os:setup. Keys are document names, values are Drive file IDs."
+  },
+  "configured": false,
+  "configuredAt": ""
+}

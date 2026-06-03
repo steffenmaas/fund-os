@@ -18,6 +18,8 @@ Run this skill when the user says any of:
 
 ## Key instructions
 
+0. **User preferences:** Check for `~/.fund-os-prefs.json`. If it exists, apply `tone` to all prose output, use `outputStoragePath` as the default save location, and load knowledge artefacts listed in `knowledgeManifest` from Google Drive instead of asking the user to paste content. If the file is absent, proceed normally — the user can run `fund-os:setup` to create it.
+
 1. IC pack order: 1-page briefing / Memo / Deck / Market map / Reference summary / Term sheet / Cap table.
 2. Always include the deal lead's three open questions on the briefing page.
 3. Lock the pack as PDF before sending; never circulate editable artefacts.
@@ -73,11 +75,11 @@ Pack: /Deals/Resolutee/IC_Pack_v1.0.pdf (45 pages)
 After successful execution, emit an entry via the `audit-trail-writer` skill:
 
 ```yaml
-skill_version: ic-pack-builder@1.7.0
+skill_version: ic-pack-builder@1.8.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of what changed>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 1.7.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 1.8.0. Do not edit directly — edit the source and rebuild.*

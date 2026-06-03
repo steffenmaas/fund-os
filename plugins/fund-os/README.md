@@ -1,6 +1,6 @@
 # Fund OS Plugin
 
-41 Claude Skills for VC fund operations across 8 lifecycle phases.
+42 Claude Skills for VC fund operations across 8 lifecycle phases.
 
 ## What it is
 
@@ -13,6 +13,12 @@ Fund OS turns the operating model of a small VC team into a portable Claude plug
 Open [`Fund_OS_Dashboard.html`](./Fund_OS_Dashboard.html) in any browser for an interactive view of all skills — periodic table, lifecycle flow and workflow map.
 
 ## Skill inventory
+
+### Phase 00 — Setup
+
+One-time welcome wizard that configures tone, output paths and knowledge sources.
+
+- **Su** [`setup`](./skills/setup/SKILL.md) — Fund OS Setup
 
 ### Phase 01 — Fundraising & LP
 
@@ -120,20 +126,67 @@ The skills compose into 18 cross-skill workflows you can wire up (cron / Agent S
 
 ## Installation
 
-1. Make sure your team has Claude Desktop with Cowork (or Claude Code) installed.
-2. Add this private marketplace:
+### Option A — Script install (no git required, recommended for teammates)
 
-   ```
-   /plugin marketplace add steffenmaas/fund-os
-   ```
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/steffenmaas/fund-os/main/install.sh)
+```
 
-3. Install the plugin:
+Downloads the latest release, places files in the correct Claude directory, and registers the plugin automatically. Requires `curl` (pre-installed on macOS and most Linux distros).
 
-   ```
-   /plugin install fund-os
-   ```
+### Option B — Claude Code CLI
 
-4. Configure MCP servers — copy `.mcp.json.example` to your project's `.mcp.json` and fill in the actual vendor servers and credentials for each capability.
+Inside a Claude Code session:
+
+```
+/plugin marketplace add steffenmaas/fund-os
+/plugin install fund-os@fund-os-marketplace
+```
+
+Requires `gh auth login` (GitHub CLI) and access to the private repo.
+
+### After either install
+
+```
+/reload-plugins
+```
+
+Then run the welcome wizard:
+
+```
+fund-os:setup
+```
+
+This collects your tone, output path and Google Drive knowledge folder — takes about 2 minutes and only needs to be done once.
+
+### MCP servers
+
+Copy `.mcp.json.example` to your project's `.mcp.json` and fill in credentials for the capabilities you use. See the full capability list in `.mcp.json.example`.
+
+## Customization
+
+Fund OS separates three layers so that plugin updates never overwrite personal or team settings:
+
+| Layer | Lives where | Updated by | Survives plugin update |
+|---|---|---|---|
+| **Plugin** (skills, logic) | this repo, versioned | you, via push | n/a — this *is* the update |
+| **User preferences** (tone, paths, Drive ID) | `~/.fund-os-prefs.json` | `fund-os:setup` wizard | ✅ yes |
+| **Shared knowledge** (criteria, templates, guides) | central Google Drive folder | whole team, live | ✅ yes |
+
+### Preferences (`~/.fund-os-prefs.json`)
+
+Every skill reads this file at run-start and applies:
+
+- `tone` — prose style (professional / friendly / formal / custom)
+- `outputStoragePath` — default folder for saved files (e.g. `Fund-Portfolio/`)
+- `driveKnowledgeFolderId` — your shared knowledge Drive folder
+- `knowledgeManifest` — auto-built map of document name → Drive file ID
+
+Run `fund-os:setup` to create or update this file. A template is at [`preferences/user-config.json.template`](./preferences/user-config.json.template).
+
+### Shared knowledge on Google Drive
+
+Store team documents (evaluation criteria, tone guide, scoring rubric, deal frameworks) in one shared Drive folder. During setup the skill scans the folder, builds a manifest, and saves it in your preferences. At runtime, skills load the *current* version of each document directly — no re-deploy needed when a document changes.
 
 ## Knowledge folders
 
@@ -146,7 +199,9 @@ Point the host at four folders in your fund's drive / wiki:
 
 ## Updates
 
-Skill versions live in `plugin.json` (currently `1.7.0`). When you bump the version and push, installed clients will see an update prompt. Enable auto-update by setting `autoUpdate: true` in the marketplace entry of your `~/.claude/settings.json`.
+Skill versions live in `plugin.json` (currently `1.8.0`). When you bump the version and push, installed clients will see an update prompt. Enable auto-update by setting `autoUpdate: true` in the marketplace entry of your `~/.claude/settings.json`.
+
+Re-running `install.sh` also picks up the latest version. Preferences in `~/.fund-os-prefs.json` are never touched by updates.
 
 ## VC-Skills.md Community Integration
 

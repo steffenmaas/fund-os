@@ -21,6 +21,8 @@ Run this skill when the user says any of:
 
 ## Key instructions
 
+0. **User preferences:** Check for `~/.fund-os-prefs.json`. If it exists, apply `tone` to all prose output, use `outputStoragePath` as the default save location, and load knowledge artefacts listed in `knowledgeManifest` from Google Drive instead of asking the user to paste content. If the file is absent, proceed normally — the user can run `fund-os:setup` to create it.
+
 1. Collect minimum viable data: pitch deck or description, founder LinkedIn, company website. Do not proceed without at least one of these.
 2. Score each of 9 dimensions on 0–10; apply the weight table below. Flag 'DATA INSUFFICIENT' for any dimension where evidence is too thin to score reliably.
 3. Compute weighted total and apply verdict: 80–100 = GO (proceed to full DD); 60–79 = CONDITIONAL GO (specify conditions); 40–59 = PIVOT (identify specific concerns); <40 = NO-GO (log reason in CRM and notify GP).
@@ -127,11 +129,11 @@ Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadl
 After successful execution, emit an entry via the `audit-trail-writer` skill:
 
 ```yaml
-skill_version: startup-scorecard@1.7.0
+skill_version: startup-scorecard@1.8.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of company, verdict and key conditions>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 1.7.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 1.8.0. Do not edit directly — edit the source and rebuild.*

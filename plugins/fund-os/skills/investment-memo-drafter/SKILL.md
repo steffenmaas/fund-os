@@ -20,6 +20,8 @@ Run this skill when the user says any of:
 
 ## Key instructions
 
+0. **User preferences:** Check for `~/.fund-os-prefs.json`. If it exists, apply `tone` to all prose output, use `outputStoragePath` as the default save location, and load knowledge artefacts listed in `knowledgeManifest` from Google Drive instead of asking the user to paste content. If the file is absent, proceed normally — the user can run `fund-os:setup` to create it.
+
 1. Modes (auto-detect from trigger and context): initial / follow-on / exit. Same template, different emphasis.
 2. Initial: Snapshot - Team - Market - Product - Model - Traction - Risks - Terms - Open Questions.
 3. Follow-on: appends 'Follow-on rationale' + reserve simulation (pro-rata / super-pro-rata / pass).
@@ -100,11 +102,11 @@ Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadl
 After successful execution, emit an entry via the `audit-trail-writer` skill:
 
 ```yaml
-skill_version: investment-memo-drafter@1.7.0
+skill_version: investment-memo-drafter@1.8.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of what changed>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 1.7.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 1.8.0. Do not edit directly — edit the source and rebuild.*

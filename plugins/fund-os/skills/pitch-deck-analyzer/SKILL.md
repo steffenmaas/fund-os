@@ -18,6 +18,8 @@ Run this skill when the user says any of:
 
 ## Key instructions
 
+0. **User preferences:** Check for `~/.fund-os-prefs.json`. If it exists, apply `tone` to all prose output, use `outputStoragePath` as the default save location, and load knowledge artefacts listed in `knowledgeManifest` from Google Drive instead of asking the user to paste content. If the file is absent, proceed normally — the user can run `fund-os:setup` to create it.
+
 1. Dimensions (fixed): Team 20%, Market 15%, Problem-Solution 15%, Tech 15%, Model 10%, Traction 10%, Competition 10%, GTM 10%, Finance 5%, Exit 5%.
 2. Score each 0-10; cite the slide(s) supporting the score.
 3. Always end with a numeric overall (0-100) and a recommendation: INVEST / CONDITIONAL / WATCHLIST / PASS.
@@ -85,11 +87,11 @@ Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadl
 After successful execution, emit an entry via the `audit-trail-writer` skill:
 
 ```yaml
-skill_version: pitch-deck-analyzer@1.7.0
+skill_version: pitch-deck-analyzer@1.8.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of what changed>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 1.7.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 1.8.0. Do not edit directly — edit the source and rebuild.*
