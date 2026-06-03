@@ -34,5 +34,12 @@
       "label": "Update Fund OS",
       "prompt": "fund-os:update"
     }
+  ],
+  "featured_skills": [
+    "setup",
+    "deal-flow-triage",
+    "deal-thesis-screen",
+    "portfolio-health-check",
+    "deal-investment-memo-draft"
   ]
 }
