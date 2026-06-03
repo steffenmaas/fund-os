@@ -42,7 +42,7 @@ Start with the vanilla version if you're the first person at your fund to instal
 
 ### Upload via Claude Desktop (recommended — no terminal needed)
 
-1. [**Download `fund-os.plugin`**](https://github.com/steffenmaas/fund-os/raw/main/fund-os.plugin) (vanilla) — or use the customised version from your colleague
+1. Get the `fund-os.plugin` file — vanilla version from the table above, or customised version from your colleague
 2. Open **Claude Desktop** and click **Customize** in the left sidebar
 3. Next to **Personal Plugins**, click the **+** button
 4. Hover over **Create plugin**
