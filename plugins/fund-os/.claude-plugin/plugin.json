@@ -1,7 +1,7 @@
 {
   "name": "fund-os",
   "displayName": "Fund OS",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "42 Claude Skills for VC fund operations across 8 lifecycle phases. Built on the open VC-Skills.md community convention. Fund-side scope only - Founder OS coaching skills are a separate bundle.",
   "author": {
     "name": "Ocean One Ventures"
@@ -17,29 +17,31 @@
     "portfolio-monitoring",
     "venture-capital"
   ],
-  "suggested_prompts": [
-    {
-      "label": "Customize",
-      "prompt": "Customize the \"fund-os\" plugin for me based on my company"
-    },
-    {
-      "label": "Triage a deal",
-      "prompt": "Triage this inbound deal against our thesis"
-    },
-    {
-      "label": "Portfolio health check",
-      "prompt": "Run a portfolio health check"
-    },
-    {
-      "label": "Update Fund OS",
-      "prompt": "fund-os:update"
-    }
-  ],
-  "featured_skills": [
-    "setup",
-    "deal-flow-triage",
-    "deal-thesis-screen",
-    "portfolio-health-check",
-    "deal-investment-memo-draft"
-  ]
+  "cowork_fusion_metadata": {
+    "suggested_prompts": [
+      {
+        "label": "Customize",
+        "prompt": "Customize the \"fund-os\" plugin for me based on my company"
+      },
+      {
+        "label": "Triage a deal",
+        "prompt": "Triage this inbound deal against our thesis"
+      },
+      {
+        "label": "Portfolio health check",
+        "prompt": "Run a portfolio health check"
+      },
+      {
+        "label": "Update Fund OS",
+        "prompt": "fund-os:update"
+      }
+    ],
+    "featured_skills": [
+      "setup",
+      "deal-flow-triage",
+      "deal-thesis-screen",
+      "portfolio-health-check",
+      "deal-investment-memo-draft"
+    ]
+  }
 }
