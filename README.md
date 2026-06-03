@@ -129,7 +129,7 @@ To verify:
 /plugin list
 ```
 
-`fund-os` should appear at version `2.0.0`.
+`fund-os` should appear at version `0.2.0`.
 
 **Claude Desktop (Cowork) — individual install**
 
