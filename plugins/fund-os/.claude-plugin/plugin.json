@@ -16,5 +16,23 @@
     "due-diligence",
     "portfolio-monitoring",
     "venture-capital"
+  ],
+  "suggested_prompts": [
+    {
+      "label": "Customize",
+      "prompt": "Customize the \"fund-os\" plugin for me based on my company"
+    },
+    {
+      "label": "Triage a deal",
+      "prompt": "Triage this inbound deal against our thesis"
+    },
+    {
+      "label": "Portfolio health check",
+      "prompt": "Run a portfolio health check"
+    },
+    {
+      "label": "Update Fund OS",
+      "prompt": "fund-os:update"
+    }
   ]
 }
