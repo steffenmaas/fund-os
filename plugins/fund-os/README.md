@@ -1,6 +1,6 @@
 # Fund OS Plugin
 
-42 Claude Skills for VC fund operations across 8 lifecycle phases.
+43 Claude Skills for VC fund operations across 8 lifecycle phases.
 
 ## What it is
 
@@ -199,7 +199,7 @@ Point the host at four folders in your fund's drive / wiki:
 
 ## Updates
 
-Skill versions live in `plugin.json` (currently `1.8.0`). When you bump the version and push, installed clients will see an update prompt. Enable auto-update by setting `autoUpdate: true` in the marketplace entry of your `~/.claude/settings.json`.
+Skill versions live in `plugin.json` (currently `1.9.0`). When you bump the version and push, installed clients will see an update prompt. Enable auto-update by setting `autoUpdate: true` in the marketplace entry of your `~/.claude/settings.json`.
 
 Re-running `install.sh` also picks up the latest version. Preferences in `~/.fund-os-prefs.json` are never touched by updates.
 

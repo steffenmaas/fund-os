@@ -21,7 +21,7 @@ Run this skill when the user says any of:
 
 ## Key instructions
 
-0. **User preferences:** Check for `~/.fund-os-prefs.json`. If it exists, apply `tone` to all prose output, use `outputStoragePath` as the default save location, and load knowledge artefacts listed in `knowledgeManifest` from Google Drive instead of asking the user to paste content. If the file is absent, proceed normally — the user can run `fund-os:setup` to create it.
+0. **User preferences:** Load preferences from the plugin: `~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json` (via Bash: `cat ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json 2>/dev/null`). Apply `tone` to all prose output, `outputStoragePath` as the default save location, and load any `knowledgeManifest` entries from Google Drive. If the file is absent, proceed normally — run `fund-os:setup` to create it.
 
 1. Establish comparison basis: Actual vs Budget (primary), Actual vs Prior Period, Actual vs Forecast. Always state which comparison is being run.
 2. Apply materiality thresholds before deep-diving: Actual vs Budget >10% or >€50K; Actual vs Prior >15%; Actual vs Forecast >5%; Sequential >20%. Only flag variances that breach these thresholds.
@@ -111,11 +111,11 @@ Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadl
 After successful execution, emit an entry via the `audit-trail-writer` skill:
 
 ```yaml
-skill_version: variance-analyzer@1.8.0
+skill_version: variance-analyzer@1.9.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of company, period and primary variance driver>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 1.8.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 1.9.0. Do not edit directly — edit the source and rebuild.*
