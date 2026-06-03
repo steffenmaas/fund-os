@@ -194,11 +194,11 @@ Suggested first skill: /fund-os:deal-flow-triage
 After successful execution, emit an entry via the `legal-audit-trail-write` skill:
 
 ```yaml
-skill_version: setup@2.0.0
+skill_version: setup@0.2.0
 output_ref:    preferences/user-config.json
 rationale:     Fund OS preferences configured for this user
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 2.0.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 0.2.0. Do not edit directly — edit the source and rebuild.*

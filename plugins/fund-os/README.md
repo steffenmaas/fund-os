@@ -156,7 +156,7 @@ To update without losing customisations: type `fund-os:update` in chat, or use `
 
 ## Updates
 
-Skill versions live in `plugin.json` (currently `2.0.0`). See the version bump checklist in the root README.
+Skill versions live in `plugin.json` (currently `0.2.0`). See the version bump checklist in the root README.
 
 ## VC-Skills.md Community Integration
 

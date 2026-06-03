@@ -83,11 +83,11 @@ Personalisation:
 After successful execution, emit an entry via the `legal-audit-trail-write` skill:
 
 ```yaml
-skill_version: outreach-newsletter-draft@2.0.0
+skill_version: outreach-newsletter-draft@0.2.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of what changed>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 2.0.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 0.2.0. Do not edit directly — edit the source and rebuild.*

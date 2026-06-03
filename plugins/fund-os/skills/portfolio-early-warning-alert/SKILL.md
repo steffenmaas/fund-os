@@ -87,11 +87,11 @@ Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadl
 After successful execution, emit an entry via the `legal-audit-trail-write` skill:
 
 ```yaml
-skill_version: portfolio-early-warning-alert@2.0.0
+skill_version: portfolio-early-warning-alert@0.2.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of what changed>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 2.0.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 0.2.0. Do not edit directly — edit the source and rebuild.*

@@ -157,11 +157,11 @@ User must explicitly confirm ("yes") before any files are written. The diff is s
 After successful execution, emit an entry via the `legal-audit-trail-write` skill:
 
 ```yaml
-skill_version: update@2.0.0
+skill_version: update@0.2.0
 output_ref:    ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/
 rationale:     Fund OS updated from v[old] to v[new]; N new skills, M updated
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 2.0.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 0.2.0. Do not edit directly — edit the source and rebuild.*
