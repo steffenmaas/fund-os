@@ -27,7 +27,14 @@ You need one of:
 - **Claude.ai** with a Teams or Enterprise plan
 - **Claude Code** — for power users and developers
 
-You also need the **`fund-os.plugin` file**. If you don't have it yet, ask your Fund OS admin (or contact [steffen@ocean1.vc](mailto:steffen@ocean1.vc)).
+You need a **`fund-os.plugin` file**. Two versions exist:
+
+| Version | What it contains | Where to get it |
+|---|---|---|
+| **Vanilla** | All 42 skills with generic starter templates — ready to use, configure after install | [Download from GitHub ↓](https://github.com/steffenmaas/fund-os/raw/main/fund-os.plugin) |
+| **Customised** | Vanilla + your fund's investment thesis, evaluation criteria, scoring rubric and tone guide pre-loaded | Ask the key Fund OS user at your firm |
+
+Start with the vanilla version if you're the first person at your fund to install Fund OS. Use the customised version if a colleague has already set up the knowledge documents — it saves you the knowledge configuration step.
 
 ---
 
@@ -35,7 +42,7 @@ You also need the **`fund-os.plugin` file**. If you don't have it yet, ask your 
 
 ### Upload via Claude Desktop (recommended — no terminal needed)
 
-1. Download the `fund-os.plugin` file you received
+1. [**Download `fund-os.plugin`**](https://github.com/steffenmaas/fund-os/raw/main/fund-os.plugin) (vanilla) — or use the customised version from your colleague
 2. Open **Claude Desktop** and click **Customize** in the left sidebar
 3. Next to **Personal Plugins**, click the **+** button
 4. Hover over **Create plugin**
