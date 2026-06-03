@@ -74,35 +74,69 @@ Your preferences are saved inside the plugin and **survive updates** — you wil
 
 ## 4. Customising Fund OS
 
-Fund OS is designed to work out of the box, but gets significantly better when you personalise it.
+Fund OS is designed to work out of the box, but gets significantly better when you personalise it. **All customisation can be done directly in the chat** — no file navigation, no hidden folders.
 
 ### Preferences
 
 Run `fund-os:setup` at any time to update your tone, output path, fund name or Drive folder.
 
-### Shared knowledge on Google Drive
+### Editing skill files in the chat
 
-If your fund has shared documents (evaluation criteria, sector frameworks, scoring rubrics, tone guides), put them in a dedicated Google Drive folder and provide the folder ID during setup. Fund OS will:
+To view or change any skill's knowledge files or templates, just ask Claude:
 
-- Scan the folder once and build a map of your documents
-- Load the **current version** of each document at runtime — no re-setup needed when a document changes
-- Apply your evaluation criteria automatically when screening deals
+```
+Show me the evaluation criteria for deal-flow-triage
+```
 
-Both team members can edit the source documents directly. Changes take effect immediately for everyone.
+```
+Update the scoring rubric — add a Regulatory Risk dimension worth 10%
+```
 
-### Per-skill templates and knowledge files
+```
+What does my investment memo template look like?
+```
 
-Each skill has a `templates/` and `knowledge/` folder inside the plugin. These contain starter documents you can edit to match your fund's methodology:
+```
+Change the health check template to add a burn multiple row
+```
 
-| Skill | What you can customise |
-|---|---|
-| `deal-flow-triage` | `knowledge/evaluation-criteria.md` — your hard filters and priority tags |
-| `deal-thesis-screen` | `knowledge/scoring-rubric.md` — your thesis dimensions and score weights |
-| `deal-investment-memo-draft` | `templates/memo-template.md` — your memo structure and boilerplate |
-| `portfolio-health-check` | `templates/health-check-template.md` — your health check format |
-| `lp-quarterly-report` | `templates/lp-report-template.md` — your LP report layout |
+Claude will read the file, show you the content, make your requested changes, and confirm. No navigating to hidden folders required.
 
-To edit: open the plugin folder in Finder (`~/.claude/plugins/cache/fund-os-marketplace/fund-os/`), navigate to the skill, and edit the file in any text editor. Changes take effect immediately.
+### Central knowledge repository on Google Drive
+
+The most powerful customisation is connecting your fund's shared knowledge folder on Google Drive. Once you provide the folder ID in `fund-os:setup`, every skill automatically loads the documents it needs before running.
+
+**How to set it up:**
+
+1. Create a dedicated Google Drive folder (e.g. `Fund OS Knowledge`)
+2. Add your fund's key documents with the names below
+3. Share the folder ID with `fund-os:setup`
+
+Skills load documents by their **filename** (without extension). Name your documents to match the keys in this table:
+
+| Document name in Drive | Contents | Used by |
+|---|---|---|
+| `investment-thesis` | Your thesis — sectors, stage, geography, ticket size | deal-flow-triage, deal-thesis-screen, deal-startup-score, deal-pitch-deck-analyze, deal-investment-memo-draft |
+| `evaluation-criteria` | Hard and soft filters; P1/P2/P3 routing rules | deal-flow-triage, deal-outbound-scout, deal-watchlist-curate |
+| `scoring-rubric` | Thesis scoring dimensions and weights | deal-thesis-screen, deal-startup-score, deal-pitch-deck-analyze |
+| `dd-framework` | Your due diligence process and checklist | deal-reference-check, deal-investment-memo-draft, deal-ic-pack-build |
+| `memo-template` | Investment memo structure and boilerplate | deal-investment-memo-draft |
+| `red-flags` | Automatic deal-kill criteria | deal-pitch-deck-analyze |
+| `health-check-template` | Portfolio health check format | portfolio-health-check |
+| `kpi-standards` | KPI definitions and stage benchmarks | portfolio-kpi-collect, portfolio-health-check, portfolio-variance-analyze |
+| `red-flag-rules` | Portfolio warning signal thresholds | portfolio-early-warning-alert, portfolio-health-check |
+| `impact-framework` | Impact assessment methodology | portfolio-impact-assess |
+| `lp-report-template` | LP quarterly report structure | lp-quarterly-report |
+| `capital-call-template` | Capital call notice format | lp-capital-call-draft |
+| `tone-guide` | Your fund's communication voice | lp-outreach-draft, outreach-newsletter-draft, outreach-content-draft |
+| `lp-thesis` | LP targeting criteria (family offices, DFIs, etc.) | lp-database-scout, lp-network-intro-map |
+| `legal-templates` | Standard term sheet, SPA, NDA clauses | legal-document-draft, legal-contract-signature-manage |
+| `compliance-calendar` | Regulatory deadlines and obligations | legal-regulatory-deadline-watch |
+| `saas-benchmarks` | SaaS benchmarks (ARR growth, NRR, LTV:CAC, margins) | deal-financial-model, deal-comps-analyze, exit-scenario-model |
+
+You don't need all of them — add the ones your team maintains and Fund OS will pick them up. Documents not in your folder are simply skipped.
+
+**Both team members can edit source documents directly in Drive.** Changes take effect immediately — no re-deploy needed.
 
 ---
 
