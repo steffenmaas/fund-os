@@ -569,7 +569,7 @@ Ex-colleague (former head of legal): 'Anna is decisive; sometimes pushes
 
 Prior investor (angel): No concerns. Clean cap table.  Signal: STRONG.
 
-Red flags: None confirmed. To verify: founder vesting after seed.","relevance":{"generalist":5,"impact":5}},{"code":"Im","num":16,"phase":"diligence","slug":"deal-investment-memo-draft","name":"Deal Investment Memo Draft","purpose":"Generate the first draft of any investment memo - initial, follow-on, or exit - from deal data, deck, meeting notes and market research, in the fund's template.","triggers":["draft memo","write IC memo","investment memo","draft follow-on memo","exit memo"],"inputs":["Company file, deck, prior notes, market scan","memo mode (initial / follow-on / exit)"],"outputs":["Memo draft with citations and clearly marked open fields","follow-on rationale + reserve simulation in follow-on mode"],"mcps":["Drive","Meeting Intelligence","CRM","Web Search"],"knowledge":["Memo-Template","Investment-Thesis","DD-Framework","Reserve-Strategy"],"hitl":"Memo is a draft; partners write the recommendation.","keyInstructions":["Modes (auto-detect from trigger and context): initial / follow-on / exit. Same template, different emphasis.","Initial: Snapshot - Team - Market - Product - Model - Traction - Risks - Terms - Open Questions.","Follow-on: appends 'Follow-on rationale' + reserve simulation (pro-rata / super-pro-rata / pass).","Every number gets a source citation in brackets. Mark unverified with [OPEN: ...].","Never write a recommendation. End the memo with the Open Questions list."],"template":"# Investment Memo - Resolutee (initial, draft v0.1)
+Red flags: None confirmed. To verify: founder vesting after seed.","relevance":{"generalist":5,"impact":5}},{"code":"Im","num":16,"phase":"diligence","slug":"deal-due-diligence","name":"Deal Due Diligence","purpose":"Generate the first draft of any investment memo - initial, follow-on, or exit - from deal data, deck, meeting notes and market research, in the fund's template.","triggers":["draft memo","write IC memo","investment memo","draft follow-on memo","exit memo"],"inputs":["Company file, deck, prior notes, market scan","memo mode (initial / follow-on / exit)"],"outputs":["Memo draft with citations and clearly marked open fields","follow-on rationale + reserve simulation in follow-on mode"],"mcps":["Drive","Meeting Intelligence","CRM","Web Search"],"knowledge":["Memo-Template","Investment-Thesis","DD-Framework","Reserve-Strategy"],"hitl":"Memo is a draft; partners write the recommendation.","keyInstructions":["Modes (auto-detect from trigger and context): initial / follow-on / exit. Same template, different emphasis.","Initial: Snapshot - Team - Market - Product - Model - Traction - Risks - Terms - Open Questions.","Follow-on: appends 'Follow-on rationale' + reserve simulation (pro-rata / super-pro-rata / pass).","Every number gets a source citation in brackets. Mark unverified with [OPEN: ...].","Never write a recommendation. End the memo with the Open Questions list."],"template":"# Investment Memo - Resolutee (initial, draft v0.1)
 
 ## Snapshot
 AI platform for commercial dispute resolution. Seed: EUR 3m @ EUR 12m post.
@@ -636,7 +636,7 @@ Concentration:
 
 Watch list:
   - Helios (3rd consecutive late submission)
-  - Cobalt AI (NRR 102% -> 88% in Q1)","relevance":{"generalist":5,"impact":5}},{"code":"Ew","num":21,"phase":"portfolio","slug":"portfolio-early-warning-alert","name":"Portfolio Early Warning Alert","purpose":"Continuously scan portfolio for negative signals - missed KPI, runway shrinking, founder churn, press risk - and surface follow-on triggers (round signal, mark-up, milestone).","triggers":["early warning","portfolio risk","alert me if","follow-on trigger"],"inputs":["KPI tracker","news feeds","meeting notes","reserve plan"],"outputs":["Prioritised alerts with intervention recommendation","follow-on trigger shortlist (hands off to investment-memo-drafter)"],"mcps":["Web Search","Meeting Intelligence","Chat","Spreadsheet"],"knowledge":["Risk-Signal-Library","Reserve-Strategy"],"hitl":"Critical alerts go to humans, not to founders.","keyInstructions":["On follow-on trigger, prepare a brief and hand off to deal-investment-memo-draft in follow-on mode."],"template":"# Alerts - 2026-05-19
+  - Cobalt AI (NRR 102% -> 88% in Q1)","relevance":{"generalist":5,"impact":5}},{"code":"Ew","num":21,"phase":"portfolio","slug":"portfolio-early-warning-alert","name":"Portfolio Early Warning Alert","purpose":"Continuously scan portfolio for negative signals - missed KPI, runway shrinking, founder churn, press risk - and surface follow-on triggers (round signal, mark-up, milestone).","triggers":["early warning","portfolio risk","alert me if","follow-on trigger"],"inputs":["KPI tracker","news feeds","meeting notes","reserve plan"],"outputs":["Prioritised alerts with intervention recommendation","follow-on trigger shortlist (hands off to investment-memo-drafter)"],"mcps":["Web Search","Meeting Intelligence","Chat","Spreadsheet"],"knowledge":["Risk-Signal-Library","Reserve-Strategy"],"hitl":"Critical alerts go to humans, not to founders.","keyInstructions":["On follow-on trigger, prepare a brief and hand off to deal-due-diligence in follow-on mode."],"template":"# Alerts - 2026-05-19
 
 P1 (within hours):
   Cobalt AI - press article 6h ago re CEO conflict. Action: call founder today.
@@ -646,7 +646,7 @@ P2 (24h):
 
 FOLLOW-ON TRIGGER:
   Resolutee - new Tier-1 lead at EUR 35m post (2.9x mark-up).
-  Handed off to deal-investment-memo-draft (follow-on mode).
+  Handed off to deal-due-diligence (follow-on mode).
 
 P3 weekly:
   Three companies with NRR softening.","relevance":{"generalist":5,"impact":5}},{"code":"Cc","num":22,"phase":"reporting","slug":"lp-capital-call-draft","name":"LP Capital Call Draft","purpose":"Compute the call quota per LP, draft the call notices and chase open commitments through to receipt.","triggers":["capital call","draw down","call notice"],"inputs":["Fund plan","LP commitments","NAV"],"outputs":["Call notices per LP","payment tracker"],"mcps":["Fund Admin (read)","Email","Drive"],"knowledge":["Capital-Call-Template","Subscription-Workflow"],"hitl":"All capital calls signed off by GP.","keyInstructions":["Compute quota strictly from the subscription agreement - never derive a quota from anywhere else.","Each notice carries: call number, percent of commitment, EUR amount, due date, bank details, fund admin contact.","Always send via the registered LP email of record - cross-check against the fund admin contact register.","Track receipts daily until 100%; escalate to GP on day 5 after due date."],"template":"# Capital Call #4 - Fund II
@@ -745,7 +745,7 @@ T-30:
 timestamp_utc:  2026-05-19T11:32:18Z
 actor:          partner.x@<fund>
 actor_type:     human
-skill_version:  deal-investment-memo-draft@0.2.0
+skill_version:  deal-due-diligence@0.2.0
 action:         memo_draft_approved
 input_hash:     sha256:8e2a...4b
 output_ref:     /Deals/Resolutee/IC_Pack_v1.0.pdf
