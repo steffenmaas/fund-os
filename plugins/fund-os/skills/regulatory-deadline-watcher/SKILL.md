@@ -18,6 +18,8 @@ Run this skill when the user says any of:
 
 ## Key instructions
 
+0. **User preferences:** Check for `~/.fund-os-prefs.json`. If it exists, apply `tone` to all prose output, use `outputStoragePath` as the default save location, and load knowledge artefacts listed in `knowledgeManifest` from Google Drive instead of asking the user to paste content. If the file is absent, proceed normally — the user can run `fund-os:setup` to create it.
+
 1. Three tiers: T-30 (preparation), T-14 (escalation), T-3 (red).
 2. Always link the alert to the filing template and the responsible officer.
 3. Re-check the regulator's website weekly for date changes; surface diffs immediately.
@@ -79,11 +81,11 @@ Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadl
 After successful execution, emit an entry via the `audit-trail-writer` skill:
 
 ```yaml
-skill_version: regulatory-deadline-watcher@1.7.0
+skill_version: regulatory-deadline-watcher@1.8.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of what changed>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 1.7.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 1.8.0. Do not edit directly — edit the source and rebuild.*

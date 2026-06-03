@@ -19,6 +19,8 @@ Run this skill when the user says any of:
 
 ## Key instructions
 
+0. **User preferences:** Check for `~/.fund-os-prefs.json`. If it exists, apply `tone` to all prose output, use `outputStoragePath` as the default save location, and load knowledge artefacts listed in `knowledgeManifest` from Google Drive instead of asking the user to paste content. If the file is absent, proceed normally — the user can run `fund-os:setup` to create it.
+
 1. Match by thesis overlap, stage focus, geography, prior co-investment history.
 2. Maintain a 'do-not-share' list per deal (conflicts, prior pass).
 3. Personalise the share note: 1 line on the deal, 1 line on why this co-investor specifically.
@@ -79,11 +81,11 @@ Do-not-share: Atomico (passed similar deal 2025).
 After successful execution, emit an entry via the `audit-trail-writer` skill:
 
 ```yaml
-skill_version: co-investor-syndicator@1.7.0
+skill_version: co-investor-syndicator@1.8.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of what changed>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 1.7.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 1.8.0. Do not edit directly — edit the source and rebuild.*

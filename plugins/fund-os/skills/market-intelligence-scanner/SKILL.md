@@ -20,6 +20,8 @@ Run this skill when the user says any of:
 
 ## Key instructions
 
+0. **User preferences:** Check for `~/.fund-os-prefs.json`. If it exists, apply `tone` to all prose output, use `outputStoragePath` as the default save location, and load knowledge artefacts listed in `knowledgeManifest` from Google Drive instead of asking the user to paste content. If the file is absent, proceed normally — the user can run `fund-os:setup` to create it.
+
 1. Three streams: (1) new reports / studies / whitepapers, (2) new deals (fundings, M&A, partnerships), (3) new events / regulation / talent moves.
 2. Critical-alert rules: regulation directly affecting a portfolio company; direct competitor funding > EUR 20m; M&A in the fund's exit-comp set.
 3. Archive every cited report into Fund-Market/Reports/ with a 3-line summary and tags.
@@ -93,11 +95,11 @@ Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadl
 After successful execution, emit an entry via the `audit-trail-writer` skill:
 
 ```yaml
-skill_version: market-intelligence-scanner@1.7.0
+skill_version: market-intelligence-scanner@1.8.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of what changed>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 1.7.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 1.8.0. Do not edit directly — edit the source and rebuild.*

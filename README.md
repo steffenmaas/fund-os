@@ -14,6 +14,31 @@ The same skill bundle runs in Claude Desktop (Cowork), Claude Code, and the Clau
 
 ## Installation
 
+Two paths depending on your setup. Both end in the same place.
+
+---
+
+### Quick install (no git required)
+
+The fastest way for teammates who don't have git or the GitHub CLI set up:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/steffenmaas/fund-os/main/install.sh)
+```
+
+This downloads the latest release, places all files in the correct Claude directory, and registers the plugin. Requires only `curl` (pre-installed on macOS).
+
+Then reload and run the setup wizard:
+
+```
+/reload-plugins
+fund-os:setup
+```
+
+---
+
+### Full install (Claude Code CLI)
+
 ### Prerequisites
 
 - Mac or Windows with a terminal
@@ -92,7 +117,7 @@ To verify:
 /plugin list
 ```
 
-`fund-os` should appear at version `1.7.0`.
+`fund-os` should appear at version `1.8.0`.
 
 **Claude Desktop (Cowork) — individual install**
 
@@ -182,7 +207,17 @@ Skills both read from and write to these folders — health checks update `Fund-
 
 ---
 
-### Step 7 — Run your first skill
+### Step 7 — Run the welcome wizard
+
+```
+fund-os:setup
+```
+
+This runs once and takes about 2 minutes. It asks for your preferred tone of voice, output storage path, and an optional Google Drive folder ID for shared knowledge documents. Preferences are saved to `~/.fund-os-prefs.json` — they survive plugin updates and are never shared with teammates.
+
+---
+
+### Step 8 — Run your first skill
 
 Type a trigger phrase in Claude:
 
@@ -202,7 +237,9 @@ Claude activates the matching skill, requests any missing inputs, and walks you 
 
 | Path | Contents |
 |---|---|
-| [`plugins/fund-os/`](./plugins/fund-os/) | Plugin root — 41 SKILL.md files across 8 phases, plugin manifest, MCP config example |
+| [`plugins/fund-os/`](./plugins/fund-os/) | Plugin root — 42 SKILL.md files across 8 phases, plugin manifest, MCP config example |
+| [`install.sh`](./install.sh) | No-git installer — downloads and registers the plugin with one command |
+| [`plugins/fund-os/preferences/`](./plugins/fund-os/preferences/) | User preferences template (copied to `~/.fund-os-prefs.json` by the setup wizard) |
 | [`plugins/fund-os/README.md`](./plugins/fund-os/README.md) | Full skill inventory, 18 workflows, installation details |
 | [`plugins/fund-os/Fund_OS_Dashboard.html`](./plugins/fund-os/Fund_OS_Dashboard.html) | Interactive periodic table of all skills — open in any browser |
 | [`.claude-plugin/marketplace.json`](./.claude-plugin/marketplace.json) | Marketplace manifest |

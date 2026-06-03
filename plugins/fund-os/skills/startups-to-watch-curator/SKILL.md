@@ -18,6 +18,8 @@ Run this skill when the user says any of:
 
 ## Key instructions
 
+0. **User preferences:** Check for `~/.fund-os-prefs.json`. If it exists, apply `tone` to all prose output, use `outputStoragePath` as the default save location, and load knowledge artefacts listed in `knowledgeManifest` from Google Drive instead of asking the user to paste content. If the file is absent, proceed normally — the user can run `fund-os:setup` to create it.
+
 1. Cap the digest at 7 startups per week - quality over volume.
 2. Each entry: 1 line on company, 1 line on why now, 1 line on what we are doing next.
 3. Produce three variants: internal team, co-investors, public LinkedIn (no confidential details).
@@ -75,11 +77,11 @@ Slide 5: 'Reach out if your thesis overlaps'
 After successful execution, emit an entry via the `audit-trail-writer` skill:
 
 ```yaml
-skill_version: startups-to-watch-curator@1.7.0
+skill_version: startups-to-watch-curator@1.8.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of what changed>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 1.7.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 1.8.0. Do not edit directly — edit the source and rebuild.*

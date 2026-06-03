@@ -21,6 +21,8 @@ Run this skill when the user says any of:
 
 ## Key instructions
 
+0. **User preferences:** Check for `~/.fund-os-prefs.json`. If it exists, apply `tone` to all prose output, use `outputStoragePath` as the default save location, and load knowledge artefacts listed in `knowledgeManifest` from Google Drive instead of asking the user to paste content. If the file is absent, proceed normally — the user can run `fund-os:setup` to create it.
+
 1. Register schema: id, party_a, party_b, type, executed_date, term, deadlines[], owner.
 2. For signature: send via the integrated e-signature MCP, track status, escalate at T+3d.
 3. Auto-create calendar entries for every deadline at T-30 and T-7.
@@ -89,11 +91,11 @@ Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadl
 After successful execution, emit an entry via the `audit-trail-writer` skill:
 
 ```yaml
-skill_version: contract-and-signature-manager@1.7.0
+skill_version: contract-and-signature-manager@1.8.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of what changed>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 1.7.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 1.8.0. Do not edit directly — edit the source and rebuild.*
