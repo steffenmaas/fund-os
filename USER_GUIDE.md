@@ -117,11 +117,10 @@ Skills load documents by their **filename** (without extension). Name your docum
 | Document name in Drive | Contents | Used by |
 |---|---|---|
 | `investment-thesis` | Your thesis — sectors, stage, geography, ticket size | deal-flow-triage, deal-thesis-screen, deal-startup-score, deal-pitch-deck-analyze, deal-investment-memo-draft |
-| `evaluation-criteria` | Hard and soft filters; P1/P2/P3 routing rules | deal-flow-triage, deal-outbound-scout, deal-watchlist-curate |
+| `evaluation-criteria` | Hard and soft filters, P1/P2/P3 routing rules, and automatic deal-kill red flags | deal-flow-triage, deal-outbound-scout, deal-watchlist-curate, deal-pitch-deck-analyze |
 | `scoring-rubric` | Thesis scoring dimensions and weights | deal-thesis-screen, deal-startup-score, deal-pitch-deck-analyze |
 | `dd-framework` | Your due diligence process and checklist | deal-reference-check, deal-investment-memo-draft, deal-ic-pack-build |
 | `memo-template` | Investment memo structure and boilerplate | deal-investment-memo-draft |
-| `red-flags` | Automatic deal-kill criteria | deal-pitch-deck-analyze |
 | `health-check-template` | Portfolio health check format | portfolio-health-check |
 | `kpi-standards` | KPI definitions and stage benchmarks | portfolio-kpi-collect, portfolio-health-check, portfolio-variance-analyze |
 | `red-flag-rules` | Portfolio warning signal thresholds | portfolio-early-warning-alert, portfolio-health-check |

@@ -28,6 +28,17 @@
 | **P3** | Passes hard filters; significant soft flags; monitor only |
 | **Pass** | Any hard filter fails |
 
+## Red flags (automatic Pass regardless of other scores)
+
+Any single red flag below is an immediate Pass — do not route for further review.
+
+- [ ] [e.g. B2C consumer with no clear monetisation path]
+- [ ] [e.g. Solo founder, no co-founder plan within 3 months]
+- [ ] [e.g. Deep-tech with >5 year commercial horizon]
+- [ ] [e.g. Regulated sector requiring licence the team does not hold]
+- [ ] [e.g. Existing investor conflict with our portfolio]
+- [ ] [e.g. Deck is NDA-gated before first call]
+
 ## Response SLA
 
 - P1: reply within 24h
