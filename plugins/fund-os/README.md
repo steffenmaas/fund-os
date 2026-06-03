@@ -126,13 +126,22 @@ The skills compose into 18 cross-skill workflows you can wire up (cron / Agent S
 
 ## Installation
 
-### Option A — Script install (no git required, recommended for teammates)
+### Option A — Upload via Claude Desktop UI (easiest, no terminal)
+
+1. [**Download `fund-os.plugin`**](https://github.com/steffenmaas/fund-os/raw/main/fund-os.plugin) from GitHub
+2. Open **Claude Desktop** → click **Customize** in the left sidebar
+3. Click the **+** button next to **Personal Plugins**
+4. Hover over **Create plugin** → click **Upload plugin**
+5. Select the `fund-os.plugin` file
+6. Run the welcome wizard: type `fund-os:setup`
+
+### Option B — Script install (no git required)
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/steffenmaas/fund-os/main/install.sh)
 ```
 
-### Option B — Claude Code CLI
+### Option C — Claude Code CLI
 
 ```
 /plugin marketplace add steffenmaas/fund-os

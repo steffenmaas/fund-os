@@ -36,11 +36,12 @@ You also need the **`fund-os.plugin` file**. If you don't have it yet, ask your 
 ### Upload via Claude Desktop (recommended — no terminal needed)
 
 1. Download the `fund-os.plugin` file you received
-2. Open **Claude Desktop** and switch to the **Cowork** tab
-3. Click **Customize** in the left sidebar
-4. Open the **Marketplace** section
-5. Click **Add plugin** and upload the `fund-os.plugin` file
-6. Claude will confirm the installation — you should see **Fund OS** appear in your plugins list
+2. Open **Claude Desktop** and click **Customize** in the left sidebar
+3. Next to **Personal Plugins**, click the **+** button
+4. Hover over **Create plugin**
+5. Click **Upload plugin**
+6. Select the `fund-os.plugin` file
+7. **Fund OS** will appear in your Personal Plugins list
 
 That's it. No terminal, no accounts, no technical setup required.
 
