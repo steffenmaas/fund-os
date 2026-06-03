@@ -132,7 +132,7 @@ Skills load documents by their **filename** (without extension). Name your docum
 <tr><td><code>evaluation-criteria</code></td><td>Hard filters (auto-Pass), soft filters (routing), priority tags (P1/P2/P3), red flags, and response SLA. Used by deal sourcing and pitch analysis skills.</td></tr>
 <tr><td><code>scoring-rubric</code></td><td>Thesis scoring dimensions with weights, 0–10 scale definitions, verdict thresholds (PROCEED / WATCHLIST / PASS). Used by screening and scoring skills.</td></tr>
 <tr><td><code>dd-framework</code></td><td>DD workstreams and owners, timeline, data room checklist, IC memo requirements, reference check standard. Used by DD skills.</td></tr>
-<tr><td><code>memo-template</code></td><td>Investment memo structure with all required sections pre-formatted. Used by the investment memo skill.</td></tr>
+<tr><td><code>memo-template</code></td><td>Investment memo structure with all required sections pre-formatted. Used by the due diligence skill.</td></tr>
 <tr><td><code>tone-guide</code></td><td>Fund voice principles, audience-specific tone (LP / founder / public), words to avoid, signature block. Used by all outreach and communications skills.</td></tr>
 <tr><td><code>health-check-template</code></td><td>Health check format with KPI table, red-flag checklist, PMF pulse, and follow-up action section. Used by the portfolio health check skill.</td></tr>
 <tr><td><code>kpi-standards</code></td><td>KPI definitions, stage benchmarks (pre-seed to Series A), red-flag thresholds, and collection cadence. Used by all portfolio monitoring skills.</td></tr>
@@ -205,7 +205,7 @@ fund-os:lp-quarterly-report
 | Run a financial model | `deal-financial-model` | "Model the financials for [Company]" |
 | Pull comparable company valuations | `deal-comps-analyze` | "Comps for [sector]" |
 | Plan and run reference checks | `deal-reference-check` | "Reference check for [Company]" |
-| Draft the investment memo | `deal-investment-memo-draft` | "Draft an investment memo for [Company]" |
+| Run DD and draft the IC memo | `deal-due-diligence` | "Run DD for [Company]" / "Draft the IC memo" |
 | Build the IC pack | `deal-ic-pack-build` | "Assemble the IC pack for [Company]" |
 
 ### I'm closing a deal
@@ -308,4 +308,4 @@ When you write in, please include:
 
 ---
 
-*Fund OS v0.2.0 · © Ocean One Ventures · Built on Claude Skills, MCP and the Claude Agent SDK*
+*Fund OS v0.2.2 · © Ocean One Ventures · Built on Claude Skills, MCP and the Claude Agent SDK*
