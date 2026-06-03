@@ -129,7 +129,7 @@ To verify:
 /plugin list
 ```
 
-`fund-os` should appear at version `1.8.0`.
+`fund-os` should appear at version `1.9.0`.
 
 **Claude Desktop (Cowork) — individual install**
 
@@ -249,7 +249,7 @@ Claude activates the matching skill, requests any missing inputs, and walks you 
 
 | Path | Contents |
 |---|---|
-| [`plugins/fund-os/`](./plugins/fund-os/) | Plugin root — 42 SKILL.md files across 8 phases, plugin manifest, MCP config example |
+| [`plugins/fund-os/`](./plugins/fund-os/) | Plugin root — 43 SKILL.md files across 8 phases, plugin manifest, MCP config example |
 | [`install.sh`](./install.sh) | No-git installer — downloads and registers the plugin with one command |
 | [`plugins/fund-os/preferences/`](./plugins/fund-os/preferences/) | User preferences template (copied to `~/.fund-os-prefs.json` by the setup wizard) |
 | [`plugins/fund-os/README.md`](./plugins/fund-os/README.md) | Full skill inventory, 18 workflows, installation details |

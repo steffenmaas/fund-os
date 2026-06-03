@@ -21,7 +21,7 @@ Run this skill when the user says any of:
 
 ## Key instructions
 
-0. **User preferences:** Check for `~/.fund-os-prefs.json`. If it exists, apply `tone` to all prose output, use `outputStoragePath` as the default save location, and load knowledge artefacts listed in `knowledgeManifest` from Google Drive instead of asking the user to paste content. If the file is absent, proceed normally — the user can run `fund-os:setup` to create it.
+0. **User preferences:** Load preferences from the plugin: `~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json` (via Bash: `cat ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json 2>/dev/null`). Apply `tone` to all prose output, `outputStoragePath` as the default save location, and load any `knowledgeManifest` entries from Google Drive. If the file is absent, proceed normally — run `fund-os:setup` to create it.
 
 1. Define the comp universe: identify 5–10 comparable public companies and 3–5 recent M&A transactions in the same sector, stage-adjacency and geography. Prioritise recency (transactions <3 years old weighted higher).
 2. For each public comp pull: EV, Revenue (LTM + NTM), EBITDA (LTM), ARR (if SaaS), growth rate, gross margin, NRR. Compute: EV/LTM Revenue, EV/NTM Revenue, EV/EBITDA, EV/ARR.
@@ -109,11 +109,11 @@ Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadl
 After successful execution, emit an entry via the `audit-trail-writer` skill:
 
 ```yaml
-skill_version: comps-analyzer@1.8.0
+skill_version: comps-analyzer@1.9.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of sector, comp set and valuation range>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 1.8.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 1.9.0. Do not edit directly — edit the source and rebuild.*

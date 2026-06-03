@@ -20,7 +20,7 @@ Run this skill when the user says any of:
 
 ## Key instructions
 
-0. **User preferences:** Check for `~/.fund-os-prefs.json`. If it exists, apply `tone` to all prose output, use `outputStoragePath` as the default save location, and load knowledge artefacts listed in `knowledgeManifest` from Google Drive instead of asking the user to paste content. If the file is absent, proceed normally — the user can run `fund-os:setup` to create it.
+0. **User preferences:** Load preferences from the plugin: `~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json` (via Bash: `cat ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json 2>/dev/null`). Apply `tone` to all prose output, `outputStoragePath` as the default save location, and load any `knowledgeManifest` entries from Google Drive. If the file is absent, proceed normally — run `fund-os:setup` to create it.
 
 1. Gather data from all available sources in order: CRM, pitch deck / data room, web search, LinkedIn, funding databases (Crunchbase, Dealroom, Apollo).
 2. Structure the profile in five sections: (i) Company basics — name, founded, HQ, stage, sector, website; (ii) Founding team — bios, domain expertise, prior exits, team completeness; (iii) Product — one-sentence description, core value proposition, current stage (idea / MVP / growth), tech differentiation; (iv) Traction — ARR/MRR, growth rate, customer count, key logos, NRR, runway; (v) Market & competitive landscape — TAM/SAM/SOM, top 3–5 competitors with differentiators.
@@ -121,11 +121,11 @@ Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadl
 After successful execution, emit an entry via the `audit-trail-writer` skill:
 
 ```yaml
-skill_version: company-profiler@1.8.0
+skill_version: company-profiler@1.9.0
 output_ref:    <path or record id of the produced artefact>
 rationale:     <one-line summary of company and profile purpose>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 1.8.0. Do not edit directly — edit the source and rebuild.*
+*Generated from `skills-data.js` at version 1.9.0. Do not edit directly — edit the source and rebuild.*
