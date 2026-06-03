@@ -112,28 +112,22 @@ The most powerful customisation is connecting your fund's shared knowledge folde
 2. Add your fund's key documents with the names below
 3. Share the folder ID with `fund-os:setup`
 
-Skills load documents by their **filename** (without extension). Name your documents to match the keys in this table:
+Skills load documents by their **filename** (without extension). Name your documents to match the keys below — starter templates for each are included in the plugin and can be shown to you by asking Claude:
 
-| Document name in Drive | Contents | Used by |
-|---|---|---|
-| `investment-thesis` | Your thesis — sectors, stage, geography, ticket size | deal-flow-triage, deal-thesis-screen, deal-startup-score, deal-pitch-deck-analyze, deal-investment-memo-draft |
-| `evaluation-criteria` | Hard and soft filters, P1/P2/P3 routing rules, and automatic deal-kill red flags | deal-flow-triage, deal-outbound-scout, deal-watchlist-curate, deal-pitch-deck-analyze |
-| `scoring-rubric` | Thesis scoring dimensions and weights | deal-thesis-screen, deal-startup-score, deal-pitch-deck-analyze |
-| `dd-framework` | Your due diligence process and checklist | deal-reference-check, deal-investment-memo-draft, deal-ic-pack-build |
-| `memo-template` | Investment memo structure and boilerplate | deal-investment-memo-draft |
-| `health-check-template` | Portfolio health check format | portfolio-health-check |
-| `kpi-standards` | KPI definitions and stage benchmarks | portfolio-kpi-collect, portfolio-health-check, portfolio-variance-analyze |
-| `red-flag-rules` | Portfolio warning signal thresholds | portfolio-early-warning-alert, portfolio-health-check |
-| `impact-framework` | Impact assessment methodology | portfolio-impact-assess |
-| `lp-report-template` | LP quarterly report structure | lp-quarterly-report |
-| `capital-call-template` | Capital call notice format | lp-capital-call-draft |
-| `tone-guide` | Your fund's communication voice | lp-outreach-draft, outreach-newsletter-draft, outreach-content-draft |
-| `lp-thesis` | LP targeting criteria (family offices, DFIs, etc.) | lp-database-scout, lp-network-intro-map |
-| `legal-templates` | Standard term sheet, SPA, NDA clauses | legal-document-draft, legal-contract-signature-manage |
-| `compliance-calendar` | Regulatory deadlines and obligations | legal-regulatory-deadline-watch |
-| `saas-benchmarks` | SaaS benchmarks (ARR growth, NRR, LTV:CAC, margins) | deal-financial-model, deal-comps-analyze, exit-scenario-model |
+| Document name | What to put in it |
+|---|---|
+| `investment-thesis` | Fund overview, thesis statement, target sectors, ideal company profile, conviction questions. Used by all deal and screening skills. |
+| `evaluation-criteria` | Hard filters (auto-Pass), soft filters (routing), priority tags (P1/P2/P3), red flags, and response SLA. Used by deal sourcing and pitch analysis skills. |
+| `scoring-rubric` | Thesis scoring dimensions with weights, 0–10 scale definitions, verdict thresholds (PROCEED / WATCHLIST / PASS). Used by screening and scoring skills. |
+| `dd-framework` | DD workstreams and owners, timeline, data room checklist, IC memo requirements, reference check standard. Used by DD skills. |
+| `memo-template` | Investment memo structure with all required sections pre-formatted. Used by the investment memo skill. |
+| `tone-guide` | Fund voice principles, audience-specific tone (LP / founder / public), words to avoid, signature block. Used by all outreach and communications skills. |
+| `health-check-template` | Health check format with KPI table, red-flag checklist, PMF pulse, and follow-up action section. Used by the portfolio health check skill. |
+| `kpi-standards` | KPI definitions, stage benchmarks (pre-seed to Series A), red-flag thresholds, and collection cadence. Used by all portfolio monitoring skills. |
+| `lp-report-template` | LP quarterly report structure with fund snapshot, portfolio table, NAV bridge, and narrative sections. Used by the LP reporting skill. |
+| `newsletter-template` | LP newsletter format with opening, portfolio highlights, market observations, and team note. Used by the newsletter skill. |
 
-You don't need all of them — add the ones your team maintains and Fund OS will pick them up. Documents not in your folder are simply skipped.
+Add the ones your team maintains — documents not in your folder are simply skipped. Start with `investment-thesis` and `evaluation-criteria`; they unlock the most skills immediately.
 
 **Both team members can edit source documents directly in Drive.** Changes take effect immediately — no re-deploy needed.
 
