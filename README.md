@@ -14,19 +14,31 @@ The same skill bundle runs in Claude Desktop (Cowork), Claude Code, and the Clau
 
 ## Installation
 
-Two paths depending on your setup. Both end in the same place.
+Three options — pick the one that fits your setup.
 
 ---
 
-### Quick install (no git required)
+### Option 1 — Upload via Claude Desktop UI (easiest, no terminal)
 
-The fastest way for teammates who don't have git or the GitHub CLI set up:
+1. [**Download `fund-os.plugin`**](https://github.com/steffenmaas/fund-os/raw/main/fund-os.plugin) from GitHub
+2. Open **Claude Desktop** → go to the **Cowork** tab
+3. Click **Customize** in the left sidebar → open **Marketplace**
+4. Click **Add plugin** and upload the `fund-os.plugin` file
+5. Run the welcome wizard: type `fund-os:setup`
+
+That's it — no terminal, no git, no accounts needed beyond Claude Desktop access.
+
+---
+
+### Option 2 — Script install (no git required)
+
+For teammates comfortable with a terminal but without git or the GitHub CLI:
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/steffenmaas/fund-os/main/install.sh)
 ```
 
-This downloads the latest release, places all files in the correct Claude directory, and registers the plugin. Requires only `curl` (pre-installed on macOS).
+Downloads the latest release, places all files in the correct Claude directory, and registers the plugin. Requires only `curl` (pre-installed on macOS).
 
 Then reload and run the setup wizard:
 
@@ -37,7 +49,7 @@ fund-os:setup
 
 ---
 
-### Full install (Claude Code CLI)
+### Option 3 — Claude Code CLI (full developer install)
 
 ### Prerequisites
 
