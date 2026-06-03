@@ -1,6 +1,6 @@
 # Fund OS Plugin
 
-43 Claude Skills for VC fund operations across 8 lifecycle phases.
+42 Claude Skills for VC fund operations across 8 lifecycle phases.
 
 ## What it is
 
@@ -16,113 +16,113 @@ Open [`Fund_OS_Dashboard.html`](./Fund_OS_Dashboard.html) in any browser for an 
 
 ### Phase 00 — Setup
 
-One-time welcome wizard that configures tone, output paths and knowledge sources.
+One-time welcome wizard and updater.
 
-- **Su** [`setup`](./skills/setup/SKILL.md) — Fund OS Setup
+- [`setup`](./skills/setup/SKILL.md) — Fund OS Setup
+- [`update`](./skills/update/SKILL.md) — Fund OS Update
 
 ### Phase 01 — Fundraising & LP
 
 Identify potential LPs, find paths to them, reach out, prepare a data room, manage commitment and KYC.
 
-- **Ld** [`lp-database-prospector`](./skills/lp-database-prospector/SKILL.md) — LP Database Prospector
-- **Nm** [`network-intro-mapper`](./skills/network-intro-mapper/SKILL.md) — Network Intro Mapper
-- **Lo** [`lp-outreach-composer`](./skills/lp-outreach-composer/SKILL.md) — LP Outreach Composer
-- **Dr** [`data-room-builder`](./skills/data-room-builder/SKILL.md) — Data Room Builder
-- **Lp** [`lp-pipeline-manager`](./skills/lp-pipeline-manager/SKILL.md) — LP Pipeline Manager
-- **Gs** [`fund-grant-scout`](./skills/fund-grant-scout/SKILL.md) — Fund Grant Scout
+- [`lp-database-scout`](./skills/lp-database-scout/SKILL.md) — LP Database Scout
+- [`lp-network-intro-map`](./skills/lp-network-intro-map/SKILL.md) — LP Network Intro Map
+- [`lp-outreach-draft`](./skills/lp-outreach-draft/SKILL.md) — LP Outreach Draft
+- [`lp-data-room-build`](./skills/lp-data-room-build/SKILL.md) — LP Data Room Build
+- [`lp-pipeline-manage`](./skills/lp-pipeline-manage/SKILL.md) — LP Pipeline Manage
+- [`finance-grant-scout`](./skills/finance-grant-scout/SKILL.md) — Finance Grant Scout
 
 ### Phase 02 — Sourcing & Market Watch
 
 Active scouting, inbound triage, thesis screening, market intelligence and co-investor sharing.
 
-- **Os** [`outbound-startup-scout`](./skills/outbound-startup-scout/SKILL.md) — Outbound Startup Scout
-- **Di** [`deal-flow-triage`](./skills/deal-flow-triage/SKILL.md) — Deal Flow Triage
-- **Tm** [`thesis-fit-scorer`](./skills/thesis-fit-scorer/SKILL.md) — Thesis Fit Scorer
-- **Mi** [`market-intelligence-scanner`](./skills/market-intelligence-scanner/SKILL.md) — Market Intelligence Scanner
-- **Sw** [`startups-to-watch-curator`](./skills/startups-to-watch-curator/SKILL.md) — Startups-to-Watch Curator
-- **Cy** [`co-investor-syndicator`](./skills/co-investor-syndicator/SKILL.md) — Co-Investor Syndicator
-- **Ss** [`startup-scorecard`](./skills/startup-scorecard/SKILL.md) — Startup Scorecard
+- [`deal-outbound-scout`](./skills/deal-outbound-scout/SKILL.md) — Deal Outbound Scout
+- [`deal-flow-triage`](./skills/deal-flow-triage/SKILL.md) — Deal Flow Triage
+- [`deal-thesis-screen`](./skills/deal-thesis-screen/SKILL.md) — Deal Thesis Screen
+- [`deal-startup-score`](./skills/deal-startup-score/SKILL.md) — Deal Startup Score
+- [`market-intelligence-scan`](./skills/market-intelligence-scan/SKILL.md) — Market Intelligence Scan
+- [`deal-watchlist-curate`](./skills/deal-watchlist-curate/SKILL.md) — Deal Watchlist Curate
+- [`deal-co-investor-syndicate`](./skills/deal-co-investor-syndicate/SKILL.md) — Deal Co-Investor Syndicate
 
 ### Phase 03 — Due Diligence
 
-Analyse opportunities, map markets, take references, write memos, assemble the IC pack.
+Analyse opportunities, map markets, profile companies, model financials, take references, write memos, assemble the IC pack.
 
-- **Pa** [`pitch-deck-analyzer`](./skills/pitch-deck-analyzer/SKILL.md) — Pitch Deck Analyzer
-- **Mc** [`market-and-competitor-mapper`](./skills/market-and-competitor-mapper/SKILL.md) — Market & Competitor Mapper
-- **Rc** [`reference-check-orchestrator`](./skills/reference-check-orchestrator/SKILL.md) — Reference Check Orchestrator
-- **Im** [`investment-memo-drafter`](./skills/investment-memo-drafter/SKILL.md) — Investment Memo Drafter
-- **Ic** [`ic-pack-builder`](./skills/ic-pack-builder/SKILL.md) — IC Pack Builder
-- **Mb** [`meeting-briefer`](./skills/meeting-briefer/SKILL.md) — Meeting Briefer
-- **Cp** [`company-profiler`](./skills/company-profiler/SKILL.md) — Company Profiler
-- **Fm** [`financial-modeler`](./skills/financial-modeler/SKILL.md) — Financial Modeler
-- **Ca** [`comps-analyzer`](./skills/comps-analyzer/SKILL.md) — Comps Analyzer
+- [`deal-pitch-deck-analyze`](./skills/deal-pitch-deck-analyze/SKILL.md) — Deal Pitch Deck Analyze
+- [`market-competitor-map`](./skills/market-competitor-map/SKILL.md) — Market Competitor Map
+- [`deal-reference-check`](./skills/deal-reference-check/SKILL.md) — Deal Reference Check
+- [`deal-investment-memo-draft`](./skills/deal-investment-memo-draft/SKILL.md) — Deal Investment Memo Draft
+- [`deal-ic-pack-build`](./skills/deal-ic-pack-build/SKILL.md) — Deal IC Pack Build
+- [`deal-profile`](./skills/deal-profile/SKILL.md) — Deal Profile
+- [`deal-financial-model`](./skills/deal-financial-model/SKILL.md) — Deal Financial Model
+- [`deal-comps-analyze`](./skills/deal-comps-analyze/SKILL.md) — Deal Comps Analyze
 
 ### Phase 04 — Portfolio Monitoring
 
-Collect KPIs, run health checks, aggregate to fund view, flag early warnings.
+Collect KPIs, run health checks, aggregate to fund view, flag early warnings, analyse variances.
 
-- **Kc** [`portfolio-kpi-collector`](./skills/portfolio-kpi-collector/SKILL.md) — Portfolio KPI Collector
-- **Hc** [`portfolio-health-check`](./skills/portfolio-health-check/SKILL.md) — Portfolio Health Check
-- **Fv** [`fund-view-aggregator`](./skills/fund-view-aggregator/SKILL.md) — Fund View Aggregator
-- **Ew** [`early-warning-signaler`](./skills/early-warning-signaler/SKILL.md) — Early Warning Signaler
-- **Va** [`variance-analyzer`](./skills/variance-analyzer/SKILL.md) — Variance Analyzer
+- [`portfolio-kpi-collect`](./skills/portfolio-kpi-collect/SKILL.md) — Portfolio KPI Collect
+- [`portfolio-health-check`](./skills/portfolio-health-check/SKILL.md) — Portfolio Health Check
+- [`portfolio-fund-view`](./skills/portfolio-fund-view/SKILL.md) — Portfolio Fund View
+- [`portfolio-early-warning-alert`](./skills/portfolio-early-warning-alert/SKILL.md) — Portfolio Early Warning Alert
+- [`portfolio-variance-analyze`](./skills/portfolio-variance-analyze/SKILL.md) — Portfolio Variance Analyze
 
 ### Phase 05 — Reporting & Impact
 
 Capital calls, impact assessments, quarterly LP reporting.
 
-- **Cc** [`capital-call-generator`](./skills/capital-call-generator/SKILL.md) — Capital Call Generator
-- **Ia** [`impact-assessor`](./skills/impact-assessor/SKILL.md) — Impact Assessor
-- **Qr** [`lp-quarterly-reporter`](./skills/lp-quarterly-reporter/SKILL.md) — LP Quarterly Reporter
+- [`lp-capital-call-draft`](./skills/lp-capital-call-draft/SKILL.md) — LP Capital Call Draft
+- [`portfolio-impact-assess`](./skills/portfolio-impact-assess/SKILL.md) — Portfolio Impact Assess
+- [`lp-quarterly-report`](./skills/lp-quarterly-report/SKILL.md) — LP Quarterly Report
 
 ### Phase 06 — Legal & Compliance
 
 Draft legal documents, model cap tables, manage contracts and signatures, watch regulatory deadlines, write the audit trail.
 
-- **Lg** [`legal-document-drafter`](./skills/legal-document-drafter/SKILL.md) — Legal Document Drafter
-- **Ct** [`cap-table-modeler`](./skills/cap-table-modeler/SKILL.md) — Cap Table Modeler
-- **Cm** [`contract-and-signature-manager`](./skills/contract-and-signature-manager/SKILL.md) — Contract & Signature Manager
-- **Rd** [`regulatory-deadline-watcher`](./skills/regulatory-deadline-watcher/SKILL.md) — Regulatory Deadline Watcher
-- **At** [`audit-trail-writer`](./skills/audit-trail-writer/SKILL.md) — Audit Trail Writer
+- [`legal-document-draft`](./skills/legal-document-draft/SKILL.md) — Legal Document Draft
+- [`legal-captable-model`](./skills/legal-captable-model/SKILL.md) — Legal Cap Table Model
+- [`legal-contract-signature-manage`](./skills/legal-contract-signature-manage/SKILL.md) — Legal Contract & Signature Manage
+- [`legal-regulatory-deadline-watch`](./skills/legal-regulatory-deadline-watch/SKILL.md) — Legal Regulatory Deadline Watch
+- [`legal-audit-trail-write`](./skills/legal-audit-trail-write/SKILL.md) — Legal Audit Trail Write
 
-### Phase 07 — Ecosystem & Outreach
+### Phase 07 — Outreach & Ecosystem
 
 LP newsletter, public content, events, partnerships.
 
-- **Nl** [`lp-newsletter-composer`](./skills/lp-newsletter-composer/SKILL.md) — LP Newsletter Composer
-- **Pc** [`public-content-composer`](./skills/public-content-composer/SKILL.md) — Public Content Composer
-- **Ev** [`event-orchestrator`](./skills/event-orchestrator/SKILL.md) — Event Orchestrator
-- **Pn** [`partnership-manager`](./skills/partnership-manager/SKILL.md) — Partnership Manager
+- [`outreach-newsletter-draft`](./skills/outreach-newsletter-draft/SKILL.md) — Outreach Newsletter Draft
+- [`outreach-content-draft`](./skills/outreach-content-draft/SKILL.md) — Outreach Content Draft
+- [`outreach-event-manage`](./skills/outreach-event-manage/SKILL.md) — Outreach Event Manage
+- [`outreach-partner-manage`](./skills/outreach-partner-manage/SKILL.md) — Outreach Partner Manage
 
 ### Phase 08 — Exit & Wind-Down
 
-Model exit scenarios and watch the secondary market.
+Model exit scenarios and scan the secondary market.
 
-- **Es** [`exit-scenario-modeler`](./skills/exit-scenario-modeler/SKILL.md) — Exit Scenario Modeler
-- **Sm** [`secondary-market-scanner`](./skills/secondary-market-scanner/SKILL.md) — Secondary Market Scanner
+- [`exit-scenario-model`](./skills/exit-scenario-model/SKILL.md) — Exit Scenario Model
+- [`exit-secondary-market-scan`](./skills/exit-secondary-market-scan/SKILL.md) — Exit Secondary Market Scan
 
 ## Workflows
 
 The skills compose into 18 cross-skill workflows you can wire up (cron / Agent SDK / form trigger):
 
-- **WF-01** Weekly Deal Flow Digest — `Os, Di, Tm, Mi, Sw` — Scout outbound, triage inbound, score, layer in fresh market intel, ship the Monday digest.
-- **WF-02** Co-Investor Share — `Sw, Cy` — After the Monday digest, share qualified deals with relevant co-investors with personalised notes.
-- **WF-03** DD Kickoff — `Pa, Mc, Rc, Im, Ic, Ct` — From qualified deal to IC pack: deck analysis, market map, references, memo draft, cap-table model, IC briefing.
-- **WF-04** Deal Closing — `Lg, Ct, Cm, At` — Draft term sheet & SPA/SHA, finalise cap table, send for e-signature, write audit-trail.
-- **WF-05** Monthly Health Check — `Kc, Hc, Fv, Ew` — Collect KPIs, run health checks, aggregate to fund view, flag warnings.
-- **WF-06** Quarterly LP Reporting — `Fv, Ia, Qr, At` — Aggregate performance, synthesise impact, compose report, write audit-trail entry, send personalised.
-- **WF-07** Impact Assessment Pipeline — `Ia` — 5-dimension assessment plus IC slides plus deep dive plus one-pager from a single data source.
-- **WF-08** LP Onboarding — `Lp, At` — Drive KYC closure, welcome comms, system access, audit-trail entries.
-- **WF-09** LP Outbound Sourcing — `Ld, Lp, Nm` — Scout new LPs from closed databases, file new candidates into the pipeline, request intro paths.
-- **WF-10** Quarterly Finance Review — `Kc, Hc, Fv` — Pull financials, sense-check, benchmark against stage, update tracker, surface outliers.
-- **WF-11** Market Intelligence Alert — `Mi, Ew` — Continuous competitive / regulatory scan; immediate critical alerts; weekly digest.
-- **WF-12** Follow-on Trigger — `Ew, Im, Ct` — Early Warning catches a follow-on trigger, hands to Investment Memo Drafter (follow-on mode), cap-table updated.
-- **WF-13** Capital Call — `Cc, At` — Compute call quotas per LP, draft notices, track receipts, log to audit trail.
-- **WF-14** Compliance Watch — `Rd, Cm, At` — Deadline scan, contract obligations, audit-trail health-check.
-- **WF-15** Fund Grant Pipeline — `Gs` — Annual / quarterly scan of public funding programmes the fund qualifies for; draft application skeletons for review.
-- **WF-16** Public Content Pipeline — `Mi, Pc, Nl` — Turn the weekly market intel into a LinkedIn post or blog draft; queue the LP newsletter once per month.
-- **WF-17** Event Cycle — `Ev, Pn` — Plan an event, run attendee briefings, capture follow-ups, update partnership register.
-- **WF-18** Exit Review — `Es, Sm` — Scenario modelling and secondary-market opportunity scan; output feeds the LPAC discussion.
+- **WF-01** Weekly Deal Flow Digest — `deal-outbound-scout, deal-flow-triage, deal-thesis-screen, market-intelligence-scan, deal-watchlist-curate` — Scout outbound, triage inbound, screen, layer in fresh market intel, ship the Monday digest.
+- **WF-02** Co-Investor Share — `deal-watchlist-curate, deal-co-investor-syndicate` — After the Monday digest, share qualified deals with relevant co-investors with personalised notes.
+- **WF-03** DD Kickoff — `deal-pitch-deck-analyze, market-competitor-map, deal-reference-check, deal-investment-memo-draft, deal-ic-pack-build, legal-captable-model` — From qualified deal to IC pack: deck analysis, market map, references, memo draft, cap-table model, IC briefing.
+- **WF-04** Deal Closing — `legal-document-draft, legal-captable-model, legal-contract-signature-manage, legal-audit-trail-write` — Draft term sheet & SPA/SHA, finalise cap table, send for e-signature, write audit-trail.
+- **WF-05** Monthly Health Check — `portfolio-kpi-collect, portfolio-health-check, portfolio-fund-view, portfolio-early-warning-alert` — Collect KPIs, run health checks, aggregate to fund view, flag warnings.
+- **WF-06** Quarterly LP Reporting — `portfolio-fund-view, portfolio-impact-assess, lp-quarterly-report, legal-audit-trail-write` — Aggregate performance, synthesise impact, compose report, write audit-trail entry, send personalised.
+- **WF-07** Impact Assessment Pipeline — `portfolio-impact-assess` — 5-dimension assessment plus IC slides plus deep dive plus one-pager from a single data source.
+- **WF-08** LP Onboarding — `lp-pipeline-manage, legal-audit-trail-write` — Drive KYC closure, welcome comms, system access, audit-trail entries.
+- **WF-09** LP Outbound Sourcing — `lp-database-scout, lp-pipeline-manage, lp-network-intro-map` — Scout new LPs from closed databases, file new candidates into the pipeline, request intro paths.
+- **WF-10** Quarterly Finance Review — `portfolio-kpi-collect, portfolio-health-check, portfolio-fund-view` — Pull financials, sense-check, benchmark against stage, update tracker, surface outliers.
+- **WF-11** Market Intelligence Alert — `market-intelligence-scan, portfolio-early-warning-alert` — Continuous competitive / regulatory scan; immediate critical alerts; weekly digest.
+- **WF-12** Follow-on Trigger — `portfolio-early-warning-alert, deal-investment-memo-draft, legal-captable-model` — Early Warning catches a follow-on trigger, hands to Investment Memo Draft (follow-on mode), cap-table updated.
+- **WF-13** Capital Call — `lp-capital-call-draft, legal-audit-trail-write` — Compute call quotas per LP, draft notices, track receipts, log to audit trail.
+- **WF-14** Compliance Watch — `legal-regulatory-deadline-watch, legal-contract-signature-manage, legal-audit-trail-write` — Deadline scan, contract obligations, audit-trail health-check.
+- **WF-15** Fund Grant Pipeline — `finance-grant-scout` — Annual / quarterly scan of public funding programmes the fund qualifies for; draft application skeletons for review.
+- **WF-16** Public Content Pipeline — `market-intelligence-scan, outreach-content-draft, outreach-newsletter-draft` — Turn the weekly market intel into a LinkedIn post or blog draft; queue the LP newsletter once per month.
+- **WF-17** Event Cycle — `outreach-event-manage, outreach-partner-manage` — Plan an event, run attendee briefings, capture follow-ups, update partnership register.
+- **WF-18** Exit Review — `exit-scenario-model, exit-secondary-market-scan` — Scenario modelling and secondary-market opportunity scan; output feeds the LPAC discussion.
 
 ## Installation
 
@@ -132,100 +132,35 @@ The skills compose into 18 cross-skill workflows you can wire up (cron / Agent S
 bash <(curl -fsSL https://raw.githubusercontent.com/steffenmaas/fund-os/main/install.sh)
 ```
 
-Downloads the latest release, places files in the correct Claude directory, and registers the plugin automatically. Requires `curl` (pre-installed on macOS and most Linux distros).
-
 ### Option B — Claude Code CLI
-
-Inside a Claude Code session:
 
 ```
 /plugin marketplace add steffenmaas/fund-os
 /plugin install fund-os@fund-os-marketplace
 ```
 
-Requires `gh auth login` (GitHub CLI) and access to the private repo.
-
-### After either install
-
-```
-/reload-plugins
-```
-
-Then run the welcome wizard:
-
-```
-fund-os:setup
-```
-
-This collects your tone, output path and Google Drive knowledge folder — takes about 2 minutes and only needs to be done once.
-
-### MCP servers
-
-Copy `.mcp.json.example` to your project's `.mcp.json` and fill in credentials for the capabilities you use. See the full capability list in `.mcp.json.example`.
+After either install, run `/reload-plugins` then `fund-os:setup`.
 
 ## Customization
 
-Fund OS separates three layers so that plugin updates never overwrite personal or team settings:
+Every skill reads preferences from `preferences/user-config.json` inside the plugin (path: `~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json`). Run `setup` to configure.
 
-| Layer | Lives where | Updated by | Survives plugin update |
-|---|---|---|---|
-| **Plugin** (skills, logic) | this repo, versioned | you, via push | n/a — this *is* the update |
-| **User preferences** (tone, paths, Drive ID) | `~/.fund-os-prefs.json` | `fund-os:setup` wizard | ✅ yes |
-| **Shared knowledge** (criteria, templates, guides) | central Google Drive folder | whole team, live | ✅ yes |
-
-### Preferences (`~/.fund-os-prefs.json`)
-
-Every skill reads this file at run-start and applies:
-
-- `tone` — prose style (professional / friendly / formal / custom)
-- `outputStoragePath` — default folder for saved files (e.g. `Fund-Portfolio/`)
-- `driveKnowledgeFolderId` — your shared knowledge Drive folder
-- `knowledgeManifest` — auto-built map of document name → Drive file ID
-
-Run `fund-os:setup` to create or update this file. A template is at [`preferences/user-config.json.template`](./preferences/user-config.json.template).
-
-### Shared knowledge on Google Drive
-
-Store team documents (evaluation criteria, tone guide, scoring rubric, deal frameworks) in one shared Drive folder. During setup the skill scans the folder, builds a manifest, and saves it in your preferences. At runtime, skills load the *current* version of each document directly — no re-deploy needed when a document changes.
+To update without losing customisations: type `fund-os:update` in chat, or use `merge-plugin.sh` for `.plugin` file merges.
 
 ## Knowledge folders
 
-Point the host at four folders in your fund's drive / wiki:
-
-- `Fund-Framework/` — proprietary frameworks (thesis, scoring rubric, DD framework, impact framework).
-- `Fund-Templates/` — memo template, health-check template, LP report template, capital-call template.
-- `Fund-Portfolio/` — one subfolder per portfolio company, populated by skills.
-- `Fund-Market/` — external market intel kept fresh by the market-research skills.
+- `Fund-Framework/` — investment thesis, scoring rubric, DD framework, impact framework
+- `Fund-Templates/` — memo, health-check, LP report, capital-call templates
+- `Fund-Portfolio/` — one subfolder per portfolio company, populated by skills
+- `Fund-Market/` — market intel kept fresh by market-research skills
 
 ## Updates
 
-Skill versions live in `plugin.json` (currently `1.9.0`). When you bump the version and push, installed clients will see an update prompt. Enable auto-update by setting `autoUpdate: true` in the marketplace entry of your `~/.claude/settings.json`.
-
-Re-running `install.sh` also picks up the latest version. Preferences in `~/.fund-os-prefs.json` are never touched by updates.
+Skill versions live in `plugin.json` (currently `2.0.0`). See the version bump checklist in the root README.
 
 ## VC-Skills.md Community Integration
 
-Fund OS builds on the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) open community knowledge base — a database of 375 VC-relevant skills curated by Luis Schmitz with contributions from the VC community. Where the community has developed deeper methodology in a specific area, Fund OS skills reference those community skills directly rather than rebuilding from scratch.
-
-| Fund OS Skill | Community Source | What's Reused |
-|---|---|---|
-| `market-and-competitor-mapper` | `vc-skills-market-sizing` | ARPC bottom-up TAM/SAM/SOM with top-down sanity check |
-| `contract-and-signature-manager` | `kwp-nda-triage` | GREEN/YELLOW/RED NDA classification (10-point checklist) |
-| `portfolio-health-check` | `skillsmp-product-market-fit` | Sean Ellis 40% rule, Superhuman PMF Engine, retention curves |
-| `investment-memo-drafter` | `vercel-saas-financial-projections` | 2025/26 SaaS benchmark tables (growth, NRR, LTV:CAC, margins) |
-| `exit-scenario-modeler` | `vercel-saas-financial-projections` | Valuation multiples by growth rate and NRR tier |
-| `thesis-fit-scorer` | `ailabs-startup-validator` | Systematic startup validation workflow |
-| `regulatory-deadline-watcher` | `kwp-compliance` | GDPR/CCPA obligation timelines and DPA review checklist |
-| `market-intelligence-scanner` | `skillsmp-analyzing-funding-landscape` | Investor landscape, M&A tracking, funding round benchmarks |
-| `meeting-briefer` | `kwp-meeting-briefing` | 5-step briefing methodology, meeting-type classification, full briefing template |
-| `variance-analyzer` | `kwp-variance-analysis` | Price/Volume decomposition, materiality thresholds, waterfall bridge narrative |
-| `startup-scorecard` | `vasilyu-startup-idea-validation` | 9-dimension GO/NO-GO scorecard, Riskiest Assumption Test, Validation Ladder |
-| `startup-scorecard` | `skillsmp-yc-startup-fundamentals` | YC team/idea/MVP checklist, Frequency Filter |
-| `financial-modeler` | `alirezarezvani-financial-analyst` | DCF/WACC/CAPM, ratio taxonomy, materiality thresholds, SaaS adaptation |
-| `comps-analyzer` | `vercel-saas-financial-projections` | Valuation multiples by growth rate, NRR tier and Rule of 40 premium |
-| `company-profiler` | `antigravity-startup-analyst` | Structured team/product/traction/market analysis framework |
-
-Each integrated skill carries a `## Community skill references` section with direct links to the source.
+Fund OS builds on the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) open community knowledge base — 375 VC-relevant skills curated by Luis Schmitz. Each integrated skill carries a `## Community skill references` section with direct links to the source.
 
 ## License
 
