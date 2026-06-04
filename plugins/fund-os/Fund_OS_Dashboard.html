@@ -18,7 +18,7 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     color: #111827;
     background: #ffffff;
-    padding: 24px;
+    padding: 20px 28px;
     line-height: 1.5;
   }
   #fundos-root *, #fundos-root *::before, #fundos-root *::after { box-sizing: border-box; }
@@ -139,24 +139,24 @@
   .fos-filter:hover { border-color: #9ca3af; }
   .fos-filter.active { background: #111827; color: white; border-color: #111827; }
 
-  /* ===== PERIODIC TABLE - true periodic-table grid ===== */
+  /* ===== PERIODIC TABLE - name-first layout ===== */
   .fos-pt-wrap { overflow-x: auto; padding-bottom: 8px; }
   .fos-pt {
     display: grid;
-    grid-template-columns: repeat(8, minmax(120px, 1fr));
+    grid-template-columns: repeat(8, minmax(148px, 1fr));
     gap: 8px;
-    min-width: 980px;
-    align-items: end;  /* bottom-align: columns share a uniform bottom edge */
+    min-width: 1184px;
+    align-items: end;
   }
   .fos-pt-card {
     background: var(--phase-light, #f3f4f6);
-    border: 1px solid rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.06);
     border-radius: 10px;
-    padding: 8px 6px 8px 8px;
+    padding: 10px 12px 12px 14px;
     cursor: pointer;
     position: relative;
     transition: all 0.15s;
-    aspect-ratio: 0.95 / 1;
+    min-height: 86px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -177,42 +177,34 @@
   }
   .fos-pt-card.dim { opacity: 0.15; pointer-events: none; }
   .fos-pt-card .num {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     color: var(--phase-color, #6b7280);
-    opacity: 0.75;
+    opacity: 0.7;
     line-height: 1;
-  }
-  .fos-pt-card .code {
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--phase-color, #6b7280);
-    text-align: center;
-    line-height: 1;
-    margin: auto 0;
-    letter-spacing: -0.5px;
+    margin-bottom: 6px;
   }
   .fos-pt-card .name {
-    font-size: 9px;
-    font-weight: 700;
-    color: #1f2937;
-    text-align: center;
-    line-height: 1.2;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #111827;
+    line-height: 1.3;
+    text-transform: none;
+    letter-spacing: 0;
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
-    margin-top: 4px;
+    margin-top: 0;
+    flex: 1;
   }
 
   /* Domain strip (one row at the bottom of the table) */
   .fos-pt-domains {
     display: grid;
-    grid-template-columns: repeat(8, minmax(120px, 1fr));
+    grid-template-columns: repeat(8, minmax(148px, 1fr));
     gap: 8px;
-    min-width: 980px;
+    min-width: 1184px;
     margin-top: 16px;
   }
   .fos-pt-domain {
@@ -362,7 +354,7 @@
   <h1>FUND OS</h1>
   <div class="sub">The Claude Skills periodic table for VC fund operations. Fund-side scope only - portfolio coaching (Founder OS) is a separate bundle planned later.</div>
   <div class="stats">
-    <div class="stat"><div class="num">35</div><div class="lbl">Skills</div></div>
+    <div class="stat"><div class="num">42</div><div class="lbl">Skills</div></div>
     <div class="stat"><div class="num">18</div><div class="lbl">Workflows</div></div>
     <div class="stat"><div class="num">8</div><div class="lbl">Lifecycle Phases</div></div>
     <div class="stat"><div class="num">9</div><div class="lbl">MCP Capabilities</div></div>
@@ -479,7 +471,6 @@
         card.style.setProperty("--phase-light", "#" + ph.lightColor);
         card.innerHTML =
           '<div class="num">' + String(s.num).padStart(2, "0") + '</div>' +
-          '<div class="code">' + esc(s.code) + '</div>' +
           '<div class="name">' + esc(s.name) + '</div>';
         card.onclick = () => openModal(s);
         colWrap.appendChild(card);
@@ -518,7 +509,7 @@
         const mini = document.createElement("div");
         mini.className = "fos-flow-mini";
         mini.style.setProperty("--phase-color", "#" + ph.color);
-        mini.innerHTML = "<b>" + esc(s.code) + "</b>" + esc(s.name);
+        mini.innerHTML = esc(s.name);
         mini.onclick = () => openModal(s);
         wrap.appendChild(mini);
       });
