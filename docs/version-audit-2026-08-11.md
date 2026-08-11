@@ -193,19 +193,48 @@ hinter dem letzten Release liegt.
 
 ---
 
-## 6. Eine Warnung vor dem Veröffentlichen
+## 6. Umsetzung — Stand 2026-08-11
 
-Founder OS ist **public**. Fund OS ist **private** — und das aus gutem Grund. Im aktuellen
-0.3.7 stecken echte Ocean-One-Interna, keine Platzhalter:
+Alle fünf Phasen sind umgesetzt und in `main`. `python3 tools/validate.py` ist grün.
 
-- `investment-thesis.md`: Fondsgröße, Ticket-Größen, Ownership-Target, Ziel-MOIC,
-  Management Fee, Carry, Hurdle Rate, Track-Record-Zahlen, Standort
-- `lp-scoring-matrix.md`: die komplette LP-Bewertungsmethodik inkl. Institutional-Asset-
-  Owner-Override — das ist proprietäres Fondswissen
-- `user-config.json`: Google-Drive-Folder-IDs, Team, Sektor-Liste
-- `o1-scoring-matrix.md`: die O1-Scoring-Rubrik samt Attio-Feld-Mapping
+| Phase | Ergebnis |
+|---|---|
+| 1 Sichern | 0.3.7 als `salvage-v0.3.7` in Git; Drive-Bundles per Hash in `docs/provenance.md` indexiert |
+| 2 Merge | v0.4.0; `deal-due-diligence` aus beiden Linien zusammengeführt; Dashboard repariert (es warf `SyntaxError` und rendert erst wieder seit diesem Commit) |
+| 3 Pfad-Bug | 83 tote Pfade ersetzt; alle 43 Skills auf `${CLAUDE_PLUGIN_ROOT}` verankert; Config nach `~/.fund-os/`; `update` neu geschrieben |
+| 3b Sanitizing | Drive-IDs, Track-Record-Zahlen und ein realer Startup-Score aus Stand **und Historie** entfernt |
+| 4 Pipeline | `validate.py`, `build-plugin.sh`, `validate.yml`, `release.yml` |
+| 5 Learning-Loop | `fund-os:learn` mit Consent- und Scrub-Schritt |
 
-„Veröffentlichen" muss deshalb heißen: **auf GitHub pushen, Repo bleibt privat.** Wenn
-Fund OS irgendwann wirklich öffentlich werden soll, ist das ein eigenes Projekt — Trennung
-in eine generische Engine (public) und ein O1V-Knowledge-Overlay (private). Das gehört
-nicht in diese Konsolidierung.
+**Zusätzlich gefunden und behoben — alles im produktiv laufenden Stand:**
+
+- Beide Scoring-Matrizen waren arithmetisch falsch: O1 deklarierte /100 bei Summe **110**,
+  LP deklarierte 0–100 bei Summe **120**. Seit Ende Juni lagen damit alle Scores auf einer
+  gedehnten Skala, und die Tier-Schwellen bedeuteten nicht, was sie behaupteten.
+  → O1: Competition und GTM von 10 auf 5. LP: v8 mit `round(raw/120×100)`.
+  **Vor dem 11.08. vergebene Scores müssen umgerechnet werden, bevor sie mit neuen
+  verglichen werden** — mehrere LP-Einstufungen rutschen eine Stufe.
+- Das Dashboard lief seit dem 26. Juni gar nicht: 456 rohe Zeilenumbrüche in JS-Strings.
+- Vier `outreach-*`-Skills rendern seit derselben Zeit nicht (Phasen-ID `outreach` statt `ecosystem`).
+- 34 Skills verwiesen auf einen Generator `skills-data.js`, den es im Repo nie gab.
+
+## 7. Zur Veröffentlichung
+
+Entscheidung: **Repo bleibt privat, wird aber mit anderen Funds geteilt.** Daraus folgt die
+Grenze, die jetzt gilt und die `validate.py` maschinell prüft:
+
+| Bleibt im Repo | Muss draußen bleiben |
+|---|---|
+| Scoring-Matrizen und Methodik | Startup- und Portfolio-Namen, besonders mit Score |
+| O1-Branding und Framework-Namen | LP-/Investorennamen mit Tier oder Pipeline-Stufe |
+| Struktur-Templates mit Platzhaltern | Drive-/CRM-IDs, Keys, interne URLs |
+| Öffentliche Marktdaten (SaaS-Benchmarks) | Fondsökonomie, Track-Record-Zahlen, NAV, Personendaten |
+
+Fondsspezifische Inhalte liegen in `~/.fund-os/` (Config, Knowledge-Overlay, Learnings) und
+werden nie mitgeliefert — `build-plugin.sh` schließt sie aus und verifiziert den Ausschluss.
+
+**Offener Punkt für das Team:** `~/.fund-os/` liegt auf je einem Rechner. Damit Dietlind und
+weitere Teammitglieder dieselbe Thesis und Config nutzen, muss der Ordner geteilt werden —
+entweder über den Drive-Knowledge-Manifest-Weg, der dafür schon vorgesehen ist
+(`knowledge.manifest` in der Config), oder indem `~/.fund-os/` aus der geteilten Drive-Ablage
+kopiert wird. Das ist noch nicht eingerichtet.
