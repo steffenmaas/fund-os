@@ -22,6 +22,8 @@ Run this skill when the user says any of:
 0. **User preferences:** Load preferences from the plugin: `~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json` (via Bash: `cat ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json 2>/dev/null`). Apply `brandGuidelines.tone` to all prose output. Use `storagePaths.outputs` as the default save location (or `storagePaths.deals`, `storagePaths.portfolio`, `storagePaths.lps` where applicable). Reference `systems.crm` and `systems.documentStorage` by their configured names in instructions. From `knowledge.manifest`, load these keys from Google Drive if present: `tone-guide`, `newsletter-template`. Read the current document version before proceeding — this ensures you use the fund's own methodology rather than generic defaults. If the preferences file is absent, proceed normally — run `fund-os:setup` to create it.
 
 1. Max 350 words total. No fluff, no superlatives.
+
+1a. **Writing style:** Apply `skills/outreach-content-draft/knowledge/writing-style-guide.md` (sections 3, 5 and 6: sentence rules, voice, anti-AI-artefact checklist) to all newsletter prose.
 2. Section order: 1 fund news / 2-3 portfolio highlights / 1 sector observation / 1 ask.
 3. Personalisation hint per LP: optional add-on paragraph - 1-2 lines max.
 4. Always file the draft into /Drafts/LP-Newsletter/<YYYY-MM>/ and emit an audit-trail entry; never auto-send.

@@ -5,7 +5,7 @@ description: Continuously triage the deal-flow inbox - classify, enrich, dedupe,
 
 # Deal Flow Triage
 
-Continuously triage the deal-flow inbox - classify, enrich, dedupe, route, suggest a reply.
+Continuously triage the deal-flow inbox — classify, enrich, dedupe, route, and suggest a reply. Produces a First Screening Card for every qualifying inbound and routes it to CRM or rejects with a logged reason.
 
 This skill is part of the **Fund OS** plugin, Phase 02 — Sourcing & Market Watch.
 
@@ -15,79 +15,106 @@ Run this skill when the user says any of:
 - "triage inbox"
 - "new deal"
 - "process pitch email"
+- "inbound deal"
+- "new pitch"
 
 ## Key instructions
 
-0. **User preferences:** Load preferences from the plugin: `~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json` (via Bash: `cat ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json 2>/dev/null`). Apply `brandGuidelines.tone` to all prose output. Use `storagePaths.outputs` as the default save location (or `storagePaths.deals`, `storagePaths.portfolio`, `storagePaths.lps` where applicable). Reference `systems.crm` and `systems.documentStorage` by their configured names in instructions. From `knowledge.manifest`, load these keys from Google Drive if present: `investment-thesis`, `evaluation-criteria`. Read the current document version before proceeding — this ensures you use the fund's own methodology rather than generic defaults. If the preferences file is absent, proceed normally — run `fund-os:setup` to create it.
+0. **Load knowledge:** Read `knowledge/investment-thesis.md` and `knowledge/evaluation-criteria.md` (this plugin) before proceeding. These contain the hard filters, sector definition, and routing criteria for Ocean One Fund I.
 
-1. Run the thesis fit check first (sector / stage / geo / ticket); a 'No' on any hard filter is an automatic Pass.
-2. Dedupe across the last 18 months on company name, domain and founder email.
-3. If the deck is missing, draft a polite reply asking for it; do not score until you have it.
-4. Drop attachments into Drive folder /Deal-Flow-Inbox/<YYYY-MM>/<Company>/ before tagging in CRM.
+1. **Apply hard filters first** (auto-Pass on any fail — log reason and stop):
+   - Sector: Maritime LEISURE B2B software only (see investment-thesis.md for full definition)
+   - Geography: DACH, UK, Mediterranean, Nordics
+   - Stage: Pre-Seed or Seed
+   - Model: asset-light — no hardware-only, no asset-heavy businesses
+   - Cap table: clean (flag if undisclosed debt or unusual provisions mentioned)
+
+2. **Dedupe:** Check last 18 months in CRM on company name, domain, and founder email. If duplicate, log "Already in pipeline" and close without creating a new record.
+
+3. **If deck is missing:** Draft a polite reply requesting it. Do not score until you have at least the deck or a detailed company description.
+
+4. **For qualifying deals, produce a First Screening Card:**
+
+   ```
+   # First Screening Card — [Company]
+   Date: YYYY-MM-DD | Source: [Inbound/Event/Referral/Outbound]
+
+   Company:     [Name]
+   Domain:      [website]
+   Sector:      [Maritime LEISURE sub-sector]
+   Stage:       [Pre-Seed/Seed]
+   Raise:       [€Xm at €Xm cap / €Xm post-money]
+   Geography:   [City, Country]
+
+   Thesis fit:  [PASS / CONDITIONAL / FAIL]
+   Hard filters: Sector ✅/❌ | Stage ✅/❌ | Geo ✅/❌ | Model ✅/❌
+
+   Priority:    [P1 / P2 / P3 / Pass]
+   Routing:     [→ deal-startup-score | → watchlist | → Pass]
+
+   Key signals:
+   - [Traction/founder/market signal 1]
+   - [Traction/founder/market signal 2]
+   - [Red flag or open question if any]
+
+   Suggested reply:
+   "[Draft reply text]"
+
+   Files: /Deal-Flow-Inbox/YYYY-MM/[Company]/[Deck filename]
+   CRM: [Record created / updated / duplicate]
+   ```
+
+5. **Priority routing:**
+   - **P1** — Strong thesis fit + traction signal + known founder/reference → schedule call immediately
+   - **P2** — Thesis fit + some traction → request deck/financials, schedule in 2 weeks
+   - **P3** — Thesis fit but early/thin → watchlist, follow up in 90 days
+   - **Pass** — Fails hard filters or no maritime leisure angle → log and close
+
+6. **File attachments:** Drop all deck/document attachments into Drive at `/Deal-Flow-Inbox/YYYY-MM/[Company]/` before tagging in CRM.
+
+7. **Suggested replies** are drafted, never auto-sent. Always present for partner review.
 
 ## Inputs
 
-- Incoming email + attachments
+- Incoming email + attachments (deck, one-pager, etc.)
+- Founder name and company name (minimum)
 
 ## Outputs
 
-- CRM record draft
-- suggested reply
-- priority tag (P1/P2/P3/Pass)
+- First Screening Card (standard format above)
+- CRM record draft (Attio)
+- Priority tag (P1/P2/P3/Pass)
+- Suggested reply (draft only)
 
 ## Required MCP capabilities
 
 - Email
-- CRM
+- CRM (Attio)
+- Drive
 
 The fund configures which actual MCP server backs each capability via `.mcp.json`. Skills always call capabilities, never vendors.
 
 ## Knowledge references
 
-- `Investment-Thesis`
-- `Filing-Structure`
+- `knowledge/investment-thesis.md` — fund thesis, sector definition, hard filters, archetypes
+- `knowledge/evaluation-criteria.md` — soft filters, routing criteria, priority definitions
 
-These live in the fund's knowledge folders (`Fund-Framework/`, `Fund-Templates/`, `Fund-Portfolio/`, `Fund-Market/`). The skill expects the host to provide them as context.
+After scoring: hand off to `deal-startup-score` for O1 Startup Scoring (pitch deck screening depth).
 
 ## Human-in-the-loop
 
-Replies drafted, never auto-sent.
-
-## Example output / template
-
-```
-# Deal triage card
-
-Company:    Helios Sensors GmbH
-Source:     Inbound, 2026-05-19 08:14
-Sector:     Industrial IoT
-Stage:      Pre-seed (EUR 400k SAFE, EUR 4m cap)
-Geo:        Munich
-Thesis fit: PASS on hard filters
-Priority:   P2 - moderate traction, technical team
-Suggested reply:
-  'Thanks - read it. Can you share latest financials and customer list
-  before we schedule a 30-min call?'
-Files:      /Deal-Flow-Inbox/2026-05/Helios/Deck_v3.pdf
-```
-
-## Community skill references
-
-Built on methodology from the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md) community knowledge base (375 skills, curator: Luis Schmitz):
-- [`kwp-nda-triage`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/kwp-nda-triage) — GREEN/YELLOW/RED NDA classification when inbound deal includes an NDA request
-- [`skillsmp-analyzing-funding-landscape`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/investment_analysis/skillsmp-analyzing-funding-landscape) — Funding landscape context for deal routing (stage fit, active investors in sector)
-- [`skillsmp-yc-startup-fundamentals`](https://github.com/luisschmitzheadline/vc-skills.md/tree/main/knowledge_skills/due_diligence/skillsmp-yc-startup-fundamentals) — YC team, idea and MVP checklist as a lightweight pre-filter before routing to full thesis-fit-scorer
+Replies drafted, never auto-sent. P1 routing requires partner acknowledgment before call is booked.
 
 ## Audit trail
 
 After successful execution, emit an entry via the `legal-audit-trail-write` skill:
 
 ```yaml
-skill_version: deal-flow-triage@0.2.0
-output_ref:    <path or record id of the produced artefact>
-rationale:     <one-line summary of what changed>
+skill_version: deal-flow-triage@1.0.0
+output_ref:    <Attio record ID or file path>
+rationale:     <company name, priority tag, routing decision>
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 0.2.0. Do not edit directly — edit the source and rebuild.*
+*Updated 2026-06-26 — First Screening Card format, O1 hard filters, investment-thesis.md knowledge reference.*

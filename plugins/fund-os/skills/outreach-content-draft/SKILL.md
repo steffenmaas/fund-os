@@ -22,10 +22,11 @@ Run this skill when the user says any of:
 
 0. **User preferences:** Load preferences from the plugin: `~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json` (via Bash: `cat ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json 2>/dev/null`). Apply `brandGuidelines.tone` to all prose output. Use `storagePaths.outputs` as the default save location (or `storagePaths.deals`, `storagePaths.portfolio`, `storagePaths.lps` where applicable). Reference `systems.crm` and `systems.documentStorage` by their configured names in instructions. From `knowledge.manifest`, load these keys from Google Drive if present: `tone-guide`, `content-guidelines`. Read the current document version before proceeding — this ensures you use the fund's own methodology rather than generic defaults. If the preferences file is absent, proceed normally — run `fund-os:setup` to create it.
 
-1. Modes: short (LinkedIn post, max 200w), long (blog / op-ed, 400-1200w), report (multi-page).
-2. Voice: confident, specific, no superlatives, no 'thought leadership' language.
-3. Cite numbers; pull data from market-intelligence-scanner archive when applicable.
-4. File drafts under /Drafts/Public-Content/<YYYY-MM>/ - never publish directly.
+1. **Writing style is mandatory:** Read `knowledge/writing-style-guide.md` in this skill folder and apply all nine sections to every draft. Core rules: structure as Why → What → How; hook in the first two lines; one idea per sentence, 15–25 word ceiling; tension before resolution; founder voice from real experience; real numbers over adjectives; generate 5+ headline options per the headline rules; run the anti-AI-artefact checklist and the quality gate before filing.
+2. Modes: short (LinkedIn post, max 200w), long (blog / op-ed, 600-1200w, ~4 min read), report (multi-page, executive summary first).
+3. Voice: confident, specific, no superlatives, no 'thought leadership' language. First person where the author is named.
+4. Cite numbers; pull data from market-intelligence-scanner archive when applicable.
+5. File drafts under /Drafts/Public-Content/<YYYY-MM>/ - never publish directly.
 
 ## Inputs
 
@@ -35,7 +36,7 @@ Run this skill when the user says any of:
 
 ## Outputs
 
-- Draft content piece with style notes
+- Draft content piece with style notes and quality-gate result
 - image / carousel briefs
 - filed under /Drafts/Public-Content/
 
@@ -49,6 +50,7 @@ The fund configures which actual MCP server backs each capability via `.mcp.json
 
 ## Knowledge references
 
+- `writing-style-guide.md` (in this skill's `knowledge/` folder — mandatory)
 - `Brand-Voice-Guide`
 - `Content-Calendar`
 - `Sector-Map`
@@ -73,19 +75,8 @@ Three things we are watching:
 
 We are pre-seed/seed in legal AI - closed our second investment last week.
 
+Quality gate: passed (hook ✓, why-first ✓, numbers ✓, artefact check ✓, length ✓)
 Filed: /Drafts/Public-Content/2026-05/linkedin-legal-ai.md
 ```
 
 ## Audit trail
-
-After successful execution, emit an entry via the `legal-audit-trail-write` skill:
-
-```yaml
-skill_version: outreach-content-draft@0.2.0
-output_ref:    <path or record id of the produced artefact>
-rationale:     <one-line summary of what changed>
-```
-
----
-
-*Generated from `skills-data.js` at version 0.2.0. Do not edit directly — edit the source and rebuild.*
