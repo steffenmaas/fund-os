@@ -53,7 +53,7 @@ The fund configures which actual MCP server backs each capability via `.mcp.json
 ## Knowledge references
 
 - `Sector-Map`
-- `Investment-Thesis`
+- `investment-thesis` — via knowledge manifest
 - `Source-Registry`
 
 These live in the fund's knowledge folders (`Fund-Framework/`, `Fund-Templates/`, `Fund-Portfolio/`, `Fund-Market/`). The skill expects the host to provide them as context.

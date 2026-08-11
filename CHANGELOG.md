@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.8.1 - 2026-08-11
+
+Resolves the reference gaps the knowledge map surfaced in 0.8.0. Five of the twelve missing
+documents were not missing at all — the skill asked for them under a name nobody had used.
+
+- **`lp-evaluation-criteria` → `lp-scoring-matrix`.** The same thing: `lp-database-scout` wanted
+  "ticket fit, thesis overlap, prior commitments to comparable funds", which is what the matrix
+  scores. The scout was written before `lp-investor-scoring` existed and invented its own key.
+  It now ranks roughly and hands the shortlist to `lp-investor-scoring` for the real score —
+  the same relationship `deal-flow-triage` has with `deal-startup-score`. Two scoring schemes for
+  one entity is how scores stop being comparable.
+- **`content-guidelines` → `writing-style-guide`.** One document, two names, connected to nothing.
+- **`investment-note-template` → `memo-template`** in `deal-pitch-deck-analyze`.
+- **Nine legacy `Some-Doc-Name` references** resolved where a manifest key already existed.
+
+Two manifest entries added: `lp-thesis` (points at the scoring matrix, whose *Fund Context*
+section is the LP thesis today — a separate key so a future standalone document only needs the
+pointer moved) and `fund-overview`.
+
 ## 0.8.0 - 2026-08-11
 
 Adds `tools/knowledge-map.py`. The knowledge folder was a flat list of documents with nothing

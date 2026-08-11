@@ -54,8 +54,7 @@ The fund configures which actual MCP server backs each capability via `.mcp.json
 ## Knowledge references
 
 - `IC-Process`
-- `Memo-Template`
-
+- `memo-template` — via knowledge manifest
 These live in the fund's knowledge folders (`Fund-Framework/`, `Fund-Templates/`, `Fund-Portfolio/`, `Fund-Market/`). The skill expects the host to provide them as context.
 
 ## Human-in-the-loop
