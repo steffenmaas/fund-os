@@ -219,6 +219,29 @@ def main() -> int:
             problems.append(f"possible duplicates for '{stem}': {', '.join(sorted(files))}")
     report("No duplicate documents in the working set", problems)
 
+    # --- is the generated knowledge map current? -------------------------------
+    problems, warnings = [], []
+    mapfile = folder / "_KNOWLEDGE-MAP.md"
+    if not mapfile.is_file():
+        warnings.append("no _KNOWLEDGE-MAP.md — run `python3 tools/knowledge-map.py` to generate it")
+    else:
+        text = mapfile.read_text(encoding="utf-8", errors="replace")
+        m = re.search(r"für Fund OS v([0-9]+(?:\.[0-9]+)*)", text)
+        mapped = m.group(1) if m else None
+        installed = None
+        reg = Path.home() / ".claude" / "plugins" / "installed_plugins.json"
+        if reg.is_file():
+            d = json.loads(reg.read_text(encoding="utf-8"))
+            for key, entries in d.get("plugins", {}).items():
+                if key.startswith("fund-os@") and entries:
+                    installed = entries[0].get("version")
+        if mapped and installed and mapped != installed:
+            warnings.append(
+                f"_KNOWLEDGE-MAP.md was generated for v{mapped}, but v{installed} is installed — "
+                f"re-run `python3 tools/knowledge-map.py`"
+            )
+    report("Knowledge map is current", problems, "", warnings)
+
     # --- be explicit about what this script cannot see -------------------------
     gdocs = sorted(p.stem for p in folder.iterdir() if p.suffix == ".gdoc")
     if gdocs:
