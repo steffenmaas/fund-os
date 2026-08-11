@@ -38,7 +38,6 @@ Active scouting, inbound triage, thesis screening, market intelligence and co-in
 
 - [`deal-outbound-scout`](./skills/deal-outbound-scout/SKILL.md) — Deal Outbound Scout
 - [`deal-flow-triage`](./skills/deal-flow-triage/SKILL.md) — Deal Flow Triage
-- [`deal-thesis-screen`](./skills/deal-thesis-screen/SKILL.md) — Deal Thesis Screen
 - [`deal-startup-score`](./skills/deal-startup-score/SKILL.md) — Deal Startup Score
 - [`market-intelligence-scan`](./skills/market-intelligence-scan/SKILL.md) — Market Intelligence Scan
 - [`deal-watchlist-curate`](./skills/deal-watchlist-curate/SKILL.md) — Deal Watchlist Curate
@@ -51,7 +50,7 @@ Analyse opportunities, map markets, profile companies, model financials, take re
 - [`deal-pitch-deck-analyze`](./skills/deal-pitch-deck-analyze/SKILL.md) — Deal Pitch Deck Analyze
 - [`market-competitor-map`](./skills/market-competitor-map/SKILL.md) — Market Competitor Map
 - [`deal-reference-check`](./skills/deal-reference-check/SKILL.md) — Deal Reference Check
-- [`deal-investment-memo-draft`](./skills/deal-investment-memo-draft/SKILL.md) — Deal Investment Memo Draft
+- [`deal-due-diligence`](./skills/deal-due-diligence/SKILL.md) — Deal Due Diligence
 - [`deal-ic-pack-build`](./skills/deal-ic-pack-build/SKILL.md) — Deal IC Pack Build
 - [`deal-profile`](./skills/deal-profile/SKILL.md) — Deal Profile
 - [`deal-financial-model`](./skills/deal-financial-model/SKILL.md) — Deal Financial Model
@@ -105,9 +104,9 @@ Model exit scenarios and scan the secondary market.
 
 The skills compose into 18 cross-skill workflows you can wire up (cron / Agent SDK / form trigger):
 
-- **WF-01** Weekly Deal Flow Digest — `deal-outbound-scout, deal-flow-triage, deal-thesis-screen, market-intelligence-scan, deal-watchlist-curate` — Scout outbound, triage inbound, screen, layer in fresh market intel, ship the Monday digest.
+- **WF-01** Weekly Deal Flow Digest — `deal-outbound-scout, deal-flow-triage, deal-startup-score, market-intelligence-scan, deal-watchlist-curate` — Scout outbound, triage inbound, screen, layer in fresh market intel, ship the Monday digest.
 - **WF-02** Co-Investor Share — `deal-watchlist-curate, deal-co-investor-syndicate` — After the Monday digest, share qualified deals with relevant co-investors with personalised notes.
-- **WF-03** DD Kickoff — `deal-pitch-deck-analyze, market-competitor-map, deal-reference-check, deal-investment-memo-draft, deal-ic-pack-build, legal-captable-model` — From qualified deal to IC pack: deck analysis, market map, references, memo draft, cap-table model, IC briefing.
+- **WF-03** DD Kickoff — `deal-pitch-deck-analyze, market-competitor-map, deal-reference-check, deal-due-diligence, deal-ic-pack-build, legal-captable-model` — From qualified deal to IC pack: deck analysis, market map, references, memo draft, cap-table model, IC briefing.
 - **WF-04** Deal Closing — `legal-document-draft, legal-captable-model, legal-contract-signature-manage, legal-audit-trail-write` — Draft term sheet & SPA/SHA, finalise cap table, send for e-signature, write audit-trail.
 - **WF-05** Monthly Health Check — `portfolio-kpi-collect, portfolio-health-check, portfolio-fund-view, portfolio-early-warning-alert` — Collect KPIs, run health checks, aggregate to fund view, flag warnings.
 - **WF-06** Quarterly LP Reporting — `portfolio-fund-view, portfolio-impact-assess, lp-quarterly-report, legal-audit-trail-write` — Aggregate performance, synthesise impact, compose report, write audit-trail entry, send personalised.
@@ -116,7 +115,7 @@ The skills compose into 18 cross-skill workflows you can wire up (cron / Agent S
 - **WF-09** LP Outbound Sourcing — `lp-database-scout, lp-pipeline-manage, lp-network-intro-map` — Scout new LPs from closed databases, file new candidates into the pipeline, request intro paths.
 - **WF-10** Quarterly Finance Review — `portfolio-kpi-collect, portfolio-health-check, portfolio-fund-view` — Pull financials, sense-check, benchmark against stage, update tracker, surface outliers.
 - **WF-11** Market Intelligence Alert — `market-intelligence-scan, portfolio-early-warning-alert` — Continuous competitive / regulatory scan; immediate critical alerts; weekly digest.
-- **WF-12** Follow-on Trigger — `portfolio-early-warning-alert, deal-investment-memo-draft, legal-captable-model` — Early Warning catches a follow-on trigger, hands to Investment Memo Draft (follow-on mode), cap-table updated.
+- **WF-12** Follow-on Trigger — `portfolio-early-warning-alert, deal-due-diligence, legal-captable-model` — Early Warning catches a follow-on trigger, hands to Due Diligence (follow-on memo mode), cap-table updated.
 - **WF-13** Capital Call — `lp-capital-call-draft, legal-audit-trail-write` — Compute call quotas per LP, draft notices, track receipts, log to audit trail.
 - **WF-14** Compliance Watch — `legal-regulatory-deadline-watch, legal-contract-signature-manage, legal-audit-trail-write` — Deadline scan, contract obligations, audit-trail health-check.
 - **WF-15** Fund Grant Pipeline — `finance-grant-scout` — Annual / quarterly scan of public funding programmes the fund qualifies for; draft application skeletons for review.

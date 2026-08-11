@@ -1,8 +1,8 @@
 {
   "name": "fund-os",
   "displayName": "Fund OS",
-  "version": "0.3.7",
-  "description": "41 Claude Skills for VC fund operations across 8 lifecycle phases. Built on the open VC-Skills.md community convention. Fund-side scope only. (0.3.7: lp-investor-scoring SKILL.md evaluation output format now includes a concrete worked example with exact label padding/alignment, so scored outputs are formatted consistently. Scoring logic unchanged from 0.3.6.)",
+  "version": "0.4.0",
+  "description": "42 Claude Skills for VC fund operations across 8 lifecycle phases. Built on the open VC-Skills.md community convention. Fund-side scope only. (0.4.0: consolidates the v0.2.2 git line and the v0.3.7 Desktop line into one tree; deal-investment-memo-draft merged into deal-due-diligence; all configuration and knowledge paths anchored to ${CLAUDE_PLUGIN_ROOT} with a ~/.fund-os/ overlay.)",
   "author": {
     "name": "Ocean One Ventures"
   },
@@ -41,7 +41,7 @@
       "deal-flow-triage",
       "deal-startup-score",
       "portfolio-health-check",
-      "deal-investment-memo-draft"
+      "deal-due-diligence"
     ]
   }
 }
