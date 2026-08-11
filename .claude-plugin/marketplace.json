@@ -8,7 +8,7 @@
     {
       "name": "fund-os",
       "source": "./plugins/fund-os",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "description": "43 Claude Skills for VC fund operations - sourcing to wind-down.",
       "author": {
         "name": "Ocean One Ventures"

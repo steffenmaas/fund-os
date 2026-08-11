@@ -40,17 +40,34 @@ Start with the vanilla version if you're the first person at your fund to instal
 
 ## 2. Installation
 
-### Upload via Claude Desktop (recommended — no terminal needed)
+### Via the marketplace (recommended — updates arrive automatically)
 
-1. Get the `fund-os.plugin` file — vanilla version from the table above, or customised version from your colleague
+1. In the Claude app, open **Settings → Plugins**
+2. Add the marketplace: `https://github.com/steffenmaas/fund-os.git`
+3. Install **fund-os** from it
+
+From then on the app keeps the plugin current — no re-uploading, no version guessing. This is
+the only path where an installed version always corresponds to a commit.
+
+The repository is private, so your account needs read access to it. If the app cannot reach it,
+use the fallback below and ask for access.
+
+### Fallback — upload the `.plugin` file
+
+Use this only if the marketplace path is unavailable to you. Every update is then a manual
+re-upload, which is how the version history came apart once already.
+
+1. Download the latest bundle from the [releases page](https://github.com/steffenmaas/fund-os/releases) — the `fund-os-<version>.plugin` asset. It is built by CI from the tagged commit; never build one by hand.
 2. Open **Claude Desktop** and click **Customize** in the left sidebar
 3. Next to **Personal Plugins**, click the **+** button
-4. Hover over **Create plugin**
-5. Click **Upload plugin**
-6. Select the `fund-os.plugin` file
-7. **Fund OS** will appear in your Personal Plugins list
+4. Hover over **Create plugin**, then click **Upload plugin**
+5. Select the `.plugin` file
 
-That's it. No terminal, no accounts, no technical setup required.
+### Already on the upload path?
+
+Switch once: add the marketplace, install `fund-os` from it, then remove the uploaded copy so
+only one version is active. Your configuration and knowledge are untouched — they live in
+`~/.fund-os/` and in the Drive knowledge folder, not in the plugin.
 
 ---
 

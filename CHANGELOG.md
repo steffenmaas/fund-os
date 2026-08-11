@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.1 - 2026-08-11
+
+- `update` now leads with the marketplace path and explains the one-time migration off the
+  manual `.plugin` upload. The upload still works, but every update is a manual re-upload and
+  nothing ties the bundle to a commit — which is how the version history came apart.
+- `USER_GUIDE.md` installation rewritten the same way; the `.plugin` upload is now the
+  documented fallback, and the bundle is taken from the CI-built release asset.
+- Tightened the dead-path check in `validate.py`. It was flagging any mention of
+  `~/.claude/plugins/`, including legitimate ones naming it as an install location. It now
+  flags what actually broke: reading a fund *resource* from a hand-built path under it.
+  Regression-tested against the original 0.2.0 line.
+
 ## 0.5.0 - 2026-08-11
 
 The plugin now ships **templates, not one fund's filled-in documents**. This repository is
