@@ -304,11 +304,15 @@ This will:
 
 ## 8. Support
 
-**Something not working?** Contact the Fund OS team:
+**Something not working?** Two routes:
 
-📧 [steffen@ocean1.vc](mailto:steffen@ocean1.vc)
+- **Inside your fund:** run `fund-os:learn` and describe what went wrong. It writes the note to
+  `~/.fund-os/learnings/`, and generalisable fixes travel back into the plugin from there.
+- **A bug in the plugin itself:** open an issue at
+  [github.com/steffenmaas/fund-os/issues](https://github.com/steffenmaas/fund-os/issues), or get
+  in touch via [ocean1.vc](https://ocean1.vc).
 
-When you write in, please include:
+Either way, please include:
 - Which skill you were using (e.g. `deal-flow-triage`)
 - What you typed / what you expected
 - What Claude responded

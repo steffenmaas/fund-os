@@ -18,7 +18,7 @@ der Desktop-App und wäre bei einem Zurücksetzen der App restlos verloren.
 
 | # | Stand | Version | Datum | Ort | Rolle |
 |---|---|---|---|---|---|
-| 1 | **Runtime (Desktop/Cowork)** | **0.3.7** | 10.07. 09:48 | `~/Library/Application Support/Claude/local-agent-mode-sessions/283ad5e6…/29063414…/rpm/plugin_01U3NR4taVhGbwhmYU9hKDiK/` | **Der aktuell laufende Stand. Einzige Kopie.** |
+| 1 | **Runtime (Desktop/Cowork)** | **0.3.7** | 10.07. 09:48 | `~/Library/Application Support/Claude/local-agent-mode-sessions/<session>/<sub>/rpm/plugin_<id>/` | **Der aktuell laufende Stand. Einzige Kopie.** |
 | 2 | Drive-Bundle | 0.3.6 | 08.07. 13:17 | `…/FUND OS Collab/fund-os-0.3.6.plugin` | letztes gesichertes Artefakt |
 | 3 | Drive-Bundle | 0.2.5 *(Datei heißt 0.3.2)* | 26.06. 19:51 | `fund-os-0.3.2.plugin` | Dateiname ≠ interne Version |
 | 4 | Drive-Bundle | 0.2.5 *(Datei heißt 0.3.1)* | 26.06. 19:08 | `fund-os-0.3.1.plugin` | Dateiname ≠ interne Version |
@@ -92,7 +92,7 @@ ausschließlich von `install.sh` angelegt — und installiert wurde nie über `i
 sondern über den `.plugin`-Upload in Claude Desktop. Die tatsächlichen Orte sind:
 
 - `~/.claude/plugins/marketplaces/local-desktop-app-uploads/fund-os/` (CLI)
-- `~/Library/Application Support/Claude/…/rpm/plugin_01U3NR…/` (Desktop/Cowork)
+- `~/Library/Application Support/Claude/…/rpm/plugin_<id>…/` (Desktop/Cowork)
 
 Wegen `2>/dev/null` schlägt das **lautlos** fehl. Jeder Skill fällt auf Defaults zurück:
 kein Fondsname, keine Ticket-Range, keine Drive-Folder-IDs, kein Tone-of-Voice.
@@ -233,8 +233,7 @@ Grenze, die jetzt gilt und die `validate.py` maschinell prüft:
 Fondsspezifische Inhalte liegen in `~/.fund-os/` (Config, Knowledge-Overlay, Learnings) und
 werden nie mitgeliefert — `build-plugin.sh` schließt sie aus und verifiziert den Ausschluss.
 
-**Offener Punkt für das Team:** `~/.fund-os/` liegt auf je einem Rechner. Damit Dietlind und
-weitere Teammitglieder dieselbe Thesis und Config nutzen, muss der Ordner geteilt werden —
+**Offener Punkt für das Team:** `~/.fund-os/` liegt auf je einem Rechner. Damit weitere Teammitglieder dieselbe Thesis und Config nutzen, muss der Ordner geteilt werden —
 entweder über den Drive-Knowledge-Manifest-Weg, der dafür schon vorgesehen ist
 (`knowledge.manifest` in der Config), oder indem `~/.fund-os/` aus der geteilten Drive-Ablage
 kopiert wird. Das ist noch nicht eingerichtet.

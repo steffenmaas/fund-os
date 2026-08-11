@@ -173,4 +173,6 @@ Fund OS builds on the [VC-Skills.md](https://github.com/luisschmitzheadline/vc-s
 
 ## License
 
-Proprietary. © Ocean One Ventures.
+PolyForm Noncommercial License 1.0.0 — see LICENSE and NOTICE at the repository root.
+
+© 2026 Ocean One Ventures.

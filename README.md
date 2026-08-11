@@ -300,4 +300,9 @@ Skill files are generated from a single `skills-data.js` in the Fund OS upstream
 
 ## License
 
-Proprietary. © Ocean One Ventures.
+PolyForm Noncommercial License 1.0.0 — see [LICENSE](./LICENSE) and [NOTICE](./NOTICE).
+
+Free to use for funds, teams, non-profits, education and research. Commercial exploitation
+by third parties requires a separate licence: https://ocean1.vc
+
+© 2026 Ocean One Ventures.

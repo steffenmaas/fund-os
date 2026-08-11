@@ -287,7 +287,7 @@ def check_fund_neutral() -> None:
     # Attribution is legitimate; a fund still authors the plugin it publishes.
     allow = [
         re.compile(r'"name":\s*"Ocean One Ventures"'),      # plugin.json author
-        re.compile(r"©\s*Ocean One Ventures"),               # README copyright
+        re.compile(r"©\s*(\d{4}\s+)?Ocean One Ventures"),      # README copyright, with or without year
         re.compile(r'"author"'),
     ]
     bad = []

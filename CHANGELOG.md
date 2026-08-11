@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.6.0 - 2026-08-11
+
+Prepares the repository to be public, which is what makes marketplace installs work at all.
+
+The Claude app cannot load a marketplace from a private repository. It fetches the definition
+without local git credentials, so `raw.githubusercontent.com` returns 404 — measured: 200 for the
+public founder-os, 404 for fund-os. The marketplace record is still created, which is why the
+dialog reports it as already added while no plugin ever appears, and there is no token mechanism
+for git marketplaces anywhere in the app's configuration.
+
+Going public is a business decision, not a security one, because since 0.5.0 the repository holds
+nothing fund-private: verified 0 fund-specific matches in the tree and 0 in the history, and
+`validate.py` enforces it on every push. The concrete matrices, thesis and documents live in the
+fund's Drive folder.
+
+- **LICENSE / NOTICE** — PolyForm Noncommercial 1.0.0, the same terms as founder-os. The `license`
+  field said `Proprietary`, which would have been both wrong and legally confusing on a public
+  repository.
+- `.claude-plugin/marketplace.json` aligned with the schema that demonstrably works: `description`
+  and `version` inside `metadata{}`, a `category` on the plugin entry, `owner.url`. This would
+  have been the next obstacle once access was solved.
+- `docs/version-audit-2026-08-11.md` depersonalised — a colleague's name and the Desktop session
+  identifiers removed.
+- The support section named a personal work address. Replaced with `fund-os:learn` for
+  fund-internal problems and the issue tracker for plugin bugs, matching how founder-os already
+  handles this in public.
+
 ## 0.5.2 - 2026-08-11
 
 Adds `tools/check-knowledge.py`. `validate.py` checks the plugin; this checks the *content* the
