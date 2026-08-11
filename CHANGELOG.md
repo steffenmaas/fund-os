@@ -28,9 +28,9 @@ tree. See `docs/version-audit-2026-08-11.md` for the full audit.
   (removed in 0.2.5), `lp-investor-scoring` was missing entirely, and `deal-startup-score` was
   still described as the old 9-dimension GO/NO-GO model. All three corrected.
 - Four `outreach-*` skills carried phase id `outreach` while the dashboard defines `ecosystem`,
-  so they never rendered. Corrected — 40 of 42 skills now appear (Phase 00 Setup stays out of
-  the periodic table, as in 0.2.2).
-- Hero skill count 35 → 42.
+  so they never rendered. Corrected — 40 of 43 skills now appear (the three Phase 00 Setup
+  skills stay out of the periodic table, as in 0.2.2).
+- Hero skill count 35 → 43.
 - `deal-thesis-screen` stays removed; it duplicated `deal-startup-score`'s triggers.
 
 **Scoring matrices — both were arithmetically broken, both fixed:**
