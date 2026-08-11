@@ -1,54 +1,131 @@
-# Investment Thesis
+# Investment Thesis — TEMPLATE
 
-> **How to use:** Edit this file to reflect your fund's actual thesis. Save it as `investment-thesis` in your central Google Drive knowledge folder so all deal-related skills pick it up automatically.
+> **This is the shipped template, not a fund's actual thesis.**
+>
+> Fill it in for your own fund and save the result as **`~/.fund-os/knowledge/investment-thesis.md`**.
+> Every skill resolves that overlay first and only falls back to this file, so your thesis stays
+> outside the plugin and survives every update, re-upload and reinstall.
+>
+> If your fund keeps its thesis in Google Drive, put the document ID under
+> `knowledge.manifest.investment-thesis` in `~/.fund-os/user-config.json` instead — a document
+> found via the manifest wins over both this file and the local overlay.
+>
+> A skill that finds only this template will say so rather than triage against placeholders.
 
-## Fund overview
+---
 
-| Field | Value |
+## One-Line Thesis
+
+"[Fund] is a [€XXM] [stage] fund in [city] backing [geography] [sector] founders, led by partners with [the one credential that makes this fund credible]."
+
+---
+
+## Fund Overview
+
+| Parameter | Value |
 |---|---|
-| Fund name | [e.g. Ocean One Ventures Fund I] |
-| Fund size | [e.g. €30M] |
-| Target ticket | [e.g. €150K – €1.5M initial; €3M total reserve] |
-| Stage focus | [e.g. Pre-Seed and Seed] |
-| Geography | [e.g. DACH-first, broader EU considered] |
-| Investment period | [e.g. 2024 – 2027] |
+| Fund name | [Fund I] |
+| Fund size | [€XXM] |
+| Stage | [Pre-Seed / Seed] |
+| Geography | [beachhead → expansion markets] |
+| Sector | [strict sector definition — see below] |
+| Ticket size | [€XXXK–€XM initial] |
+| Ownership target | [XX% at entry] |
+| Follow-on reserve | [XX% of fund volume] |
+| Portfolio size | [XX–XX companies] |
+| Deal pace | [X–X deals/year] |
+| Fund lifetime | [10 + 2 years] |
+| Target MOIC | [Xx gross] |
 
-## Thesis statement
+---
 
-[2–3 sentences that capture the core belief driving the fund. Example: "We invest in early-stage B2B software companies tackling operationally complex industries where incumbents are slow to adopt AI. We back technical founders who have lived the problem and can build defensible product moats before the category consolidates."]
+## Sector Definition — [SECTOR] (strict)
 
-## Target sectors
+[Fund] invests in **[business model]** startups serving:
+- [customer segment 1]
+- [customer segment 2]
+- [customer segment 3]
 
-Primary:
-- [e.g. B2B SaaS — vertical software for industrial, logistics, professional services]
-- [e.g. Climate tech — software-enabled decarbonisation of heavy industry]
-- [e.g. Health tech — workflow automation for care providers]
+**EXCLUDED — hard misses (auto-Pass on any of these):**
+- [adjacent sector that looks similar but is out of scope]
+- [geography out of scope for this fund]
+- [stage or model out of scope]
 
-Secondary (opportunistic):
-- [e.g. Deep tech where commercialisation timeline is <3 years]
+**Critical brand rule:** [the phrase the fund always uses, and the one it never uses]. Getting this wrong in founder-facing output misdescribes the fund.
 
-Out of scope:
-- [e.g. Consumer, gaming, crypto, hardware-only, biotech]
+---
 
-## Ideal company profile
+## Hard Investment Filters (all must pass — any fail = automatic Pass)
 
-| Attribute | Target |
+| Filter | Pass Condition |
 |---|---|
-| Business model | [e.g. B2B SaaS, usage-based, marketplace with SaaS layer] |
-| Revenue at entry | [e.g. €0 – €500K ARR; pre-revenue OK if strong team + thesis fit] |
-| Growth signal | [e.g. ≥15% MoM at pre-revenue; ≥10% MoM at early revenue] |
-| Team | [e.g. 2–3 technical co-founders; domain expertise required] |
-| Market | [e.g. €1B+ SAM bottom-up; ideally €500M+ serviceable in 5 years] |
+| Sector | [ ] |
+| Model | [ ] |
+| Geography | [ ] |
+| Stage | [ ] |
+| Cap table | Clean — no blocking provisions, no undisclosed debt |
 
-## What we bring beyond capital
+---
 
-- [e.g. Portfolio network for enterprise sales introductions]
-- [e.g. LP relationships for Series A syndication]
-- [e.g. Operational support on pricing, GTM, hiring for technical founders]
+## Why Now — Timing Catalysts
 
-## Key conviction questions (asked at every IC)
+1. **[Structural catalyst]** — [why the category is forming now rather than five years ago]
+2. **[Regulatory catalyst]** — [what becomes non-discretionary, and when]
+3. **[Demand-side catalyst]** — [who is entering the market that was not there before]
+4. **[Cost-side catalyst]** — [what got cheap enough to make the model work]
 
-1. Why will this team win in this market?
-2. Why now — what structural shift makes this the right moment?
-3. What is the moat that compounds over time?
-4. What does a 10× outcome look like and is the market large enough?
+---
+
+## Market Size
+
+| Segment | Today | Forecast | Software TAM | Penetration |
+|---|---|---|---|---|
+| [segment 1] | [€XXB] | [€XXB] | [€X–XB] | [<X%] |
+| [segment 2] | [€XXB] | [€XXB] | [€X–XB] | [<X%] |
+| **Total** | **[€XXXB]** | **[€XXXB]** | **[€X–XXB]** | **[<X%]** |
+
+Core SAM for Fund I: [€X–XB]. SOM by [year]: [€XXX–XXXM] annual software revenue.
+
+---
+
+## Investment Archetypes
+
+| Archetype | ACV | Gross Margin | Mission-Critical Reason |
+|---|---|---|---|
+| [archetype 1] | [€XK–€XXK/yr] | [XX–XX%] | [why the customer cannot switch it off] |
+| [archetype 2] | [€XK–€XXK/yr] | [XX–XX%] | [ ] |
+
+---
+
+## Deal Funnel Targets
+
+| Stage | Volume | Criteria |
+|---|---|---|
+| Sourcing signals | [XXX/year] | [channels] |
+| Qualified | [XX/year] | [qualification bar] |
+| IC-ready | [X/year] | [IC bar] |
+| Investment | [X/year] | Portfolio companies |
+
+---
+
+## Sourcing Channels
+
+- **[Channel 1] (~XX%):** [what it produces and why it is proprietary]
+- **[Channel 2] (~XX%):** [ ]
+- **Proprietary network:** [the relationships that produce off-market dealflow]
+
+---
+
+## Exit Logic
+
+[Who buys companies in this sector, at what stage, at what multiple, and what the evidence is. If there are no comparable exits yet, say so — it is a real risk, not something to leave blank.]
+
+---
+
+## Team
+
+**[Partner name] — [role]:**
+[The specific, checkable credential that makes this partner right for this thesis — not a career summary.]
+
+**[Partner name] — [role]:**
+[ ]

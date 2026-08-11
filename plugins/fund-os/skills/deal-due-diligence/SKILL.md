@@ -32,7 +32,7 @@ Run this skill when the user says any of:
 
    If neither exists, say so and stop: *"Fund OS is not configured — run `fund-os:setup` first."* Do not silently continue with defaults; an unconfigured run produces a memo with the wrong fund name, wrong ticket sizes and the wrong save location.
 
-   From the config, apply `brandGuidelines.tone` to all prose. Use `storagePaths.deals` for DD artefacts and `storagePaths.drafts` for the memo draft. Reference `systems.crm`, `systems.documentStorage` and `systems.meetingNotes` by their configured names. From `knowledge.manifest`, load `evaluation-criteria`, `investment-thesis`, `dd-framework` and `memo-template` from Drive if present — a Drive document always wins over the bundled copy.
+   From the config, apply `brandGuidelines.tone` to all prose. Use `storagePaths.deals` for DD artefacts and `storagePaths.drafts` for the memo draft. Reference `systems.crm`, `systems.documentStorage` and `systems.meetingNotes` by their configured names. From `knowledge.manifest`, load `evaluation-criteria`, `investment-thesis`, `dd-framework`, `saas-benchmarks` and `memo-template` from Drive if present — a Drive document always wins over the bundled copy.
 
 1. **Evaluation criteria check first.** Before opening any other document, load `evaluation-criteria`. Verify the deal has passed all hard filters and holds a P1 or P2 priority tag from `deal-flow-triage`. If the deal is P3 or Pass, surface this prominently and ask the user to confirm DD is intentional before continuing.
 
@@ -86,7 +86,8 @@ The fund configures which actual MCP server backs each capability via `.mcp.json
 Bundled in this plugin, overridable from `~/.fund-os/knowledge/` and from the Drive manifest:
 
 - `evaluation-criteria` — hard filters, red flags, P-tag routing (source template at `${CLAUDE_PLUGIN_ROOT}/skills/deal-flow-triage/knowledge/evaluation-criteria.md`)
-- `${CLAUDE_PLUGIN_ROOT}/skills/deal-due-diligence/knowledge/investment-thesis.md` — thesis alignment check for the market section
+- `${CLAUDE_PLUGIN_ROOT}/skills/deal-flow-triage/knowledge/investment-thesis.md` — thesis alignment check for the market section (single source; overlay at `~/.fund-os/knowledge/investment-thesis.md` wins)
+- `${CLAUDE_PLUGIN_ROOT}/skills/deal-due-diligence/knowledge/saas-benchmarks.md` — SaaS benchmarks for the Traction and Valuation sections
 - `${CLAUDE_PLUGIN_ROOT}/skills/deal-due-diligence/knowledge/dd-framework.md` — workstreams, timeline, data room checklist, IC memo requirements
 - `${CLAUDE_PLUGIN_ROOT}/skills/deal-due-diligence/templates/memo-template.md` — memo structure and section formatting
 

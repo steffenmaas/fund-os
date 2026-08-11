@@ -16,16 +16,21 @@ Score investor and co-investor prospects for **Ocean One Fund I**, a first-time 
 ## Step 0 — Load preferences and scoring matrix
 
 ```bash
-cat ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json 2>/dev/null
+cat ~/.fund-os/user-config.json 2>/dev/null \
+  || cat "${CLAUDE_PLUGIN_ROOT}/preferences/user-config.json" 2>/dev/null
 ```
+
+If neither exists, stop and say: *"Fund OS is not configured — run `fund-os:setup` first."* Do not continue with defaults.
 
 Then load the scoring matrix:
 
 ```bash
-cat ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/skills/lp-investor-scoring/knowledge/lp-scoring-matrix.md 2>/dev/null
+cat ~/.fund-os/knowledge/lp-scoring-matrix.md 2>/dev/null \
+  || cat "${CLAUDE_PLUGIN_ROOT}/skills/lp-investor-scoring/knowledge/lp-scoring-matrix.md"
 ```
 
-If the preferences file is absent, proceed with defaults — run `fund-os:setup` to create it.
+The matrix is mandatory. If it cannot be read, stop — do not score from memory.
+
 Apply `brandGuidelines.tone` to all prose output if present.
 
 The scoring matrix in `knowledge/lp-scoring-matrix.md` is the authoritative source for:

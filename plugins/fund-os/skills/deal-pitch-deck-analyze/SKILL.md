@@ -18,12 +18,14 @@ Run this skill when the user says any of:
 
 ## Key instructions
 
-### 0. Load preferences
-Load preferences from the plugin:
+### 0. Load configuration
+Resolve in this order, first hit wins:
 ```bash
-cat ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json 2>/dev/null
+cat ~/.fund-os/user-config.json 2>/dev/null \
+  || cat "${CLAUDE_PLUGIN_ROOT}/preferences/user-config.json" 2>/dev/null
 ```
-Apply `brandGuidelines.tone` to all prose output. Note `storagePaths.rootFolderId`, `storagePaths.deals`, and `systems.crm` — these are used in later steps. From `knowledge.manifest`, load: `investment-hypothesis`, `investment-criteria`, `investment-note-template`. If the preferences file is absent, proceed normally.
+If neither exists, stop and say: *"Fund OS is not configured — run `fund-os:setup` first."* Do not continue with defaults.
+Apply `brandGuidelines.tone` to all prose output. Note `storagePaths.rootFolderId`, `storagePaths.deals`, and `systems.crm` — these are used in later steps. From `knowledge.manifest`, load: `investment-hypothesis`, `investment-criteria`, `investment-note-template`. A document found via the Drive manifest always wins over the bundled copy.
 
 ---
 
@@ -247,4 +249,4 @@ rationale:     <company name> deck scored <score>/100 — <STATUS>; saved to Dea
 
 ---
 
-*Fund OS v0.5.0 — customised for Ocean One Ventures*
+*Fund OS v0.4.0 · Phase 03 — Due Diligence*

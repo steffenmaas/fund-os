@@ -20,7 +20,16 @@ Run this skill when the user says any of:
 
 ## Key instructions
 
-0. **User preferences:** Load preferences from the plugin: `~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json` (via Bash: `cat ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json 2>/dev/null`). Apply `brandGuidelines.tone` to all prose output. Use `storagePaths.outputs` as the default save location (or `storagePaths.deals`, `storagePaths.portfolio`, `storagePaths.lps` where applicable). Reference `systems.crm` and `systems.documentStorage` by their configured names in instructions. From `knowledge.manifest`, load these keys from Google Drive if present: `investment-thesis`. Read the current document version before proceeding — this ensures you use the fund's own methodology rather than generic defaults. If the preferences file is absent, proceed normally — run `fund-os:setup` to create it.
+0. **Load configuration.** Resolve in this order, first hit wins — `~/.fund-os/user-config.json`, then `${CLAUDE_PLUGIN_ROOT}/preferences/user-config.json`:
+
+   ```bash
+   cat ~/.fund-os/user-config.json 2>/dev/null \
+     || cat "${CLAUDE_PLUGIN_ROOT}/preferences/user-config.json" 2>/dev/null
+   ```
+
+   If neither exists, stop and say: *"Fund OS is not configured — run `fund-os:setup` first."* Do not continue with defaults; an unconfigured run silently produces output with the wrong fund name, wrong ticket sizes and the wrong save location.
+
+   Apply `brandGuidelines.tone` to all prose output. Use `storagePaths.outputs` as the default save location (or `storagePaths.deals`, `storagePaths.portfolio`, `storagePaths.lps` where applicable). Reference `systems.crm` and `systems.documentStorage` by their configured names in instructions. From `knowledge.manifest`, load these keys from Google Drive if present: `investment-thesis`. Read the current document version before proceeding — this ensures you use the fund's own methodology rather than generic defaults. A document found via the Drive manifest always wins over the bundled copy.
 
 1. Gather data from all available sources in order: CRM, pitch deck / data room, web search, LinkedIn, funding databases (Crunchbase, Dealroom, Apollo).
 2. Structure the profile in five sections: (i) Company basics — name, founded, HQ, stage, sector, website; (ii) Founding team — bios, domain expertise, prior exits, team completeness; (iii) Product — one-sentence description, core value proposition, current stage (idea / MVP / growth), tech differentiation; (iv) Traction — ARR/MRR, growth rate, customer count, key logos, NRR, runway; (v) Market & competitive landscape — TAM/SAM/SOM, top 3–5 competitors with differentiators.
@@ -128,4 +137,4 @@ rationale:     <one-line summary of company and profile purpose>
 
 ---
 
-*Generated from `skills-data.js` at version 0.2.0. Do not edit directly — edit the source and rebuild.*
+*Fund OS v0.4.0 · skill `deal-profile`. This file is the source — edit it directly.*
