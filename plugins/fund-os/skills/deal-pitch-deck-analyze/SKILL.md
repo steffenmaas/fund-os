@@ -24,7 +24,7 @@ Resolve in this order, first hit wins:
 cat ~/.fund-os/user-config.json
 ```
 If neither exists, stop and say: *"Fund OS is not configured — run `fund-os:setup` first."* Do not continue with defaults.
-Apply `brandGuidelines.tone` to all prose output. Note `storagePaths.rootFolderId`, `storagePaths.deals`, and `systems.crm` — these are used in later steps. From `knowledge.manifest`, load: `investment-hypothesis`, `investment-criteria`, `investment-note-template`. A document found via the Drive manifest always wins over the bundled copy.
+Apply `brandGuidelines.tone` to all prose output. Note `storagePaths.rootFolderId`, `storagePaths.deals`, and `systems.crm` — these are used in later steps. From `knowledge.manifest`, load: `investment-hypothesis`, `investment-criteria`, `memo-template`. A document found via the Drive manifest always wins over the bundled copy.
 
 ---
 
@@ -77,7 +77,7 @@ for i, slide in enumerate(prs.slides, 1):
 From `knowledge.manifest`, download and read:
 - `investment-criteria` — O1 10-dimension scoring rubric, positive/negative signals, score interpretation table
 - `investment-hypothesis` — O1 thesis, conviction pillars, geography mandate, dual-use rationale
-- `investment-note-template` — blank DOCX output template (download binary, save to `/tmp/template.docx`)
+- `memo-template` — blank DOCX output template (download binary, save to `/tmp/template.docx`)
 
 ---
 
@@ -99,7 +99,7 @@ Apply the O1 Venture Investmentkriterien (10 fixed dimensions):
 
 Score each 0–10; cite the slide number(s). End with a numeric overall (0–100) and a recommendation: **INVEST / CONDITIONAL / WATCHLIST / REJECTED**.
 
-Fill the `investment-note-template` DOCX with all scores and commentary.
+Fill the `memo-template` DOCX with all scores and commentary.
 
 ---
 
@@ -230,7 +230,7 @@ Drive: <viewUrl of the investment note DOCX>
 
 - `investment-hypothesis` — O1 thesis, conviction pillars, dual-use rationale
 - `investment-criteria` — O1 scoring rubric (10 dimensions, weights, signals)
-- `investment-note-template` — blank DOCX in the O1 Investment Note format
+- `memo-template` — blank DOCX in the O1 Investment Note format
 
 ## Human-in-the-loop
 

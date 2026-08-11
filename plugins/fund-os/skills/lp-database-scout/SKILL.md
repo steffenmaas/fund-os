@@ -28,11 +28,11 @@ Run this skill when the user says any of:
 
    If it is missing, stop and say: *"Fund OS is not configured — run `fund-os:setup` first."* Do not continue with defaults; an unconfigured run silently produces output with the wrong fund name, wrong ticket sizes and the wrong save location. The shape of the file is documented in `${CLAUDE_PLUGIN_ROOT}/preferences/user-config.json.template`.
 
-   Apply `brandGuidelines.tone` to all prose output. Use `storagePaths.outputs` as the default save location (or `storagePaths.deals`, `storagePaths.portfolio`, `storagePaths.lps` where applicable). Reference `systems.crm` and `systems.documentStorage` by their configured names in instructions. From `knowledge.manifest`, load these keys from Google Drive if present: `lp-thesis`, `lp-evaluation-criteria`. Read the current document version before proceeding — this ensures you use the fund's own methodology rather than generic defaults. A document found via the Drive manifest always wins over the bundled copy.
+   Apply `brandGuidelines.tone` to all prose output. Use `storagePaths.outputs` as the default save location (or `storagePaths.deals`, `storagePaths.portfolio`, `storagePaths.lps` where applicable). Reference `systems.crm` and `systems.documentStorage` by their configured names in instructions. From `knowledge.manifest`, load these keys from Google Drive if present: `lp-thesis`, `lp-scoring-matrix`. Read the current document version before proceeding — this ensures you use the fund's own methodology rather than generic defaults. A document found via the Drive manifest always wins over the bundled copy.
 
 1. Pull from at least three independent sources per run (PitchBook LP-side + news + B2B database).
 2. Reject anyone already in the LP-Database with status 'Passed' in the last 12 months.
-3. Score each candidate against the LP thesis: ticket fit, thesis overlap, prior commitments to comparable funds.
+3. Do not invent a scoring scheme here. Rank candidates roughly on the `lp-scoring-matrix` dimensions — ticket fit, thesis overlap, prior fund commitments — and hand the shortlist to `lp-investor-scoring` for the actual 8-dimension score. Two scoring schemes for the same entity is how scores stop being comparable.
 4. Always hand off to network-intro-mapper rather than suggesting cold outreach.
 
 ## Inputs
