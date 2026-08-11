@@ -70,7 +70,7 @@ No outreach without approval - this skill only produces a shortlist.
 | Company    | Stage   | Why a fit                          | Path                |
 | Helios     | Pre-S   | IoT + EU + EUR 4m cap = thesis     | Warm via TUM        |
 | Resolutee  | Seed    | Legal AI, DACH, female co-founder  | Inbound likely      |
-| Nordwind   | Pre-S   | Climate data, Hamburg              | Cold from network   |
+| Nordwind   | Pre-S   | Climate data, Lisbon               | Cold from network   |
 
 Sources: Dealroom DACH/Climate, Specter signals, [University Lab], Slush 2026.
 ```

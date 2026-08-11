@@ -72,7 +72,7 @@ Co-investor share approved before send.
 Internal:
 1. Helios Sensors (pre-seed, Munich) - IoT, paid pilots. Next: founder call Thu.
 2. Resolutee (seed, Berlin) - legal AI. Next: term-sheet discussion.
-3. Nordwind (pre-seed, Hamburg) - climate data. Next: pass.
+3. Nordwind (pre-seed, Lisbon) - climate data. Next: pass.
 
 LinkedIn carousel draft:
 Slide 1: 'Three companies we found this week'

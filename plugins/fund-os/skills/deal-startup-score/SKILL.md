@@ -1,11 +1,11 @@
 ---
 name: deal-startup-score
-description: Run a structured 10-dimension O1 scoring of an early-stage startup against the fund's thesis. Outputs a scored card with per-dimension contributions, O1 Thesis Fit and Impact Fit star ratings, and a recommended action — in the standard O1 Startup Scoring format used across all screening depths. Use this skill when the user says "score this startup", "startup scorecard", "go/no-go", "first screen", "quick screen" or "validate this idea". Phase 02 (Sourcing & Market Watch). Fund-side only.
+description: Run a structured 10-dimension scoring of an early-stage startup against the fund's thesis. Outputs a scored card with per-dimension contributions, Thesis Fit and Impact Fit star ratings, and a recommended action — in the standard scoring format used across all screening depths. Use this skill when the user says "score this startup", "startup scorecard", "go/no-go", "first screen", "quick screen" or "validate this idea". Phase 02 (Sourcing & Market Watch). Fund-side only.
 ---
 
 # Deal Startup Score
 
-Run a structured 10-dimension O1 scoring of an early-stage startup against the Ocean One investment thesis. Produces the standard O1 Startup Scoring card used across all screening depths — from first screening to full due diligence.
+Run a structured 10-dimension scoring of an early-stage startup against the fund's investment thesis. Produces the standard scoring card used across all screening depths — from first screening to full due diligence.
 
 This skill is part of the **Fund OS** plugin, Phase 02 — Sourcing & Market Watch.
 
@@ -39,7 +39,7 @@ Run this skill when the user says any of:
    - **Pitch deck screening** — full deck reviewed → most dimensions scoreable
    - **Due diligence screening** — data room + founder calls + references → all 10 dimensions must be scored
 
-2. **Score ALL 10 dimensions** on actual evidence — ALWAYS, regardless of thesis fit. Do NOT zero out dimensions because of geography, stage, or model mismatches. Hard-pass thesis filters belong ONLY in the O1 Thesis Fit star rating and the Recommended action. Weights:
+2. **Score ALL 10 dimensions** on actual evidence — ALWAYS, regardless of thesis fit. Do NOT zero out dimensions because of geography, stage, or model mismatches. Hard-pass thesis filters belong ONLY in the Thesis Fit star rating and the Recommended action. Weights:
    - Team & Founder-Market Fit: /20
    - Market Opportunity: /15
    - Problem–Solution Fit: /15
@@ -56,20 +56,20 @@ Run this skill when the user says any of:
 
 4. **Apply score band** from the matrix (90–100 = Strong Buy → 0–39 = Hard Pass).
 
-5. **Assess O1 thesis fit** (from investment-thesis.md) in the star ratings:
+5. **Assess thesis fit** (from `investment-thesis`) in the star ratings:
    - Geography: DACH, UK, Mediterranean, Nordics (others = hard pass flag)
    - Stage: Pre-Seed or Seed (later = hard pass flag)
    - Model: SaaS / platform / marketplace (hardware-only or asset-heavy = flag)
-   - Sector: [sector] B2B software
-   If any hard filter fails, note it explicitly in O1 Thesis Fit reason AND Recommended action. The score still reflects the company's quality on the merits.
+   - Sector: as defined in `investment-thesis`
+   If any hard filter fails, note it explicitly in Thesis Fit reason AND Recommended action. The score still reflects the company's quality on the merits.
 
 6. **Append star ratings:**
-   - O1 Thesis Fit ★/5 — [sector] SaaS fit, geography, stage, model. If hard-pass criteria apply (wrong geo, wrong stage, acquired/wound-down), state them here and in Recommended action.
-   - Impact Fit ★/5 — environmental/social impact on [sector] ecosystem
+   - Thesis Fit ★/5 — sector, geography, stage and model fit per `investment-thesis`. If hard-pass criteria apply (wrong geo, wrong stage, acquired/wound-down), state them here and in Recommended action.
+   - Impact Fit ★/5 — impact against the fund's stated impact mandate. If the fund has none, omit this rating rather than leaving it blank.
 
 7. **Output the standard scorecard format** exactly as defined in startup-scoring-matrix.md:
    ```
-   O1 Startup Score: X/100 — [Band]
+   Startup Score: X/100 — [Band]
    Screening depth: [label]
 
    [2–3 sentence company description]
@@ -86,18 +86,19 @@ Run this skill when the user says any of:
    • Financial Planning:        +X/5    — [reason]
    • Exit Potential:            +X/5    — [reason]
 
-   O1 Thesis Fit:    ★★★☆☆ — [reason; state any hard-pass flags here]
+   Thesis Fit:       ★★★☆☆ — [reason; state any hard-pass flags here]
    Impact Fit:       ★★★☆☆ — [reason]
 
    Recommended action: [emoji + label; state hard-pass reason if applicable]
-   Evaluated: YYYY-MM-DD | Ocean One Fund I – O1 Startup Scoring v1
+   Evaluated: YYYY-MM-DD | [Fund] Startup Scoring v1
    ```
 
-8. **Write to Attio** (if connected): find the entry in `vc_deal_flow` list using `list-records-in-list`, then update using `update-list-entry-by-id` at the LIST ENTRY level:
-   - `[crm-score-field]` = integer total score  ← correct slug. `ai_investment_score` is ARCHIVED — do NOT use it.
-   - `o1_investment_summary` = full scorecard block text
-   - NEVER use `update-list-entry-by-record-id` — it always fails
-   - NEVER use `update-record` — scores live at list-entry level, not record level
+8. **Write to the CRM** (if connected). Field slugs come from `crmFields` in the configuration — never hardcode them, and never guess a slug:
+   - `crmFields.dealList` — the list to search with `list-records-in-list`
+   - `crmFields.startupScore` = integer total score
+   - `crmFields.startupSummary` = full scorecard block text
+   - Write at the **list-entry** level using `update-list-entry-by-id`. Scores live on the list entry, not on the record.
+   - `crmFields.archivedSlugs` names slugs that must never be written to. If a slug you are about to use appears there, stop and report it.
 
 9. Every scored dimension requires a one-line citation (deck slide, URL, founder statement, or "No information available"). Never guess — mark thin evidence as 0 with the zero-information label.
 
@@ -110,8 +111,8 @@ Run this skill when the user says any of:
 
 ## Outputs
 
-- O1 Startup Scoring card (standard format)
-- Attio list-entry update (`[crm-score-field]` + `o1_investment_summary`)
+- Startup scoring card (standard format)
+- CRM list-entry update, using the slugs from `crmFields`
 
 ## Required MCP capabilities
 
@@ -142,4 +143,4 @@ rationale:     <company name, score/100, band, recommended action>
 
 ---
 
-*Updated 2026-06-26 — Removed pre-scoring hard-pass KO filter (all 10 dims always scored on evidence); hard-pass criteria moved to O1 Thesis Fit stars + Recommended action only. Fixed Technology & Product weight to /10 (never /15). Total score = arithmetic sum of dimension numerators, computed after scoring — never set manually. Updated 2026-06-26 (2) — Corrected Attio field slug to `[crm-score-field]`; `ai_investment_score` is the archived/old slug — never use it.*
+*Updated 2026-06-26 — Removed pre-scoring hard-pass KO filter (all 10 dims always scored on evidence); hard-pass criteria moved to Thesis Fit stars + Recommended action only. Fixed Technology & Product weight to /10 (never /15). Total score = arithmetic sum of dimension numerators, computed after scoring — never set manually. Updated 2026-08-11 — CRM field slugs now come from `crmFields` in the configuration rather than being hardcoded, so the skill is not bound to one fund's CRM schema.*

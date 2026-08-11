@@ -136,7 +136,7 @@ search_files → query: "title = '<CompanyName>' and parentId = '<DealsFolderID>
 
 **Step C — Upload the investment note DOCX:**
 ```
-create_file → title: "<CompanyName>_Investment_Note_O1_EN_<YYYY-MM-DD>.docx"
+create_file → title: "<CompanyName>_Investment_Note_EN_<YYYY-MM-DD>.docx"
               parentId: <CompanyFolderID>
               contentMimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               disableConversionToGoogleType: true
@@ -171,7 +171,7 @@ add-record-to-list → list: "vc_deal_flow", parent_object: "companies", parent_
 If already in the list, catch the error and continue.
 
 **Step D — Read existing evaluation (preserve history):**
-Read the current `o1_investment_summary` value. If a prior evaluation exists, append it below the new one.
+Read the current `crmFields.startupSummary` value. If a prior evaluation exists, append it below the new one.
 
 **Step E — Write score, evaluation, and stage:**
 ```
@@ -181,7 +181,7 @@ update-list-entry-by-record-id
   parent_record_id: <record_id>
   entry_values:
     ai_investment_score: <total score as integer>
-    o1_investment_summary: <formatted evaluation — see format below>
+    crmFields.startupSummary: <formatted evaluation — see format below>
     deal_stage: "Screening"
 ```
 
@@ -208,7 +208,7 @@ Drive: <viewUrl of the investment note DOCX>
 
 | Artefact | Location |
 |---|---|
-| Investment Note DOCX | Google Drive: `rootFolder/Deals/<CompanyName>/<CompanyName>_Investment_Note_O1_EN_<date>.docx` |
+| Investment Note DOCX | Google Drive: `rootFolder/Deals/<CompanyName>/<CompanyName>_Investment_Note_EN_<date>.docx` |
 | Attio entry | `vc_deal_flow` list: score, evaluation, deal stage = Screening |
 
 ## Required MCP capabilities
@@ -223,7 +223,7 @@ Drive: <viewUrl of the investment note DOCX>
 | Field | API slug | Type | Notes |
 |---|---|---|---|
 | O1 Investment Score | `ai_investment_score` | number | Integer 0–100 |
-| O1 Investment Evaluation | `o1_investment_summary` | text | Timestamped; append history; includes Drive link |
+| Investment evaluation | `crmFields.startupSummary` | text | Timestamped; append history; includes Drive link |
 | Deal Stage | `deal_stage` | status | Set to `"Screening"` post-analysis |
 
 ## Knowledge references

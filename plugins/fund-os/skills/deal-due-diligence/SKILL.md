@@ -1,6 +1,6 @@
 ---
 name: deal-due-diligence
-description: Plan and run the full due diligence process for a deal — workstreams, data room checklist, reference checks, financial benchmarks, and the IC memo draft (initial, follow-on or exit) in the fund's O1 Framework format — anchored to the fund's evaluation criteria and DD framework. Use this skill when the user says "run DD", "start due diligence", "DD plan", "draft memo", "write IC memo", "investment memo", "follow-on memo" or "exit memo" or any natural variant. Phase 03 (Due Diligence). Fund-side only.
+description: Plan and run the full due diligence process for a deal — workstreams, data room checklist, reference checks, financial benchmarks, and the IC memo draft (initial, follow-on or exit) in the fund's scorecard format — anchored to the fund's evaluation criteria and DD framework. Use this skill when the user says "run DD", "start due diligence", "DD plan", "draft memo", "write IC memo", "investment memo", "follow-on memo" or "exit memo" or any natural variant. Phase 03 (Due Diligence). Fund-side only.
 ---
 
 # Deal Due Diligence
@@ -40,11 +40,11 @@ Run this skill when the user says any of:
 
 3. **DD plan output.** Use the workstreams, timeline and data room checklist from `dd-framework`. Assign owners from `masterData.team`. Show a timeline table anchored to today's date.
 
-4. **Memo draft — always load `${CLAUDE_PLUGIN_ROOT}/skills/deal-due-diligence/templates/memo-template.md` and follow its structure exactly** (the O1 Framework format). An overlay at `~/.fund-os/templates/memo-template.md` wins if present.
+4. **Memo draft — always load `${CLAUDE_PLUGIN_ROOT}/skills/deal-due-diligence/templates/memo-template.md` and follow its structure exactly** (the fund's scorecard format). An overlay at `~/.fund-os/templates/memo-template.md` wins if present.
 
-   **Section order (O1 format):** Header (company, tagline, sector, Round/Ticket/Post-Money/Equity grid, HQ/Legal Entity/Website) — Analysis Status + Summary Findings — 1. Executive Summary — 2. O1 Framework Overall Scorecard — 3. Detailed Assessment by Dimension — 4. Competitive Analysis — 5. Valuation Analysis — 6. Opportunities & Risks — 7. Recommendation + Next Steps.
+   **Section order:** Header (company, tagline, sector, Round/Ticket/Post-Money/Equity grid, HQ/Legal Entity/Website) — Analysis Status + Summary Findings — 1. Executive Summary — 2. Overall Scorecard — 3. Detailed Assessment by Dimension — 4. Competitive Analysis — 5. Valuation Analysis — 6. Opportunities & Risks — 7. Recommendation + Next Steps.
 
-5. **O1 Scorecard (mandatory).** Score all 10 dimensions and compute the weighted total /100. Weights: Team 20%, Market Opportunity 15%, Problem–Solution Fit 15%, Technology & Product 10%, Business Model 10%, Traction & Validation 10%, Competition & Differentiation 5%, Go-to-Market 5%, Financial Planning & Use of Funds 5%, Exit Potential 5% — these sum to 100% (+ optional Storytelling & Design bonus, 0% weight). Bands: ≥90 Strong Conviction · 75–89 Investable — Minor Gaps · 60–74 Watchlist — Material Gaps · <60 Pass. Each dimension gets a two-column table: positive signals (+) vs. negative signals / risks (−).
+5. **Scorecard (mandatory).** Score all 10 dimensions and compute the weighted total /100. Weights: Team 20%, Market Opportunity 15%, Problem–Solution Fit 15%, Technology & Product 10%, Business Model 10%, Traction & Validation 10%, Competition & Differentiation 5%, Go-to-Market 5%, Financial Planning & Use of Funds 5%, Exit Potential 5% — these sum to 100% (+ optional Storytelling & Design bonus, 0% weight). Bands: ≥90 Strong Conviction · 75–89 Investable — Minor Gaps · 60–74 Watchlist — Material Gaps · <60 Pass. Each dimension gets a two-column table: positive signals (+) vs. negative signals / risks (−).
 
 6. **Follow-on mode** appends the follow-on rationale and a reserve simulation (pro-rata / super-pro-rata / pass).
 
@@ -64,7 +64,7 @@ Run this skill when the user says any of:
 ## Outputs
 
 - **DD plan mode:** workstream table with owners + timeline + data room checklist
-- **Memo mode:** IC memo draft in O1 Framework format with citations, benchmarks and open questions; follow-on addendum if applicable
+- **Memo mode:** IC memo draft in the fund's scorecard format with citations, benchmarks and open questions; follow-on addendum if applicable
 
 ## Required MCP capabilities
 
@@ -91,7 +91,7 @@ The memo is always a draft. Partners write the recommendation and sign off befor
 
 ## Example output / template
 
-The full O1 Framework structure lives in `templates/memo-template.md` — always load and follow it. Skeleton:
+The full structure lives in `templates/memo-template.md` — always load and follow it. Skeleton:
 
 ```
 **INVESTMENT NOTE — [COMPANY]**
@@ -106,7 +106,7 @@ The full O1 Framework structure lives in `templates/memo-template.md` — always
 - Summary Findings: Score X/100 → [Band]; critical gate; valuation; open items
 
 ## 1. Executive Summary
-## 2. O1 Framework — Overall Scorecard   (10 dims, weighted, /100 + band)
+## 2. Overall Scorecard                  (10 dims, weighted, /100 + band)
 ## 3. Detailed Assessment by Dimension    (per-dim: + signals | − risks)
 ## 4. Competitive Analysis                (profile, landscape, findings, funding)
 ## 5. Valuation Analysis                  (pricing, methods, fair value, tranching)
@@ -141,4 +141,4 @@ rationale:     <one-line summary of what changed>
 
 ---
 
-*Fund OS v0.4.0 · Phase 03 — Due Diligence. Merged from `deal-due-diligence` (v0.2.2: DD plan mode, evaluation-criteria gate, red-flag surfacing) and `deal-investment-memo-draft` (v0.3.7: O1 Framework memo structure, scorecard, 6 KB memo template).*
+*Fund OS v0.4.0 · Phase 03 — Due Diligence. Merged from `deal-due-diligence` (v0.2.2: DD plan mode, evaluation-criteria gate, red-flag surfacing) and `deal-investment-memo-draft` (v0.3.7: scorecard memo structure, scorecard, 6 KB memo template).*

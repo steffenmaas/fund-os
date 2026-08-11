@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.5.0 - 2026-08-11
+
+The plugin now ships **templates, not one fund's filled-in documents**. This repository is
+private but shared with other funds, and until now it carried Ocean One's actual scoring
+matrices, memo format, sector language and CRM field slugs. A fund receiving it got someone
+else's thesis as the default, and Ocean One's concrete rubrics travelled with it.
+
+**Concrete documents replaced by templates.** The originals move to `~/.fund-os/` and to the
+fund's Drive knowledge folder, where the resolution chain already looks first:
+
+- `startup-scoring-matrix.md` → `startup-scoring-matrix.md`. The methodology is intact and shipped —
+  10 dimensions, weights summing to 100, band thresholds, the zero-information rule, the
+  "score every dimension on evidence" rule. The *signals* are now generic B2B SaaS with
+  `[sector]` placeholders, and the sector ladder is marked as the part to rewrite.
+- `lp-scoring-matrix.md` → template. All eight dimensions, the relationship-type
+  classification, the institutional asset owner override, the fund-count-vs-rank rule and the
+  `round(raw / 120 × 100)` normalisation are kept as methodology. Dimension 3, geography and
+  fund-size bands carry placeholders. Named investors and calibration anchors are gone — a
+  named investor with a score is exactly what must not be shared.
+- `memo-template.md` → `[Fund]` throughout instead of a fixed fund name and framework name.
+- Sector language removed from `deal-flow-triage` and `deal-startup-score`: both now apply the
+  sector definition from `investment-thesis` rather than carrying one fund's sector in the
+  skill body.
+
+**CRM field slugs come from the configuration.** `[crm-score-field]`, `[crm-fit-field]` and
+friends were hardcoded, binding the plugin to one fund's Attio schema. Skills now read
+`crmFields` — including `archivedSlugs`, so a slug that must never be written to is declared
+once rather than remembered.
+
+**`validate.py` gained a fund-neutrality check.** It scans everything shipped under
+`plugins/` for a fund's name, sector language, framework names, CRM slugs and individuals, and
+fails the build if any appear. Attribution — the author field and the copyright line — is the
+one allowed exception. This is what keeps the boundary from eroding on the next edit, rather
+than relying on whoever is editing to remember it.
+
 ## 0.4.0 - 2026-08-11
 
 Consolidation release. Between 25 June and 10 July the plugin was iterated only through

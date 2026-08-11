@@ -1,6 +1,8 @@
-# Investment Note — [Company] — Ocean One Ventures (O1 Framework)
+# Investment Note — [Company] — [Fund] (TEMPLATE)
 
-> **Ocean One memo template.** Replace every `[...]` placeholder. Keep the section order. Score the 10 O1 dimensions, weight them, and report a total /100 with the investability band. Cite every figure; mark unverified items `[OPEN: ...]`. The Recommendation section is written by the partners — leave the call to them, but populate Status/Score and Next Steps.
+> **Shipped memo template — not a fund's actual memo.** Replace every `[...]` placeholder, starting with the fund name, and save your version as `~/.fund-os/templates/memo-template.md` or in the Drive knowledge folder under `memo-template`. Either overlay wins over this file.
+>
+> Keep the section order — it is what makes two memos comparable at IC. Score the 10 dimensions, weight them, and report a total /100 with the investability band. Cite every figure; mark unverified items `[OPEN: ...]`. The Recommendation section is written by the partners — leave the call to them, but populate Status/Score and Next Steps.
 
 ---
 
@@ -8,7 +10,7 @@
 
 **INVESTMENT NOTE — [COMPANY NAME]**
 [One-line product tagline] | [Sector / Sub-sector]
-Ocean One Ventures | [Month Year] | Confidential – Internal Use Only
+[Fund] | [Month Year] | Confidential – Internal Use Only
 
 | Round | Ticket | Post-Money | Equity |
 |---|---|---|---|
@@ -18,7 +20,7 @@ Ocean One Ventures | [Month Year] | Confidential – Internal Use Only
 
 ---
 
-## Analysis Status — [Month Year] | Ocean One Ventures
+## Analysis Status — [Month Year] | [Fund]
 
 - [How the deal was sourced / founder meeting]
 - Data room reviewed: [list documents]
@@ -42,7 +44,7 @@ Ocean One Ventures | [Month Year] | Confidential – Internal Use Only
 
 ---
 
-## 2. O1 Framework — Overall Scorecard
+## 2. Overall Scorecard
 
 | Dim. | Category | Weight | Score | Wtd. Score |
 |---|---|---|---|---|
@@ -171,4 +173,4 @@ Interpretation: [where the total places the company, and the single critical fac
 
 ---
 
-*Prepared by Ocean One Ventures | [Month Year] | Confidential – Internal Use Only | Sources: [data room docs + external sources].*
+*Prepared by [Fund] | [Month Year] | Confidential – Internal Use Only | Sources: [data room docs + external sources].*

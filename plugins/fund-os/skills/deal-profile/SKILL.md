@@ -104,7 +104,7 @@ Differentiation: SMB price point + AI synthesis layer
 | Round    | Date    | Amount | Lead       | Post-money |
 |----------|---------|--------|------------|------------|
 | Pre-seed | 2023-Q3 | €350K  | FFF        | €1.5M      |
-| Seed     | 2024-Q2 | €1.8M  | Ocean One  | €8M        |
+| Seed     | 2024-Q2 | €1.8M  | Meridian   | €8M        |
 
 ## Signal quality
 | Section  | Confidence | Source                  |
