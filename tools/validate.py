@@ -256,6 +256,45 @@ def check_secrets() -> None:
     report("No secrets", bad, n)
 
 
+# ---------------------------------------------------------- fund-neutral -----
+def check_fund_neutral() -> None:
+    """The plugin ships templates, not one fund's filled-in documents.
+
+    This repository is shared with other funds. A fund's own thesis, scoring signals, sector
+    language and CRM slugs belong in ~/.fund-os/ or the Drive knowledge folder — never here.
+    Attribution (author, copyright) is the one legitimate exception.
+    """
+    terms = [
+        (re.compile(r"\bOcean One\b", re.I), "names the publishing fund as if it were the user's fund"),
+        (re.compile(r"maritime\s+leisure", re.I), "hardcodes one fund's sector"),
+        (re.compile(r"\bO1\s+(Framework|Startup Scoring|LP|Thesis Fit)\b"), "hardcodes one fund's framework name"),
+        (re.compile(r"\bo1_[a-z_]+\b"), "hardcodes one fund's CRM field slug — read it from crmFields instead"),
+        (re.compile(r"\b(Steffen Maas|Dietlind)\b"), "names an individual"),
+    ]
+    # Attribution is legitimate; a fund still authors the plugin it publishes.
+    allow = [
+        re.compile(r'"name":\s*"Ocean One Ventures"'),      # plugin.json author
+        re.compile(r"©\s*Ocean One Ventures"),               # README copyright
+        re.compile(r'"author"'),
+    ]
+    bad = []
+    n = 0
+    for f in walk(".md", ".json", ".template", ".html", ".example"):
+        r = rel(f)
+        if r.startswith("docs/") or r == "CHANGELOG.md" or not r.startswith("plugins/"):
+            continue
+        n += 1
+        for i, line in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if any(a.search(line) for a in allow):
+                continue
+            for pat, why in terms:
+                m = pat.search(line)
+                if m:
+                    bad.append(f"{r}:{i}: '{m.group(0)}' {why}")
+                    break
+    report("Shipped content is fund-neutral", bad, n)
+
+
 # ------------------------------------------------------- scoring integrity ---
 def check_scoring_matrices() -> None:
     """A scored matrix must add up. Either the caps sum to 100, or it normalises explicitly.
@@ -267,7 +306,7 @@ def check_scoring_matrices() -> None:
     checked = 0
     specs = [
         # path, dimension-cap pattern, raw total that is correct, normalisation required?
-        (SKILLS / "deal-startup-score" / "knowledge" / "o1-scoring-matrix.md",
+        (SKILLS / "deal-startup-score" / "knowledge" / "startup-scoring-matrix.md",
          re.compile(r"^### \d+\. .+ — Weight: (\d+)%", re.M), 100, False),
         (SKILLS / "lp-investor-scoring" / "knowledge" / "lp-scoring-matrix.md",
          re.compile(r"^## Dimension \d+ — .+ \(\d+–(\d+) pts\)", re.M), 120, True),
@@ -318,6 +357,7 @@ def main() -> int:
     check_plugin_root_refs()
     check_skills_have_anchor()
     check_skill_crossrefs()
+    check_fund_neutral()
     check_dashboard()
     check_versions()
     check_secrets()

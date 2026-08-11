@@ -48,7 +48,7 @@ Example: Meridian Ventures (MV) · EUR · Pre-Seed & Seed · €100K–€500K i
 
 **Sectors:**
 "List your target sectors, comma-separated."
-Example: Charter & Fleet Ops, Marina & Infrastructure, Crew & Service Tech, Maritime Data & SaaS
+Example: Field Service Ops, Facility Management, Workforce & Compliance, Industry Data & SaaS
 
 **Team:**
 "Who are the team members and their roles?"
@@ -56,7 +56,7 @@ Example: A. Beck – Managing Partner, C. Duval – Partner
 
 **Market anchor:**
 "One-line TAM description for reports and LP communications."
-Example: €130B global leisure boating, 8% CAGR
+Example: €130B global [sector] market, 8% CAGR
 
 ---
 
@@ -140,8 +140,8 @@ Store under `learnings.contributeUpstream` as `ask` / `yes` / `no`. Never assume
 │  Fund        : Meridian Ventures (MV)                        │
 │  Currency    : EUR  |  Stage: Pre-Seed & Seed                │
 │  Ticket      : €100K–€500K initial, €1.5M reserve            │
-│  Sectors     : Charter & Fleet Ops, Marina & Infrastructure  │
-│                Crew & Service Tech, Maritime Data & SaaS     │
+│  Sectors     : Field Service Ops, Facility Management        │
+│                Workforce & Compliance, Industry Data & SaaS  │
 │  Team        : A. Beck, C. Duval                             │
 │  Market      : €130B global leisure boating, 8% CAGR         │
 │                                                              │

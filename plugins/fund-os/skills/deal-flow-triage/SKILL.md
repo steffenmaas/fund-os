@@ -32,7 +32,7 @@ Run this skill when the user says any of:
    If either file cannot be read, stop and say which one — triaging without the thesis produces confident, wrong routing.
 
 1. **Apply hard filters first** (auto-Pass on any fail — log reason and stop):
-   - Sector: Maritime LEISURE B2B software only (see investment-thesis.md for full definition)
+   - Sector: apply the sector definition and the exclusion list from `investment-thesis` verbatim — do not substitute your own reading of the sector
    - Geography: DACH, UK, Mediterranean, Nordics
    - Stage: Pre-Seed or Seed
    - Model: asset-light — no hardware-only, no asset-heavy businesses
@@ -50,7 +50,7 @@ Run this skill when the user says any of:
 
    Company:     [Name]
    Domain:      [website]
-   Sector:      [Maritime LEISURE sub-sector]
+   Sector:      [sub-sector, per investment-thesis]
    Stage:       [Pre-Seed/Seed]
    Raise:       [€Xm at €Xm cap / €Xm post-money]
    Geography:   [City, Country]
@@ -77,7 +77,7 @@ Run this skill when the user says any of:
    - **P1** — Strong thesis fit + traction signal + known founder/reference → schedule call immediately
    - **P2** — Thesis fit + some traction → request deck/financials, schedule in 2 weeks
    - **P3** — Thesis fit but early/thin → watchlist, follow up in 90 days
-   - **Pass** — Fails hard filters or no maritime leisure angle → log and close
+   - **Pass** — Fails a hard filter, or no angle on the thesis sector → log and close
 
 6. **File attachments:** Drop all deck/document attachments into Drive at `/Deal-Flow-Inbox/YYYY-MM/[Company]/` before tagging in CRM.
 
@@ -108,7 +108,7 @@ The fund configures which actual MCP server backs each capability via `.mcp.json
 - `${CLAUDE_PLUGIN_ROOT}/skills/deal-flow-triage/knowledge/investment-thesis.md` — fund thesis, sector definition, hard filters, archetypes
 - `${CLAUDE_PLUGIN_ROOT}/skills/deal-flow-triage/knowledge/evaluation-criteria.md` — soft filters, routing criteria, priority definitions
 
-After scoring: hand off to `deal-startup-score` for O1 Startup Scoring (pitch deck screening depth).
+After scoring: hand off to `deal-startup-score` (pitch deck screening depth).
 
 ## Human-in-the-loop
 

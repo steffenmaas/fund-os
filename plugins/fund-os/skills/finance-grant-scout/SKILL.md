@@ -70,16 +70,16 @@ Applications signed off by GP before submission.
 ```
 # Public funding scan - Fund II
 
-Fund profile: Hamburg-domiciled, registered KVG, AuM target EUR 50m,
-FinTech-tech focus.
+Fund profile: [City]-domiciled, registered [vehicle type], AuM target EUR 50m,
+[sector] focus.
 
 | Programme                | Type             | Ticket          | Deadline    | Match |
-| IFB Hamburg InnoFinTech  | Non-repayable    | up to EUR 200k  | rolling     | YES   |
+| [Regional dev. bank]     | Non-repayable    | up to EUR 200k  | rolling     | YES   |
 | KfW ERP Innovation       | Soft loan        | up to EUR 5m    | rolling     | YES   |
 | EIF AMUF                 | DFI commitment   | EUR 5-25m       | rolling     | YES   |
 | Horizon EIC Accelerator  | Equity + grant   | EUR 2.5m+       | 2026-06-15  | NO    |
 
-IFB InnoFinTech skeleton: 6 pages, 4x [OPEN: ...] - ready for GP review.
+Application skeleton: 6 pages, 4x [OPEN: ...] - ready for GP review.
 Filed: /Fund-Capital/Public-Funding/2026-05-scan.md
 ```
 

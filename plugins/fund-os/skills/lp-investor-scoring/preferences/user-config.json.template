@@ -1,11 +1,11 @@
 {
   "fund": {
-    "name": "Ocean One Fund I",
-    "targetSize": "€15–30M",
-    "idealTicket": "€250K–€3M",
-    "vehicle": "First-time fund",
-    "hq": "Hamburg, Germany",
-    "thesis": "Maritime LEISURE"
+    "name": "[Fund I]",
+    "targetSize": "[€XX–XXM]",
+    "idealTicket": "[€XXXK–€XM]",
+    "vehicle": "[First-time fund]",
+    "hq": "[City, Country]",
+    "thesis": "[sector, as the fund always states it]"
   },
   "scoring": {
     "priorityThreshold": 80,
@@ -14,7 +14,12 @@
     "watchlistThreshold": 20
   },
   "output": {
-    "csvColumns": ["Name", "Domain", "o1_investor_fit", "o1_investor_fit_evaluation"],
+    "csvColumns": [
+      "Name",
+      "Domain",
+      "[crmFields.investorFit]",
+      "[crmFields.investorFitEvaluation]"
+    ],
     "matchKey": "Name",
     "batchSize": 300,
     "saveCheckpointEvery": 300

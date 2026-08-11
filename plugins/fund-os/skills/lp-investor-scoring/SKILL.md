@@ -1,13 +1,13 @@
 ---
 name: lp-investor-scoring
-description: Score and evaluate LP investor prospects for Ocean One Fund I. Use this skill whenever the user wants to score investors, evaluate LP fit, rate a new investor, screen a prospect list, add scores to a CSV, or assess whether an investor is a good LP candidate for Ocean One. Also use proactively when working with investor CSVs, Attio LP lists, or Dealroom exports where o1_investor_fit is missing. Trigger on phrases like "score these investors", "LP fit", "add scoring", "evaluate this investor", "who should we approach".
+description: Score LP, co-investor and strategic-partner prospects against the fund's LP thesis on eight dimensions, with relationship-type classification and the institutional asset owner override. Use this skill whenever the user wants to score investors, evaluate LP fit, rate a new investor, screen a prospect list, add scores to a CSV, or assess whether an investor is a good LP candidate. Also use proactively when working with investor CSVs, CRM LP lists, or database exports where the investor-fit field is missing. Trigger on phrases like "score these investors", "LP fit", "add scoring", "evaluate this investor", "who should we approach". Phase 01 (Fundraising & LP). Fund-side only.
 ---
 
-# LP Investor Scoring — Ocean One Fund I
+# LP Investor Scoring
 
-Score investor and co-investor prospects for **Ocean One Fund I**, a first-time VC fund focused exclusively on **Maritime LEISURE**. This covers the fund's full blue-economy relationship universe: LPs who might invest into the fund, and Co-Investors/Strategic Partners the fund might work alongside.
+Score investor and co-investor prospects against the fund's LP thesis. This covers the fund's full relationship universe: LPs who might invest into the fund, and Co-Investors and Strategic Partners the fund might work alongside.
 
-**Critical positioning rule**: Ocean One is the ONLY VC fund focused on Maritime LEISURE. Never describe it as "maritime technology" — the uniqueness is leisure, not tech.
+The fund's identity, sector and positioning come from the **Fund Context** section of the scoring matrix and from `investment-thesis` — never from memory. In particular, apply the matrix's **positioning rule** verbatim: every fund has a phrase it always uses and one it never uses, and LP-facing output is exactly where getting it wrong costs the most.
 
 **No entity is ever scored 0 or disqualified.** Every scored entity is a potential relationship of some kind — see Investor Relationship Type below. All relationship types are scored on the same 8 dimensions with no separate multiplier or adjustment; Dimension 1 (Fund of Funds/LP Fit) naturally differentiates LPs from Co-Investors on its own.
 
@@ -38,7 +38,7 @@ The scoring matrix in `knowledge/lp-scoring-matrix.md` is the authoritative sour
 - All 8 dimension point tables
 - Score tier thresholds and recommended actions (separate action wording for LP vs. Co-Investor, same score thresholds)
 - Validation reference scores
-- Misclassification warnings (maritime tech ≠ maritime leisure)
+- Misclassification warnings — the adjacent categories this fund is regularly mistaken for
 
 ---
 
@@ -68,14 +68,14 @@ Apply in order:
 Use this exact structure and alignment — labels padded so all `+` signs line up in one column:
 
 ```
-O1 LP Fit Score: [SCORE]/100  (raw [RAW]/120)
+LP Fit Score: [SCORE]/100  (raw [RAW]/120)
 [🤝 Co-Investor / Strategic Partner — [1-line reason for classification]  ← only if not LP]
 [🏛 Institutional Asset Owner Override applied — [reason]  ← only if override applies]
 
 Scoring breakdown:
 • Fund of Funds Fit:    +[pts]/20 — [1-line rationale]
 • Emerging Manager Fit: +[pts]/20 — [1-line rationale]
-• Maritime Leisure Fit: +[pts]/20 — [1-line rationale]
+• Thesis Fit:           +[pts]/20 — [1-line rationale]
 • Geography:            +[pts]/15 — [1-line rationale]
 • AuM / Ticket Size:    +[pts]/8  — [1-line rationale]
 • Investor Strength:    +[pts]/15 — [1-line rationale]
@@ -83,32 +83,32 @@ Scoring breakdown:
 • Activity Signal:      +[pts]/7  — [1-line rationale]
 
 Fund of Funds Fit: [★★★★★] — [1-sentence summary]
-Maritime Leisure Fit: [★★★★★] — [1-sentence summary]
+Thesis Fit: [★★★★★] — [1-sentence summary]
 
 Recommended action: [emoji + tier label, LP or Co-Investor wording per Relationship Type]
-Evaluated: [YYYY-MM-DD] | Ocean One Fund I LP scoring v8
+Evaluated: [YYYY-MM-DD] | [Fund] LP scoring v1
 ```
 
 **Worked example** (follow this formatting exactly — same label padding, same line breaks, same level of detail per rationale):
 
 ```
-O1 LP Fit Score: 77/100  (raw 92/120)
+LP Fit Score: 77/100  (raw 92/120)
 
 Scoring breakdown:
 • Fund of Funds Fit:    +20/20 — fund-of-funds
 • Emerging Manager Fit: +18/20 — explicit/known emerging-manager appetite
-• Maritime Leisure Fit: +20/20 — dedicated ocean/blue-economy mandate
-• Geography:            +15/15 — DACH — home market
+• Thesis Fit:           +20/20 — dedicated mandate in the fund's sector
+• Geography:            +15/15 — home market
 • AuM / Ticket Size:    +4/8  — ticket fit estimated from profile
 • Investor Strength:    +7/15 — Tier 3
 • Network Proximity:    +3/15 — identifiable decision-maker
 • Activity Signal:      +5/7  — recent activity
 
 Fund of Funds Fit: ★★★★★ — fund-of-funds (Dim 1 = 20/20)
-Maritime Leisure Fit: ★★★★★ — dedicated ocean/blue-economy mandate
+Thesis Fit: ★★★★★ — dedicated mandate in the fund's sector
 
 Recommended action: ⭐ High Fit — active pipeline; personalised approach
-Evaluated: 2026-08-11 | Ocean One Fund I LP scoring v8
+Evaluated: 2026-08-11 | [Fund] LP scoring v1
 ```
 
 Note the padding: each dimension label plus its trailing spaces totals 22 characters before the `+`, so every point value and every em dash lines up down the block. Rationales stay short — a few words is enough (see "fund-of-funds", "Tier 3", "recent activity" above); reserve longer explanations for cases that genuinely need them (e.g. Institutional Asset Owner Override applying).
@@ -119,7 +119,7 @@ Star ratings: ★★★★★ = perfect, ★★★★☆ = strong, ★★★☆�
 
 ## Step 3 — Batch workflow (CSV)
 
-Use when scoring a list. Output columns: `Name`, `Domain`, `o1_investor_fit`, `o1_investor_fit_evaluation`.
+Use when scoring a list. Output columns: `Name`, `Domain`, and the two slugs from `crmFields` — `crmFields.investorFit` and `crmFields.investorFitEvaluation`.
 
 ```
 1. Investor Relationship Type check — classify LP / Co-Investor / Strategic Partner per row for
@@ -128,15 +128,15 @@ Use when scoring a list. Output columns: `Name`, `Domain`, `o1_investor_fit`, `o
 3. Institutional Asset Owner Override check — Pension Fund / Insurance / Sovereign Wealth Fund /
    Endowment >€1B without confirmed EM program evidence → apply Dimension 2/6/8 caps
 4. Apply all 8 dimensions — award points, note rationale per dimension. Same math for every row.
-5. Write o1_investor_fit (integer, never 0) and o1_investor_fit_evaluation (full text)
+5. Write `crmFields.investorFit` (integer, never 0) and `crmFields.investorFitEvaluation` (full text). Slugs come from the configuration — never hardcode them.
 6. Sort descending by score
 7. Save checkpoint after every 300 rows — partial results are never lost
-8. Output Attio-ready update CSV: Name, Domain, o1_investor_fit, o1_investor_fit_evaluation
+8. Output a CRM-ready update CSV: Name, Domain, and the two `crmFields` slugs
 ```
 
 **Attio import**: match on `Name` or `Domain`. Include only score fields + match key to avoid overwriting other fields.
 
-**Re-scoring note**: any row whose `o1_investor_fit_evaluation` cites "scoring v3", "v4", "v5", or "v6" was scored under a prior matrix version — re-score under v7 before comparing or using in a ranked/exported list. v6 introduced a 0.75x Co-Investor multiplier that v7 removed; any v6-scored Co-Investor rows should be re-scored to drop that adjustment.
+**Re-scoring note**: any row whose evaluation text cites an older matrix version than the one just loaded is on a different scale — re-score it before comparing. Legacy note: rows citing "v6" was scored under a prior matrix version — re-score under v7 before comparing or using in a ranked/exported list. v6 introduced a 0.75x Co-Investor multiplier that v7 removed; any v6-scored Co-Investor rows should be re-scored to drop that adjustment.
 
 ### Dealroom thesis string parsing
 

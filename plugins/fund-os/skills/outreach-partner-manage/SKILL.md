@@ -71,7 +71,7 @@ New partnership commitments require partner sign-off.
 # Partnership register - 2026-05-19
 
 ACCELERATORS (4 active):
-  Techstars Maritime    Last 2026-04-22  3 intros Q1     HIGH
+  Techstars (vertical)   Last 2026-04-22  3 intros Q1     HIGH
   Lloyd's Lab           Last 2026-03-10  0 - STALE       LOW
 
 UNIVERSITIES (2 active):

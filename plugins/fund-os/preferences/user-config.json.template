@@ -44,5 +44,14 @@
   "learnings": {
     "_comment": "Controls fund-os:learn --upstream. yes = send without asking, ask = show the batch and require approval (default), no = keep every learning local.",
     "contributeUpstream": "ask"
+  },
+  "crmFields": {
+    "_comment": "CRM field slugs, so skills never hardcode them. Fill in your own; leave a slug empty to disable that write.",
+    "dealList": "",
+    "startupScore": "",
+    "startupSummary": "",
+    "investorFit": "",
+    "investorFitEvaluation": "",
+    "archivedSlugs": []
   }
 }
