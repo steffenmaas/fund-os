@@ -192,7 +192,7 @@ fund-os:lp-quarterly-report
 | Task | Skill | What to say |
 |---|---|---|
 | Classify and route an inbound pitch | `deal-flow-triage` | "Triage this new deal" |
-| Quick thesis fit check | `deal-thesis-screen` | "Screen this startup against our thesis" |
+| Quick thesis fit check | `deal-startup-score` | "Score this startup against our thesis" |
 | Detailed weighted scoring | `deal-startup-score` | "Score this startup" / "Go/no-go on [Company]" |
 
 ### I'm in due diligence
