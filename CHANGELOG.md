@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.5.2 - 2026-08-11
+
+Adds `tools/check-knowledge.py`. `validate.py` checks the plugin; this checks the *content* the
+plugin loads — the fund's Drive knowledge folder and the manifest pointing at it.
+
+It exists because of what a review of one fund's folder turned up: four documents defined the
+same 10-dimension framework with three different weightings, two of which did not sum to 100;
+the manifest pointed at a shipped placeholder for the document that gates due diligence, so DD
+would have run against empty filters; the strategy document excluded a sector outright while the
+LP-facing document promoted it as the growth path; and three superseded copies of the memo
+template sat alongside each other with no indication which was current.
+
+Checks: every manifest key resolves to a live document, and every document is reachable through
+some key; no load-bearing document is still a shipped placeholder; the scoring matrices add up
+and the LP matrix states its normalisation; the thesis and the hypothesis do not contradict each
+other on scope; no duplicates in the working set. It tolerates a file whose Drive id has not
+finished syncing rather than reporting it as missing, and it names the Google Docs it cannot
+inspect instead of passing silently over them.
+
 ## 0.5.1 - 2026-08-11
 
 - `update` now leads with the marketplace path and explains the one-time migration off the
