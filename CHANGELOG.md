@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.1 - 2026-08-11
+
+`check-knowledge.py` now separates warnings from failures. A dangling manifest pointer breaks a
+skill and fails the run; a document nobody points at breaks nothing — it is simply invisible.
+Reporting both the same way produces a permanently red check, which teaches people to ignore it.
+
+The distinction surfaced immediately: a completed, confidential investment note had been placed in
+the knowledge folder because its filename ended in `_TEMPLATE`. Nothing was broken, but every
+memo-drafting run would have loaded a specific live deal as the structural example to follow.
+
 ## 0.7.0 - 2026-08-11
 
 Documentation consolidated and corrected. Three files described installation, and they had drifted
