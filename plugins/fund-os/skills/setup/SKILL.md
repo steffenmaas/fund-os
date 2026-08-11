@@ -34,7 +34,7 @@ Also run if any other Fund OS skill detects no preferences file and the user con
 
 2. **Welcome message.** One short paragraph: explain Fund OS, what this wizard sets up, and that preferences live in `~/.fund-os/` outside the plugin, so they survive every update and re-upload.
 
-3. **Collect preferences in four sections — complete one section before moving to the next.**
+3. **Collect preferences in six sections — complete one section before moving to the next.**
 
 ---
 
@@ -116,6 +116,20 @@ If provided:
 
 ---
 
+---
+
+### Section 6 — Learnings (optional)
+
+"When a Fund OS skill goes wrong and we work out the fix, may that fix be sent upstream to the Fund OS repository as a pull request? Company names, LP names and identifiers are always stripped first."
+
+1. **Ask each time** *(default)* — you see exactly what would be sent and approve the batch
+2. **Yes** — send without asking
+3. **No** — keep every learning local to this fund
+
+Store under `learnings.contributeUpstream` as `ask` / `yes` / `no`. Never assume consent: `fund-os:learn --upstream` treats a missing value as `ask`.
+
+---
+
 4. **Show confirmation summary before writing:**
 
 ```
@@ -150,6 +164,9 @@ If provided:
 │  KNOWLEDGE                                                   │
 │  Drive folder: [ID or "not configured"]                      │
 │  Documents   : [N found or "none"]                           │
+│                                                              │
+│  LEARNINGS                                                   │
+│  Upstream    : Ask each time                                 │
 └──────────────────────────────────────────────────────────────┘
 Type a section name to edit it, or press Enter to save.
 ```

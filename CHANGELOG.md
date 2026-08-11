@@ -50,6 +50,25 @@ since late June sat on a stretched scale and the tier thresholds did not mean wh
   them before comparing; several will move down one tier. Output now reports both, e.g.
   `77/100 (raw 92/120)`, so any score can be audited back to its dimensions.
 
+**New skill — `fund-os:learn`, the loop that was missing:**
+
+The defects fixed in this release had been producing wrong output for six weeks. Nobody had a
+place to write "this keeps going wrong", so nothing accumulated into a fix. `learn` is that place,
+modelled on `founder-os:dev-learn` and adapted to fund work:
+
+- **Capture** to `~/.fund-os/learnings/YYYY-MM-DD-<slug>.md` — in the fund's own directory, because
+  learnings arise in deal and LP sessions, not in a checkout of this repository.
+- **Upstream** (`--upstream`) groups the open `scope: upstream` learnings, builds the concrete
+  change, and opens a pull request here.
+- **Consent** is checked first, from `learnings.contributeUpstream` (`ask` by default, and a
+  missing value is treated as `ask` — consent is never assumed). Added to the setup wizard.
+- **Scrub** before anything leaves the fund: no company names, no LP names tied to a score, no
+  Drive or CRM ids, no fund internals. This repository is private but shared with other funds, and
+  a real company attached to a real score is the most sensitive artefact the system produces.
+- If a `validate.py` check could have caught the defect, proposing that check is part of the
+  change — a rule a machine enforces outlives the person who wrote it.
+- And the rule about rules: a rule is created after an incident, never preventively.
+
 **Release pipeline — so this cannot happen again:**
 - `tools/validate.py` — checks JSON, skill front matter, that every `${CLAUDE_PLUGIN_ROOT}`
   reference resolves to a file that exists, that no dead plugin-cache path returns, that the
