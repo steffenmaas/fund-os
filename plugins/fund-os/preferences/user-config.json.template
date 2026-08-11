@@ -1,7 +1,6 @@
 {
   "_note": "Fund OS preferences — edit manually or re-run fund-os:setup to regenerate. Lives inside the plugin and is never overwritten by fund-os:update.",
   "version": "1.0",
-
   "masterData": {
     "_comment": "Core fund identity used across all skills",
     "fundName": "",
@@ -12,13 +11,11 @@
     "team": [],
     "marketAnchor": ""
   },
-
   "brandGuidelines": {
     "_comment": "Tone applied to all prose output. Set tone-guide in knowledge.manifest for detailed voice rules.",
     "tone": "professional",
     "toneCustom": ""
   },
-
   "systems": {
     "_comment": "The actual tool used for each capability. Names are used in skill instructions and audit trails.",
     "crm": "",
@@ -29,7 +26,6 @@
     "fundAdmin": "",
     "eSignature": ""
   },
-
   "storagePaths": {
     "_comment": "Folder paths / locations within documentStorage where each type of artefact is saved.",
     "outputs": "",
@@ -38,13 +34,15 @@
     "lps": "",
     "drafts": ""
   },
-
   "knowledge": {
     "_comment": "Central Google Drive knowledge folder. Fund OS scans it once and maps document names to file IDs.",
     "driveFolderId": "",
     "manifest": {}
   },
-
   "configured": false,
-  "configuredAt": ""
+  "configuredAt": "",
+  "learnings": {
+    "_comment": "Controls fund-os:learn --upstream. yes = send without asking, ask = show the batch and require approval (default), no = keep every learning local.",
+    "contributeUpstream": "ask"
+  }
 }

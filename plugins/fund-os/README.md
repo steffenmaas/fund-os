@@ -1,6 +1,6 @@
 # Fund OS Plugin
 
-42 Claude Skills for VC fund operations across 8 lifecycle phases.
+43 Claude Skills for VC fund operations across 8 lifecycle phases.
 
 ## What it is
 
@@ -20,6 +20,7 @@ One-time welcome wizard and updater.
 
 - [`setup`](./skills/setup/SKILL.md) — Fund OS Setup
 - [`update`](./skills/update/SKILL.md) — Fund OS Update
+- [`learn`](./skills/learn/SKILL.md) — Learn: capture what went wrong, upstream the generalisable fixes
 
 ### Phase 01 — Fundraising & LP
 
