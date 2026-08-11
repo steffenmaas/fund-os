@@ -113,8 +113,8 @@ gh auth status
 Inside the Claude Code session:
 
 ```
-/plugin marketplace add https://github.com/steffenmaas/fund-os.git
-/plugin install fund-os@fund-os-marketplace
+/plugin marketplace add steffenmaas/fund-os
+/plugin install fund-os@fund-os
 ```
 
 The first command registers the marketplace from the repo; the second installs Fund OS from it. Both only need to be run once.

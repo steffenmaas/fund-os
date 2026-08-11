@@ -145,7 +145,7 @@ Settings → Plugins → Add marketplace → https://github.com/steffenmaas/fund
 
 ```
 /plugin marketplace add steffenmaas/fund-os
-/plugin install fund-os@fund-os-marketplace
+/plugin install fund-os@fund-os
 ```
 
 After either install, run `/reload-plugins` then `fund-os:setup`.

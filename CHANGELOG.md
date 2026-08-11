@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.6.2 - 2026-08-11
+
+Renames the marketplace from `fund-os-marketplace` to **`fund-os`**, so it matches the repository
+name the way founder-os does.
+
+Adding the marketplace in the Claude app kept reporting "already added" while no plugin appeared.
+Making the repository public removed the access problem but not this one: a stale registration
+from 3 June was still sitting in the CLI registry under a name that did not match the repository,
+and the dialog dedupes on the repository URL. Plugin ids therefore change from
+`fund-os@fund-os-marketplace` to **`fund-os@fund-os`**.
+
+Nothing had to be migrated — the plugin was not installed from a marketplace at the time, so this
+was the last moment the rename was free.
+
 ## 0.6.1 - 2026-08-11
 
 Removes two leftovers from the manual era that became visible the moment the repository went
