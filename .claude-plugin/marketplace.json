@@ -1,19 +1,19 @@
 {
-  "name": "fund-os-marketplace",
+  "name": "fund-os",
   "owner": {
     "name": "Ocean One Ventures",
     "url": "https://github.com/steffenmaas"
   },
   "metadata": {
     "description": "Fund OS — 43 Claude Skills for VC fund operations, sourcing to wind-down.",
-    "version": "0.6.1"
+    "version": "0.6.2"
   },
   "plugins": [
     {
       "name": "fund-os",
       "source": "./plugins/fund-os",
       "description": "43 Claude Skills for VC fund operations - sourcing to wind-down.",
-      "version": "0.6.1",
+      "version": "0.6.2",
       "category": "fund-operations",
       "license": "PolyForm-Noncommercial-1.0.0",
       "keywords": [
