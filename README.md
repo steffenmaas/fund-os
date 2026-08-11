@@ -234,7 +234,12 @@ Your configuration is never affected — it lives in `~/.fund-os/` and the knowl
 ```bash
 python3 tools/validate.py          # the plugin: paths, front matter, dashboard, secrets, neutrality
 python3 tools/check-knowledge.py   # your knowledge folder: manifest, placeholders, contradictions
+python3 tools/knowledge-map.py     # regenerate the index of which document each skill uses
 ```
+
+`knowledge-map.py` writes `_KNOWLEDGE-MAP.md` into the knowledge folder: document → skills,
+skill → documents, plus the documents skills expect that do not exist anywhere. Run it after every
+update; `check-knowledge.py` warns when the map was generated for an older version.
 
 Every check in both scripts exists because that exact defect shipped once. `validate.py` runs in CI
 on every push and pull request.

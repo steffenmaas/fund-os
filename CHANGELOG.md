@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.8.0 - 2026-08-11
+
+Adds `tools/knowledge-map.py`. The knowledge folder was a flat list of documents with nothing
+saying what reads them — and since editing one changes live behaviour, "which skill does this
+affect?" needed an answer that did not involve opening 43 skills.
+
+It is **generated, never hand-written**. A hand-maintained map is a second source of truth, and
+this project already knows how those end: the README's skill inventory sat two months out of date
+because nothing compared it to reality.
+
+`_KNOWLEDGE-MAP.md` lands in the knowledge folder with three views:
+
+- **Document → skills**, plus where the document actually comes from at runtime (Drive manifest,
+  bundled plugin template, or nowhere).
+- **Skill → documents**, so the effect of a change is visible from either direction.
+- **Gaps.** Documents skills expect that exist in neither place, and manifest entries no skill
+  reads.
+
+Generating it against the current tree immediately surfaced 12 documents that skills ask for and
+that exist nowhere — `lp-thesis` alone is expected by five LP skills — plus nine legacy
+`Some-Doc-Name` references in the pre-0.4.0 style that resolve to nothing, two of which have a
+perfectly good manifest key sitting behind a different spelling.
+
+`check-knowledge.py` warns when the map was generated for an older plugin version.
+
 ## 0.7.1 - 2026-08-11
 
 `check-knowledge.py` now separates warnings from failures. A dangling manifest pointer breaks a
