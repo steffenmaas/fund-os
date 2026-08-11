@@ -65,15 +65,27 @@ Detect it from `${CLAUDE_PLUGIN_ROOT}`:
 
 | `${CLAUDE_PLUGIN_ROOT}` contains | Install method | What the user does |
 |---|---|---|
-| `local-agent-mode-sessions/…/rpm/` | Claude Desktop upload | Download the `fund-os-<version>.plugin` asset from the release, then in Claude Desktop: **+ → Create plugin → Upload plugin**. The new upload replaces the old one. |
-| `~/.claude/plugins/marketplaces/` | CLI marketplace | `/plugin marketplace update fund-os-marketplace`, then `/plugin install fund-os@fund-os-marketplace` |
+| `~/.claude/plugins/marketplaces/` or `~/.claude/plugins/cache/` | **Marketplace (recommended)** | The Claude app updates it. If it has not picked the new version up: refresh the marketplace, then reinstall `fund-os` from it. |
+| `local-agent-mode-sessions/…/rpm/` with marketplace `My Uploads` | Manual `.plugin` upload | Works, but every update is a manual re-upload and nothing enforces that the bundle matches a commit. **Offer the migration below.** |
 | anything else | unknown | Report the path and ask how it was installed rather than guessing. |
 
-Download link for the Desktop path:
+**Migrating from the upload to the marketplace** — worth doing once, because it turns updates
+from a manual re-upload into an app action:
+
+1. In the Claude app, add the marketplace: `https://github.com/steffenmaas/fund-os.git`
+2. Install `fund-os` from that marketplace
+3. Remove the previously uploaded copy, so only one version is active
+
+The repository is private, so this requires the account to have read access to it. If the app
+cannot reach it, say so plainly rather than retrying — the fallback is the `.plugin` asset from
+the release:
 
 ```bash
 gh release download --repo steffenmaas/fund-os --pattern '*.plugin' --dir ~/Downloads
 ```
+
+Configuration is never affected by any of this — it lives in `~/.fund-os/` and knowledge comes
+from the Drive manifest.
 
 ### 5. Never do any of the following
 

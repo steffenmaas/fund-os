@@ -88,16 +88,29 @@ def check_frontmatter() -> None:
 
 # ------------------------------------------------------------ dead paths ------
 def check_dead_paths() -> None:
-    """The 0.2.0-0.3.7 bug: a config path that exists in no environment."""
-    dead = re.compile(r"~/\.claude/plugins/cache/")
+    """The 0.2.0-0.3.7 bug: 40 skills read the fund config from a guessed plugin path.
+
+    Naming ~/.claude/plugins/ as an install *location* is fine — that is where the CLI puts
+    marketplace installs. What broke was reading a fund *resource* from a hand-built path
+    under it, instead of from ${CLAUDE_PLUGIN_ROOT} or ~/.fund-os. So flag the resource read,
+    not the mention.
+    """
+    resource = re.compile(r"~/\.claude/plugins/[^\s`'\"|)]*/[^\s`'\"|)]*\.(json|md)")
     bad = []
     n = 0
     for f in walk(".md", ".json", ".sh", ".html"):
+        r = rel(f)
+        if r.startswith("docs/") or r == "CHANGELOG.md":
+            continue
         n += 1
         for i, line in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
-            if dead.search(line) and "docs/" not in rel(f) and "CHANGELOG" not in rel(f):
-                bad.append(f"{rel(f)}:{i}: references ~/.claude/plugins/cache/ — that directory is not created by the .plugin install path")
-    report("No dead plugin-cache paths", bad, n)
+            m = resource.search(line)
+            if m:
+                bad.append(
+                    f"{r}:{i}: reads a resource from a hand-built plugin path — {m.group(0)}. "
+                    f"Use ${{CLAUDE_PLUGIN_ROOT}} or ~/.fund-os; the plugin directory layout is not stable."
+                )
+    report("No resource reads from guessed plugin paths", bad, n)
 
 
 # --------------------------------------------------- plugin-root references ---
