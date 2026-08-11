@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.7.0 - 2026-08-11
+
+Documentation consolidated and corrected. Three files described installation, and they had drifted
+apart; two of them still described a model the plugin abandoned in 0.5.0.
+
+**One README.** `plugins/fund-os/README.md` is merged into the root `README.md` — 480 lines with
+heavy duplication become 288. `build-plugin.sh` copies the README into the bundle at build time, so
+the upload install path still ships documentation without a second file to keep in sync.
+
+**Corrected, because it actively misled:**
+- The user guide told people to edit skill files directly. Those files are replaced on every
+  update, and a change made there is invisible to colleagues — which is why customisations kept
+  disappearing. Replaced with a table of where a change actually belongs.
+- It described "vanilla" and "customised" bundle flavours. There is one plugin; what makes it
+  yours is the Drive knowledge folder and `~/.fund-os/user-config.json`.
+- It said `fund-os:update` "applies only the new and changed skill files". It applies nothing —
+  it reports, and deliberately never writes into the plugin directory.
+
+**`lp-investor-scoring` was missing from the README inventory** since June, so the documented
+roster and the real one disagreed for two months. `validate.py` now compares them on every push,
+and the quick reference gained the four skills it was missing.
+
 ## 0.6.2 - 2026-08-11
 
 Renames the marketplace from `fund-os-marketplace` to **`fund-os`**, so it matches the repository

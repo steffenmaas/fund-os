@@ -29,6 +29,11 @@ python3 "$ROOT/tools/validate.py"
 
 rm -f "$OUT"
 
+# The repository has exactly one authored README. Copy it into the bundle at build time so
+# the upload install path still ships documentation, without a second file to keep in sync.
+cp "$ROOT/README.md" "$PLUGIN_DIR/README.md"
+trap 'rm -f "$PLUGIN_DIR/README.md"' EXIT
+
 # A .plugin is a zip of the plugin directory contents. Exclude OS noise and any
 # real fund configuration that may exist in a working copy — the bundle must never
 # carry one fund's config to another.

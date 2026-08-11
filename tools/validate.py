@@ -308,6 +308,24 @@ def check_fund_neutral() -> None:
     report("Shipped content is fund-neutral", bad, n)
 
 
+# ------------------------------------------------------- readme inventory ----
+def check_readme_inventory() -> None:
+    """The README's skill list must match the skills that exist.
+
+    lp-investor-scoring was added in June and never made it into the inventory, so for two
+    months the documented roster and the real one disagreed and nobody noticed.
+    """
+    readme = ROOT / "README.md"
+    if not readme.is_file():
+        report("README skill inventory", ["README.md missing"], 0)
+        return
+    listed = set(re.findall(r"\[`([a-z0-9-]+)`\]\(\./plugins/fund-os/skills/", readme.read_text(encoding="utf-8")))
+    on_disk = {p.name for p in SKILLS.iterdir() if p.is_dir()}
+    bad = [f"'{s}' exists but is not in the README inventory" for s in sorted(on_disk - listed)]
+    bad += [f"README lists '{s}', which has no skill directory" for s in sorted(listed - on_disk)]
+    report("README skill inventory", bad, len(on_disk))
+
+
 # ------------------------------------------------------- no committed bundles -
 def check_no_committed_bundle() -> None:
     """A .plugin in the repository is a bundle nobody can trace to a build.
@@ -385,6 +403,7 @@ def main() -> int:
     check_skill_crossrefs()
     check_fund_neutral()
     check_dashboard()
+    check_readme_inventory()
     check_no_committed_bundle()
     check_versions()
     check_secrets()

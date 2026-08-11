@@ -27,47 +27,23 @@ You need one of:
 - **Claude.ai** with a Teams or Enterprise plan
 - **Claude Code** — for power users and developers
 
-If you use the release bundle rather than the marketplace, you need a **`fund-os-<version>.plugin` file** from the [latest release](https://github.com/steffenmaas/fund-os/releases/latest). Two flavours exist:
+There is only one version of the plugin. It ships **generic templates**, never a fund's actual
+documents — your thesis, scoring matrices and memo format live in your fund's Google Drive
+knowledge folder and are loaded at runtime.
 
-| Version | What it contains | Where to get it |
-|---|---|---|
-| **Vanilla** | All 43 skills with generic starter templates — ready to use, configure after install | [Latest release](https://github.com/steffenmaas/fund-os/releases/latest) |
-| **Customised** | Vanilla + your fund's investment thesis, evaluation criteria, scoring rubric and tone guide pre-loaded | Ask the key Fund OS user at your firm |
-
-Start with the vanilla version if you're the first person at your fund to install Fund OS. Use the customised version if a colleague has already set up the knowledge documents — it saves you the knowledge configuration step.
+That means installing gives you a working but unconfigured Fund OS. What makes it *yours* is
+`~/.fund-os/user-config.json`, which points at that Drive folder. If a colleague has already set
+it up, copying their file is all the configuration you need.
 
 ---
 
 ## 2. Installation
 
-### Via the marketplace (recommended — updates arrive automatically)
+In the Claude app: **Settings → Plugins → Add marketplace**, enter `steffenmaas/fund-os`, then
+install **fund-os**. Updates arrive through the app from then on.
 
-1. In the Claude app, open **Settings → Plugins**
-2. Add the marketplace: `https://github.com/steffenmaas/fund-os.git`
-3. Install **fund-os** from it
-
-From then on the app keeps the plugin current — no re-uploading, no version guessing. This is
-the only path where an installed version always corresponds to a commit.
-
-The repository is private, so your account needs read access to it. If the app cannot reach it,
-use the fallback below and ask for access.
-
-### Fallback — upload the `.plugin` file
-
-Use this only if the marketplace path is unavailable to you. Every update is then a manual
-re-upload, which is how the version history came apart once already.
-
-1. Download the latest bundle from the [releases page](https://github.com/steffenmaas/fund-os/releases) — the `fund-os-<version>.plugin` asset. It is built by CI from the tagged commit; never build one by hand.
-2. Open **Claude Desktop** and click **Customize** in the left sidebar
-3. Next to **Personal Plugins**, click the **+** button
-4. Hover over **Create plugin**, then click **Upload plugin**
-5. Select the `.plugin` file
-
-### Already on the upload path?
-
-Switch once: add the marketplace, install `fund-os` from it, then remove the uploaded copy so
-only one version is active. Your configuration and knowledge are untouched — they live in
-`~/.fund-os/` and in the Drive knowledge folder, not in the plugin.
+Full instructions, including the release-bundle fallback and the CLI, are in the
+[README](./README.md#installation) — kept in one place so the two cannot drift apart.
 
 ---
 
@@ -106,27 +82,25 @@ Fund OS is designed to work out of the box, but gets significantly better when y
 
 Run `fund-os:setup` at any time to update your tone, output path, fund name or Drive folder.
 
-### Editing skill files in the chat
+### Where to make a change — this matters
 
-To view or change any skill's knowledge files or templates, just ask Claude:
+| You want to change | Edit | Effect |
+|---|---|---|
+| Thesis, filters, scoring, memo format | the document in your **Drive knowledge folder** | applies to the whole team immediately |
+| Fund name, systems, storage paths, CRM fields | `~/.fund-os/user-config.json` (or re-run `fund-os:setup`) | applies to you |
+| How a skill behaves in general | open an issue — it belongs in the plugin | applies to everyone, next release |
 
-```
-Show me the evaluation criteria for deal-flow-triage
-```
+**Do not edit files inside the plugin directory.** They are replaced on every update, and a change
+made there is invisible to your colleagues. Earlier versions of this guide suggested editing skill
+files directly; that advice was wrong and is how customisations kept disappearing.
 
-```
-Update the scoring rubric — add a Regulatory Risk dimension worth 10%
-```
-
-```
-What does my investment memo template look like?
-```
+To read any document, just ask:
 
 ```
-Change the health check template to add a burn multiple row
+Show me our evaluation criteria
 ```
 
-Claude will read the file, show you the content, make your requested changes, and confirm. No navigating to hidden folders required.
+To change methodology, ask Claude to edit the Drive document — or edit it in Drive yourself.
 
 ### Central knowledge repository on Google Drive
 
@@ -209,6 +183,7 @@ fund-os:lp-quarterly-report
 | Task | Skill | What to say |
 |---|---|---|
 | Classify and route an inbound pitch | `deal-flow-triage` | "Triage this new deal" |
+| Source proactively instead of waiting | `deal-outbound-scout` | "Scout pre-seed startups in [sector]" |
 | Quick thesis fit check | `deal-startup-score` | "Score this startup against our thesis" |
 | Detailed weighted scoring | `deal-startup-score` | "Score this startup" / "Go/no-go on [Company]" |
 
@@ -258,6 +233,7 @@ fund-os:lp-quarterly-report
 | Task | Skill | What to say |
 |---|---|---|
 | Scout LP databases | `lp-database-scout` | "Find new LP prospects" |
+| Score LP and co-investor fit | `lp-investor-scoring` | "Score these investors" / "LP fit for [Investor]" |
 | Find intro paths | `lp-network-intro-map` | "Who can intro me to [LP]?" |
 | Draft outreach | `lp-outreach-draft` | "Draft an outreach email to [LP]" |
 | Manage the LP pipeline | `lp-pipeline-manage` | "Update the LP pipeline" |
@@ -270,6 +246,7 @@ fund-os:lp-quarterly-report
 | Scan for market intelligence | `market-intelligence-scan` | "What happened in [sector] this week?" |
 | Share deals with co-investors | `deal-co-investor-syndicate` | "Match this deal with co-investors" |
 | Curate the weekly watchlist | `deal-watchlist-curate` | "Curate this week's watchlist" |
+| Manage accelerator and partner relationships | `outreach-partner-manage` | "Update the partner overview" |
 
 ### Other
 
@@ -281,24 +258,28 @@ fund-os:lp-quarterly-report
 | Plan an event | `outreach-event-manage` | "Plan the LP dinner" |
 | Model an exit scenario | `exit-scenario-model` | "Model an exit for [Company]" |
 | Check the secondary market | `exit-secondary-market-scan` | "Any secondary opportunities for [Company]?" |
+| Record something that went wrong | `learn` | "Write that down" / "We learned something" |
 
 ---
 
 ## 7. Updating Fund OS
 
-When a new version of Fund OS is available, update directly from Claude:
+If you installed through the marketplace, the Claude app keeps the plugin current — there is
+nothing to do.
+
+To see what changed:
 
 ```
 fund-os:update
 ```
 
-This will:
-1. Check the latest version from GitHub
-2. Show you what is new (new skills, updated methodology)
-3. Ask for your confirmation before making any changes
-4. Apply only the new and changed skill files
+It reports the installed version against the latest release, shows the changelog between them,
+and explains the update path for your install method. It does **not** write into the plugin
+directory: earlier versions tried to patch the installed plugin in place, and that is precisely
+what let the running version drift months ahead of the source.
 
-**Your preferences, customised knowledge files and edited templates are never touched by an update.**
+**Your configuration and knowledge are never affected by an update.** They live in `~/.fund-os/`
+and in the Drive knowledge folder, both outside the plugin.
 
 ---
 
