@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.8.2 - 2026-08-11
+
+`check-knowledge.py` no longer assumes every knowledge document lives in the knowledge folder.
+
+It does not have to, and usually should not. A fund's live documents already live somewhere — a
+data room, a fundraising folder — and copying them into the knowledge folder means the copy
+silently stops tracking its source. That had already happened once: the folder held an
+`O1_Investment_Hypothesis (COPY)` made in June from a document last edited in May, with nothing
+saying which was authoritative.
+
+The manifest is the index; documents can live anywhere on the shared drive. The check now
+resolves an id across the whole drive and reports **where** each external document sits, so
+pointing at an original reads as a deliberate choice rather than a broken pointer.
+
 ## 0.8.1 - 2026-08-11
 
 Resolves the reference gaps the knowledge map surfaced in 0.8.0. Five of the twelve missing

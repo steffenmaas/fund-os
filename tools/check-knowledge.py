@@ -68,6 +68,40 @@ def find_drive_folder() -> Path | None:
     return None
 
 
+def index_shared_drive(knowledge: Path) -> dict[str, str]:
+    """Map every Drive id on the shared drive to a readable location.
+
+    A document does not have to live in the knowledge folder. Pointing the manifest at the
+    original wherever it already lives is better than keeping a copy here — a copy silently
+    stops tracking its source, which is how the folder ended up holding an
+    "O1_Investment_Hypothesis (COPY)" that no longer matched the data room.
+    """
+    root = knowledge.parent.parent          # .../Ocean One Ventures
+    out: dict[str, str] = {}
+    for p in root.rglob("*"):
+        if not p.is_file() or p.name.startswith("."):
+            continue
+        i = drive_id_of(p)
+        if i:
+            out[i] = str(p.relative_to(root))
+    return out
+
+
+def drive_id_of(p: Path) -> str | None:
+    if p.suffix == ".gdoc":
+        try:
+            return json.loads(p.read_text(encoding="utf-8")).get("doc_id")
+        except Exception:
+            return None
+    try:
+        import subprocess
+        r = subprocess.run(["xattr", "-p", "com.google.drivefs.item-id#S", str(p)],
+                           capture_output=True, text=True)
+        return r.stdout.strip() or None
+    except Exception:
+        return None
+
+
 def main() -> int:
     if not CONFIG.is_file():
         print(f"No configuration at {CONFIG} — run fund-os:setup first.")
@@ -87,22 +121,7 @@ def main() -> int:
     names = {p.name for p in folder.iterdir()}
     archive = folder / "_archive"
 
-    def drive_id(p: Path) -> str | None:
-        """Every synced file carries its Drive id — .gdoc in the JSON body, others as an xattr."""
-        if p.suffix == ".gdoc":
-            try:
-                return json.loads(p.read_text(encoding="utf-8")).get("doc_id")
-            except Exception:
-                return None
-        try:
-            import subprocess
-            r = subprocess.run(
-                ["xattr", "-p", "com.google.drivefs.item-id#S", str(p)],
-                capture_output=True, text=True,
-            )
-            return r.stdout.strip() or None
-        except Exception:
-            return None
+    drive_id = drive_id_of
 
     active = {}     # drive id -> filename, in the working set
     stale = {}      # drive id -> filename, in _archive
@@ -124,16 +143,23 @@ def main() -> int:
     # be missing for a while. That is a local sync artefact, not a broken manifest — fall
     # back to the filename before claiming a document has gone missing.
     problems = []
+    external: list[str] = []
+    elsewhere: dict[str, str] | None = None
     for key, fid in manifest.items():
         if fid in stale:
             problems.append(f"'{key}' points at {stale[fid]}, which was moved to _archive/")
         elif fid not in active:
             if f"{key}.md" in no_id:
                 continue  # named correctly, id not yet synced
-            problems.append(
-                f"'{key}' points at id {fid}, which is not in the knowledge folder — "
-                f"it was moved, renamed or deleted"
-            )
+            if elsewhere is None:
+                elsewhere = index_shared_drive(folder)
+            if fid in elsewhere:
+                external.append(f"'{key}' → {elsewhere[fid]}")
+            else:
+                problems.append(
+                    f"'{key}' points at id {fid}, which is nowhere on the shared drive — "
+                    f"it was deleted, or you lack access"
+                )
     referenced = set(manifest.values())
     warnings = []
     for i, n in sorted(active.items(), key=lambda kv: kv[1]):
@@ -142,10 +168,14 @@ def main() -> int:
                 f"'{n}' is in the folder but no manifest key points at it — no skill loads it. "
                 f"Either add it to the manifest, or move it out if it is not knowledge."
             )
-    detail = f"{len(active) + len(no_id)} documents"
+    detail = f"{len(active) + len(no_id)} in the knowledge folder"
+    if external:
+        detail += f", {len(external)} elsewhere on the drive"
     if no_id:
         detail += f", {len(no_id)} still syncing"
     report("Manifest entries resolve", problems, detail, warnings)
+    for e in sorted(external):
+        print(f"    · {e}")
 
     # --- documents that must be real, not placeholders -------------------------
     problems = []
