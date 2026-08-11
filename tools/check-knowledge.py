@@ -38,15 +38,22 @@ PLACEHOLDER_MARKERS = ["— TEMPLATE", "This is the shipped template", "[e.g. "]
 failed = False
 
 
-def report(label: str, problems: list[str], detail: str = "") -> None:
+def report(label: str, problems: list[str], detail: str = "", warnings: list[str] | None = None) -> None:
+    """A dangling manifest pointer breaks a skill — that fails. A document nobody points at
+    breaks nothing; it is just invisible. Reporting both the same way trains people to ignore
+    the check, so warnings are shown without failing the run."""
     global failed
+    warnings = warnings or []
     if problems:
         failed = True
         print(f"  {label}: FAILED")
         for p in problems:
             print(f"    - {p}")
     else:
-        print(f"  {label}: ok{('  (' + detail + ')') if detail else ''}")
+        suffix = f"  ({detail})" if detail else ""
+        print(f"  {label}: ok{suffix}")
+    for w in warnings:
+        print(f"    ! {w}")
 
 
 def find_drive_folder() -> Path | None:
@@ -128,13 +135,17 @@ def main() -> int:
                 f"it was moved, renamed or deleted"
             )
     referenced = set(manifest.values())
+    warnings = []
     for i, n in sorted(active.items(), key=lambda kv: kv[1]):
         if i not in referenced and not n.startswith("_"):
-            problems.append(f"'{n}' is in the folder but no manifest key points at it — no skill will find it")
+            warnings.append(
+                f"'{n}' is in the folder but no manifest key points at it — no skill loads it. "
+                f"Either add it to the manifest, or move it out if it is not knowledge."
+            )
     detail = f"{len(active) + len(no_id)} documents"
     if no_id:
         detail += f", {len(no_id)} still syncing"
-    report("Manifest entries resolve", problems, detail)
+    report("Manifest entries resolve", problems, detail, warnings)
 
     # --- documents that must be real, not placeholders -------------------------
     problems = []
