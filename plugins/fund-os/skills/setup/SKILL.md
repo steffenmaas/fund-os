@@ -25,13 +25,12 @@ Also run if any other Fund OS skill detects no preferences file and the user con
 1. **Check for existing config.** Resolve in this order, first hit wins:
 
    ```bash
-   cat ~/.fund-os/user-config.json 2>/dev/null \
-     || cat "${CLAUDE_PLUGIN_ROOT}/preferences/user-config.json" 2>/dev/null
+   cat ~/.fund-os/user-config.json 2>/dev/null
    ```
 
    If found: display current values grouped as below, ask: "Your preferences are already configured. Update a specific section or reconfigure everything?"
 
-   If the config was found at the **bundled** location rather than `~/.fund-os/`, say so and offer to migrate it — a config inside the plugin is overwritten whenever the plugin is reinstalled or re-uploaded.
+   If an old `user-config.json` is still sitting inside the plugin's own `preferences/` directory (where versions before 0.4.0 wrote it), offer to migrate it to `~/.fund-os/` — a config inside the plugin is overwritten whenever the plugin is reinstalled or re-uploaded.
 
 2. **Welcome message.** One short paragraph: explain Fund OS, what this wizard sets up, and that preferences live in `~/.fund-os/` outside the plugin, so they survive every update and re-upload.
 
@@ -166,7 +165,7 @@ Loop until confirmed.
    JSON
    ```
 
-   Never write it into the plugin directory. `${CLAUDE_PLUGIN_ROOT}/preferences/user-config.json` is a read-only fallback shipped with the plugin; anything written there is lost on the next install.
+   Never write it into the plugin directory — anything written there is lost on the next install. `${CLAUDE_PLUGIN_ROOT}/preferences/user-config.json.template` documents the shape of the file and is never read at runtime.
 
    If Bash is unavailable: display the JSON and tell the user to save it as `~/.fund-os/user-config.json` themselves.
 

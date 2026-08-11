@@ -1,0 +1,31 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Plugin self-check
+        run: python3 tools/validate.py
+
+      - name: Dashboard script parses
+        run: |
+          python3 - <<'PY'
+          t = open('plugins/fund-os/Fund_OS_Dashboard.html', encoding='utf-8').read()
+          i = t.find('<script')
+          j = t.find('</script>', i)
+          open('/tmp/dash.js', 'w', encoding='utf-8').write(t[t.find('>', i) + 1:j])
+          PY
+          node --check /tmp/dash.js
+
+      - name: Bundle builds
+        run: bash tools/build-plugin.sh /tmp/dist

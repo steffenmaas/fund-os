@@ -33,11 +33,40 @@ tree. See `docs/version-audit-2026-08-11.md` for the full audit.
 - Hero skill count 35 → 42.
 - `deal-thesis-screen` stays removed; it duplicated `deal-startup-score`'s triggers.
 
-**Known, not yet fixed — needs a decision (see audit §7):**
-- `startup-scoring-matrix.md` declares a total of /100 but its ten dimension caps sum to **110**.
-- `lp-scoring-matrix.md` declares 0–100 but its eight dimension caps sum to **120**.
-  Both have been in production since late June, so scores from that period sit on a stretched
-  scale and the tier thresholds do not mean what they say.
+**Scoring matrices — both were arithmetically broken, both fixed:**
+
+Each declared a total of /100 while its dimension caps summed to something else, so every score
+since late June sat on a stretched scale and the tier thresholds did not mean what they said.
+
+- `startup-scoring-matrix.md` — caps summed to **110**. Competition & Differentiation and
+  Go-to-Market Strategy go from 10 to 5, which brings the total to exactly 100 **and** makes it
+  agree with the weights `deal-due-diligence` already used in the IC memo. The two skills now
+  score the same company the same way. Past scores: subtract the points awarded above 5 on
+  those two dimensions.
+- `lp-scoring-matrix.md` v7 → **v8** — caps sum to **120** and the skill "capped at 100", which
+  hid the defect. The raw sum is now explicitly 0–120 and normalised with
+  `round(raw / 120 × 100)`; the tier thresholds (80/60/40/20) are unchanged and now apply to the
+  normalised score. All eight point tables are untouched. Past scores are raw sums — convert
+  them before comparing; several will move down one tier. Output now reports both, e.g.
+  `77/100 (raw 92/120)`, so any score can be audited back to its dimensions.
+
+**Release pipeline — so this cannot happen again:**
+- `tools/validate.py` — checks JSON, skill front matter, that every `${CLAUDE_PLUGIN_ROOT}`
+  reference resolves to a file that exists, that no dead plugin-cache path returns, that the
+  dashboard parses and matches the skill roster, that versions agree across `plugin.json`,
+  `marketplace.json` and this changelog, that no Drive id or credential is committed, and that
+  the scoring matrices add up. Every check exists because that exact defect shipped.
+- `tools/build-plugin.sh` — the only supported way to build a `.plugin`. Runs the validator
+  first and refuses to produce a bundle that fails it; excludes any real fund config and then
+  verifies the exclusion held.
+- `.github/workflows/validate.yml` runs on every push and PR;
+  `.github/workflows/release.yml` makes a version bump in `plugin.json` the release trigger —
+  it tags `fund-os/v<version>`, builds the bundle and attaches it to a GitHub Release.
+- `merge-plugin.sh` removed. It existed to merge preferences across hand-built `.plugin` files;
+  preferences now live outside the plugin, so there is nothing to merge.
+- The README's version-bump checklist told maintainers to copy files into
+  `~/.claude/plugins/cache/` and rebuild the bundle by hand. That checklist *was* the bug.
+  Replaced with the CI process.
 
 ## 0.2.2 - 2026-06-03
 

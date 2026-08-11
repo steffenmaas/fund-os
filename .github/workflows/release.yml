@@ -1,0 +1,68 @@
+# Bumping the version in plugins/fund-os/.claude-plugin/plugin.json on main IS the release
+# trigger. CI validates, tags fund-os/v<version>, builds the .plugin bundle and attaches it to
+# a GitHub Release. No manual tagging, no hand-built bundles — that is what let the running
+# version drift nine weeks ahead of git.
+name: release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read plugin version
+        id: v
+        run: |
+          v=$(python3 -c "import json;print(json.load(open('plugins/fund-os/.claude-plugin/plugin.json'))['version'])")
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "tag=fund-os/v$v" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if this version is already released
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${{ steps.v.outputs.tag }}" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release ${{ steps.v.outputs.tag }} already exists — nothing to do."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate
+        if: steps.check.outputs.release == 'true'
+        run: python3 tools/validate.py
+
+      - name: Build the bundle
+        if: steps.check.outputs.release == 'true'
+        run: bash tools/build-plugin.sh dist
+
+      - name: Extract the changelog section for this version
+        if: steps.check.outputs.release == 'true'
+        run: |
+          python3 - <<'PY' > notes.md
+          import re
+          v = "${{ steps.v.outputs.version }}"
+          t = open('CHANGELOG.md', encoding='utf-8').read()
+          m = re.search(rf"^## {re.escape(v)}.*?(?=^## |\Z)", t, re.S | re.M)
+          print(m.group(0).strip() if m else f"Release {v}")
+          PY
+
+      - name: Create the release
+        if: steps.check.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.v.outputs.tag }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Fund OS v${{ steps.v.outputs.version }}" \
+            --notes-file notes.md \
+            dist/fund-os-${{ steps.v.outputs.version }}.plugin

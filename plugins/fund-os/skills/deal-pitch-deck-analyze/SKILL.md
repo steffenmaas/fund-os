@@ -21,8 +21,7 @@ Run this skill when the user says any of:
 ### 0. Load configuration
 Resolve in this order, first hit wins:
 ```bash
-cat ~/.fund-os/user-config.json 2>/dev/null \
-  || cat "${CLAUDE_PLUGIN_ROOT}/preferences/user-config.json" 2>/dev/null
+cat ~/.fund-os/user-config.json
 ```
 If neither exists, stop and say: *"Fund OS is not configured — run `fund-os:setup` first."* Do not continue with defaults.
 Apply `brandGuidelines.tone` to all prose output. Note `storagePaths.rootFolderId`, `storagePaths.deals`, and `systems.crm` — these are used in later steps. From `knowledge.manifest`, load: `investment-hypothesis`, `investment-criteria`, `investment-note-template`. A document found via the Drive manifest always wins over the bundled copy.
