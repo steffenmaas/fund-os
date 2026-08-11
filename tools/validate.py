@@ -308,6 +308,19 @@ def check_fund_neutral() -> None:
     report("Shipped content is fund-neutral", bad, n)
 
 
+# ------------------------------------------------------- no committed bundles -
+def check_no_committed_bundle() -> None:
+    """A .plugin in the repository is a bundle nobody can trace to a build.
+
+    One sat in the root from June until the repository went public: a hand-built v0.2.2 bundle,
+    still carrying the fund-specific content that had since been removed from the tree, and
+    offered for download from the README while the releases held something entirely different.
+    Bundles come from CI, attached to a release, or they do not exist.
+    """
+    bad = [rel(f) for f in walk(".plugin")]
+    report("No committed .plugin bundles", bad, 1)
+
+
 # ------------------------------------------------------- scoring integrity ---
 def check_scoring_matrices() -> None:
     """A scored matrix must add up. Either the caps sum to 100, or it normalises explicitly.
@@ -372,6 +385,7 @@ def main() -> int:
     check_skill_crossrefs()
     check_fund_neutral()
     check_dashboard()
+    check_no_committed_bundle()
     check_versions()
     check_secrets()
     check_scoring_matrices()

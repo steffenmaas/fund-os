@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.6.1 - 2026-08-11
+
+Removes two leftovers from the manual era that became visible the moment the repository went
+public.
+
+- **`fund-os.plugin` deleted from the repository root.** It was a hand-built v0.2.2 bundle from
+  June, still carrying the fund-specific content and partner names that had since been removed
+  from the tree — and the README offered it as the primary download while the releases held
+  something entirely different. `validate.py` now fails on any committed `.plugin`: bundles come
+  from CI, attached to a release, or they do not exist.
+- **`install.sh` deleted.** It created `~/.claude/plugins/cache/fund-os-marketplace/fund-os/` —
+  the very path the 0.2.0–0.3.7 skills read their configuration from, and the reason that path
+  looked plausible for months while existing nowhere. With the marketplace working, nothing needs
+  it.
+- Installation docs rewritten around the marketplace, with the release bundle as the documented
+  fallback.
+
 ## 0.6.0 - 2026-08-11
 
 Prepares the repository to be public, which is what makes marketplace installs work at all.
