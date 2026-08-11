@@ -20,7 +20,16 @@ Run this skill when the user says any of:
 
 ## Key instructions
 
-0. **Load knowledge:** Read `knowledge/investment-thesis.md` and `knowledge/evaluation-criteria.md` (this plugin) before proceeding. These contain the hard filters, sector definition, and routing criteria for Ocean One Fund I.
+0. **Load knowledge.** Both files are mandatory — they carry the hard filters, sector definition and routing criteria. An overlay in `~/.fund-os/knowledge/` wins over the bundled copy:
+
+   ```bash
+   for k in investment-thesis evaluation-criteria; do
+     cat ~/.fund-os/knowledge/$k.md 2>/dev/null \
+       || cat "${CLAUDE_PLUGIN_ROOT}/skills/deal-flow-triage/knowledge/$k.md"
+   done
+   ```
+
+   If either file cannot be read, stop and say which one — triaging without the thesis produces confident, wrong routing.
 
 1. **Apply hard filters first** (auto-Pass on any fail — log reason and stop):
    - Sector: [sector] B2B software only (see investment-thesis.md for full definition)
@@ -96,8 +105,8 @@ The fund configures which actual MCP server backs each capability via `.mcp.json
 
 ## Knowledge references
 
-- `knowledge/investment-thesis.md` — fund thesis, sector definition, hard filters, archetypes
-- `knowledge/evaluation-criteria.md` — soft filters, routing criteria, priority definitions
+- `${CLAUDE_PLUGIN_ROOT}/skills/deal-flow-triage/knowledge/investment-thesis.md` — fund thesis, sector definition, hard filters, archetypes
+- `${CLAUDE_PLUGIN_ROOT}/skills/deal-flow-triage/knowledge/evaluation-criteria.md` — soft filters, routing criteria, priority definitions
 
 After scoring: hand off to `deal-startup-score` for O1 Startup Scoring (pitch deck screening depth).
 

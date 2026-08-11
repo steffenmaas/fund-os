@@ -1,148 +1,101 @@
 ---
 name: update
-description: Fetch the latest Fund OS release from GitHub, show what is new, and merge only new and changed skill files into the local plugin — preserving all preferences, knowledge and template customisations. Trigger with "update fund OS", "check for fund OS updates" or "fund-os:update". Phase 00 (Setup). Fund-side only.
+description: Check whether a newer Fund OS release exists, show what changed since the installed version, and walk through the update for the install method actually in use. Never writes into the plugin directory. Trigger with "update fund OS", "check for fund OS updates", "are there new skills?" or "fund-os:update". Phase 00 (Setup). Fund-side only.
 ---
 
 # Fund OS Update
 
-Fetch the latest Fund OS release from GitHub, show what is new, and merge only the new or changed skill files — your customisations (preferences, knowledge files, templates) are never touched.
+Check for a newer Fund OS release, show what changed, and guide the update.
 
 This skill is part of the **Fund OS** plugin, Phase 00 — Setup.
+
+> **This skill never writes into the plugin directory.** Earlier versions tried to patch the
+> installed plugin in place. That is what produced the 0.2.2 / 0.3.7 split: the plugin
+> directory is managed by Claude (Desktop materialises it per session under
+> `local-agent-mode-sessions/…/rpm/plugin_<id>/`; the CLI manages
+> `~/.claude/plugins/`), so anything written there is unversioned, invisible to git, and
+> discarded on the next install. Updates go through the release, not through the filesystem.
 
 ## When to trigger
 
 Run this skill when the user says any of:
 - "update fund OS"
 - "check for fund OS updates"
-- "fund-os:update"
 - "are there new skills?"
+- `fund-os:update`
 
 ## Key instructions
 
-1. **Check current version** by reading `plugin.json`:
-   ```bash
-   cat ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/plugin.json 2>/dev/null | grep version
-   # or
-   cat ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/.claude-plugin/plugin.json 2>/dev/null | grep version
-   ```
+### 1. Read the installed version
 
-2. **Fetch latest plugin.json from GitHub** to check the remote version:
-   ```bash
-   curl -fsSL "https://raw.githubusercontent.com/steffenmaas/fund-os/main/plugins/fund-os/.claude-plugin/plugin.json" | grep version
-   ```
+```bash
+cat "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json" | python3 -c "import json,sys;print(json.load(sys.stdin)['version'])"
+```
 
-   If local version == remote version: tell the user "Fund OS is already up to date (v[X])." and stop.
+If `${CLAUDE_PLUGIN_ROOT}` is not set, say so and stop — without it there is no reliable way to know which copy is running, and guessing is what caused the split in the first place.
 
-3. **Download the latest release** to a temp directory:
-   ```bash
-   TMP=$(mktemp -d)
-   curl -fsSL "https://github.com/steffenmaas/fund-os/archive/refs/heads/main.tar.gz" | tar -xz -C "$TMP"
-   REMOTE="$TMP/fund-os-main/plugins/fund-os"
-   ```
+### 2. Read the latest release
 
-4. **Diff and show the changelog.** Compare remote skills against local:
-   ```bash
-   LOCAL=$(ls -d ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/skills/ | head -1)
-   # New skills = dirs in remote not in local
-   comm -23 <(ls "$REMOTE/skills/" | sort) <(ls "$LOCAL" | sort)
-   # Changed SKILL.md files (excluding preferences/ knowledge/ templates/)
-   ```
-   Present a clear list:
-   ```
-   Fund OS update available: v[current] → v[new]
+The repository is **private**, so `raw.githubusercontent.com` returns 404 without credentials. Use the authenticated CLI:
 
-   New skills (N):
-     + meeting-briefer
-     + variance-analyzer
+```bash
+gh release view --repo steffenmaas/fund-os --json tagName,body,publishedAt 2>/dev/null
+```
 
-   Updated skills (M):
-     ~ deal-flow-triage  (SKILL.md changed)
-     ~ setup             (SKILL.md changed)
+If `gh` is missing or not authenticated, say exactly that and stop — do not fall back to an unauthenticated fetch that will silently 404.
 
-   Unchanged: 38 skills
+### 3. Compare and report
 
-   Your customisations (NOT touched):
-     preferences/user-config.json ✓ preserved
-     skills/*/knowledge/*         ✓ preserved
-     skills/*/templates/*         ✓ preserved
-     skills/*/preferences/*       ✓ preserved
-   ```
+If installed == latest: *"Fund OS is up to date (v[X])."* and stop.
 
-5. **Ask for confirmation:**
-   "Apply this update? (yes / no / show diff for [skill-name])"
-   - If the user asks for a diff, show the SKILL.md diff for that skill before proceeding.
-   - Only proceed on explicit "yes".
+Otherwise show the delta from `CHANGELOG.md` between the two versions:
 
-6. **Apply the merge** — copy only:
-   - New skill folders (entire directory)
-   - Updated `SKILL.md` files in existing skills
-   - Updated `plugin.json`, `marketplace.json`, `README.md`, `Fund_OS_Dashboard.html`
-   - **Never overwrite:** `*/preferences/*`, `*/knowledge/*`, `*/templates/*`
+```
+Fund OS update available: v[installed] → v[latest]
 
-   ```bash
-   INSTALL=$(ls -d ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/ | head -1)
+  <changelog entries between the two versions>
 
-   # Copy new skills
-   for skill in $(comm -23 <(ls "$REMOTE/skills/" | sort) <(ls "$INSTALL/skills/" | sort)); do
-     cp -r "$REMOTE/skills/$skill" "$INSTALL/skills/"
-   done
+Your configuration is not affected — it lives in ~/.fund-os/ and is never
+touched by an update.
+```
 
-   # Update SKILL.md in changed skills (skip protected dirs)
-   for skill in $(ls "$REMOTE/skills/"); do
-     if [ -f "$REMOTE/skills/$skill/SKILL.md" ]; then
-       cp "$REMOTE/skills/$skill/SKILL.md" "$INSTALL/skills/$skill/SKILL.md"
-     fi
-   done
+### 4. Explain the update path for the install actually in use
 
-   # Update top-level plugin files
-   cp "$REMOTE/.claude-plugin/plugin.json" "$INSTALL/.claude-plugin/plugin.json"
-   cp "$TMP/fund-os-main/.claude-plugin/marketplace.json" \
-      "$INSTALL/../../../.claude-plugin/marketplace.json" 2>/dev/null || true
+Detect it from `${CLAUDE_PLUGIN_ROOT}`:
 
-   # Clean up
-   rm -rf "$TMP"
-   ```
+| `${CLAUDE_PLUGIN_ROOT}` contains | Install method | What the user does |
+|---|---|---|
+| `local-agent-mode-sessions/…/rpm/` | Claude Desktop upload | Download the `fund-os-<version>.plugin` asset from the release, then in Claude Desktop: **+ → Create plugin → Upload plugin**. The new upload replaces the old one. |
+| `~/.claude/plugins/marketplaces/` | CLI marketplace | `/plugin marketplace update fund-os-marketplace`, then `/plugin install fund-os@fund-os-marketplace` |
+| anything else | unknown | Report the path and ask how it was installed rather than guessing. |
 
-7. **Update installed_plugins.json** with the new version:
-   ```bash
-   INSTALLED="$HOME/.claude/plugins/installed_plugins.json"
-   NEW_VERSION=$(cat "$INSTALL/.claude-plugin/plugin.json" | grep '"version"' | sed 's/.*"\([0-9.]*\)".*/\1/')
-   # Use python3 to update the JSON safely
-   python3 -c "
-   import json
-   with open('$INSTALLED') as f: d = json.load(f)
-   d['plugins']['fund-os@fund-os-marketplace'][0]['version'] = '$NEW_VERSION'
-   with open('$INSTALLED', 'w') as f: json.dump(d, f, indent=2)
-   "
-   ```
+Download link for the Desktop path:
 
-8. **Confirm completion:**
-   ```
-   ✓ Fund OS updated to v[new version]
+```bash
+gh release download --repo steffenmaas/fund-os --pattern '*.plugin' --dir ~/Downloads
+```
 
-   New skills now available:
-     /fund-os:meeting-briefer
-     /fund-os:portfolio-variance-analyze
+### 5. Never do any of the following
 
-   Your preferences and customisations were preserved.
-   Run /reload-plugins to activate the new skills.
-   ```
+- Write, copy or `rm` anything under `${CLAUDE_PLUGIN_ROOT}`
+- Edit `~/.claude/plugins/installed_plugins.json` or `known_marketplaces.json`
+- Build a `.plugin` bundle by hand — bundles are built by CI so that every bundle has a commit behind it
+
+If the user asks for an in-place patch anyway, explain the trade-off once — it works until the next reinstall, and it puts the running version out of sync with git again — and let them decide.
 
 ## Inputs
 
-- None required — fetches from GitHub automatically
+- None. Reads the installed `plugin.json` and the latest GitHub release.
 
 ## Outputs
 
-- Updated SKILL.md files and new skill folders in the local plugin cache
-- Updated version in `installed_plugins.json`
-- Changelog shown to user before and after update
+- Installed vs. latest version
+- The changelog delta between them
+- The concrete update steps for the detected install method
 
 ## Required MCP capabilities
 
-- None — uses Bash tool for all file operations and HTTP fetch
-
-The Bash tool must be available. If it is not, fall back to instructing the user to run `install.sh` manually.
+- None. Uses the Bash tool and the `gh` CLI.
 
 ## Knowledge references
 
@@ -150,18 +103,18 @@ None.
 
 ## Human-in-the-loop
 
-User must explicitly confirm ("yes") before any files are written. The diff is shown first so the user knows exactly what changes.
+This skill only reads and reports. Every write — the upload, the marketplace install — is performed by the user.
 
 ## Audit trail
 
-After successful execution, emit an entry via the `legal-audit-trail-write` skill:
+After a reported update, emit an entry via the `legal-audit-trail-write` skill:
 
 ```yaml
-skill_version: update@0.2.0
-output_ref:    ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/
-rationale:     Fund OS updated from v[old] to v[new]; N new skills, M updated
+skill_version: update@0.4.0
+output_ref:    ${CLAUDE_PLUGIN_ROOT}
+rationale:     Fund OS update check — installed v[old], latest v[new]
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 0.2.0. Do not edit directly — edit the source and rebuild.*
+*Fund OS v0.4.0 · Phase 00 — Setup*

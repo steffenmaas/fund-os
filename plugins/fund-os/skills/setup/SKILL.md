@@ -22,15 +22,18 @@ Also run if any other Fund OS skill detects no preferences file and the user con
 
 ## Key instructions
 
-1. **Check for existing config.** Locate the preferences file at:
+1. **Check for existing config.** Resolve in this order, first hit wins:
+
+   ```bash
+   cat ~/.fund-os/user-config.json 2>/dev/null \
+     || cat "${CLAUDE_PLUGIN_ROOT}/preferences/user-config.json" 2>/dev/null
    ```
-   ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json
-   ```
-   Via Bash: `cat ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json 2>/dev/null`
 
    If found: display current values grouped as below, ask: "Your preferences are already configured. Update a specific section or reconfigure everything?"
 
-2. **Welcome message.** One short paragraph: explain Fund OS, what this wizard sets up, and that preferences survive all future updates.
+   If the config was found at the **bundled** location rather than `~/.fund-os/`, say so and offer to migrate it — a config inside the plugin is overwritten whenever the plugin is reinstalled or re-uploaded.
+
+2. **Welcome message.** One short paragraph: explain Fund OS, what this wizard sets up, and that preferences live in `~/.fund-os/` outside the plugin, so they survive every update and re-upload.
 
 3. **Collect preferences in four sections — complete one section before moving to the next.**
 
@@ -42,7 +45,7 @@ Ask these questions, collecting multiple answers in one prompt per sub-group:
 
 **Fund identity:**
 "Fund name (and abbreviation if any), currency, stage focus, ticket range?"
-Examples: Ocean One Ventures (O1) · EUR · Pre-Seed & Seed · €100K–€500K initial, €1.5M reserve
+Example: Meridian Ventures (MV) · EUR · Pre-Seed & Seed · €100K–€500K initial, €1.5M reserve
 
 **Sectors:**
 "List your target sectors, comma-separated."
@@ -50,7 +53,7 @@ Example: Charter & Fleet Ops, Marina & Infrastructure, Crew & Service Tech, Mari
 
 **Team:**
 "Who are the team members and their roles?"
-Example: [Managing Partner] – Managing Partner, [Partner] – Partner
+Example: A. Beck – Managing Partner, C. Duval – Partner
 
 **Market anchor:**
 "One-line TAM description for reports and LP communications."
@@ -94,11 +97,11 @@ Ask in a single prompt: "Where within [documentStorage] should Fund OS save each
 
 | Artefact type | Example |
 |---|---|
-| Outputs (general) | `O1 Fund OS/Outputs/` |
-| Deal folders | `O1 Fund OS/Deals/` |
-| Portfolio folders | `O1 Fund OS/Portfolio/` |
-| LP records | `O1 Fund OS/LPs/` |
-| Drafts (pre-sign-off) | `O1 Fund OS/Drafts/` |
+| Outputs (general) | `Fund OS/Outputs/` |
+| Deal folders | `Fund OS/Deals/` |
+| Portfolio folders | `Fund OS/Portfolio/` |
+| LP records | `Fund OS/LPs/` |
+| Drafts (pre-sign-off) | `Fund OS/Drafts/` |
 
 ---
 
@@ -121,12 +124,12 @@ If provided:
 │  Fund OS Setup — please confirm                              │
 ├──────────────────────────────────────────────────────────────┤
 │  MASTER DATA                                                 │
-│  Fund        : Ocean One Ventures (O1)                       │
+│  Fund        : Meridian Ventures (MV)                        │
 │  Currency    : EUR  |  Stage: Pre-Seed & Seed                │
 │  Ticket      : €100K–€500K initial, €1.5M reserve            │
 │  Sectors     : Charter & Fleet Ops, Marina & Infrastructure  │
 │                Crew & Service Tech, Maritime Data & SaaS     │
-│  Team        : [Managing Partner], [Partner]              │
+│  Team        : A. Beck, C. Duval                             │
 │  Market      : €130B global leisure boating, 8% CAGR         │
 │                                                              │
 │  BRAND GUIDELINES                                            │
@@ -139,11 +142,11 @@ If provided:
 │  E-signature : BoldSign                                      │
 │                                                              │
 │  STORAGE PATHS                                               │
-│  Outputs     : O1 Fund OS/Outputs/                           │
-│  Deals       : O1 Fund OS/Deals/                             │
-│  Portfolio   : O1 Fund OS/Portfolio/                         │
-│  LPs         : O1 Fund OS/LPs/                               │
-│  Drafts      : O1 Fund OS/Drafts/                            │
+│  Outputs     : Fund OS/Outputs/                              │
+│  Deals       : Fund OS/Deals/                                │
+│  Portfolio   : Fund OS/Portfolio/                            │
+│  LPs         : Fund OS/LPs/                                  │
+│  Drafts      : Fund OS/Drafts/                               │
 │                                                              │
 │  KNOWLEDGE                                                   │
 │  Drive folder: [ID or "not configured"]                      │
@@ -154,14 +157,23 @@ Type a section name to edit it, or press Enter to save.
 
 Loop until confirmed.
 
-5. **Write preferences file** to the plugin path:
-   ```bash
-   PREFS=$(ls -d ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/ | head -1)user-config.json
-   ```
-   If Bash is available: write directly. If not: display the JSON and instruct the user to save manually.
+5. **Write the preferences file outside the plugin**, so it survives updates and re-uploads:
 
-6. **Confirm and suggest next step:**
-   "Setup complete. Run `fund-os:deal-flow-triage` to triage your first deal, or ask Claude to show you your investment thesis starter template."
+   ```bash
+   mkdir -p ~/.fund-os
+   cat > ~/.fund-os/user-config.json <<'JSON'
+   { ...the confirmed configuration... }
+   JSON
+   ```
+
+   Never write it into the plugin directory. `${CLAUDE_PLUGIN_ROOT}/preferences/user-config.json` is a read-only fallback shipped with the plugin; anything written there is lost on the next install.
+
+   If Bash is unavailable: display the JSON and tell the user to save it as `~/.fund-os/user-config.json` themselves.
+
+6. **Verify the write** by reading the file back and confirming it parses as JSON. Report the path and the fund name you read back — not the values you intended to write.
+
+7. **Confirm and suggest next step:**
+   "Setup complete — configuration saved to `~/.fund-os/user-config.json`. Run `fund-os:deal-flow-triage` to triage your first deal, or ask Claude to show you your investment thesis starter template."
 
 ## Inputs
 
@@ -170,7 +182,7 @@ Loop until confirmed.
 
 ## Outputs
 
-- `preferences/user-config.json` written inside the plugin
+- `~/.fund-os/user-config.json` — written outside the plugin, survives every update
 - Grouped confirmation summary shown before writing
 
 ## Required MCP capabilities
@@ -184,11 +196,11 @@ User reviews and confirms the grouped summary before any file is written.
 ## Audit trail
 
 ```yaml
-skill_version: setup@0.2.0
+skill_version: setup@0.4.0
 output_ref:    preferences/user-config.json
 rationale:     Fund OS preferences configured for this user
 ```
 
 ---
 
-*Generated from `skills-data.js` at version 0.2.0. Do not edit directly — edit the source and rebuild.*
+*Fund OS v0.4.0 · Phase 00 — Setup*

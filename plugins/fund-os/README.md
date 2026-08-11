@@ -151,7 +151,7 @@ After either install, run `/reload-plugins` then `fund-os:setup`.
 
 ## Customization
 
-Every skill reads preferences from `preferences/user-config.json` inside the plugin (path: `~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json`). Run `setup` to configure.
+Every skill resolves preferences in this order, first hit wins: `~/.fund-os/user-config.json`, then the bundled fallback at `${CLAUDE_PLUGIN_ROOT}/preferences/user-config.json`. Keep your real configuration in `~/.fund-os/` — it lives outside the plugin and therefore survives every update and re-upload. Run `setup` to create it.
 
 To update without losing customisations: type `fund-os:update` in chat, or use `merge-plugin.sh` for `.plugin` file merges.
 

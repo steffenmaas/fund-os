@@ -23,7 +23,16 @@ Run this skill when the user says any of:
 
 ## Key instructions
 
-0. **Load knowledge:** Read `knowledge/startup-scoring-matrix.md` (this plugin) — it contains the full 10-dimension rubric with signal→score tables, output format, score bands, and Attio field mapping. Use it verbatim. Also read `knowledge/investment-thesis.md` from the deal-flow-triage skill for sector context.
+0. **Load knowledge.** The scoring matrix is mandatory and must be used verbatim — it carries the 10-dimension rubric, the signal→score tables, the output format, the score bands and the Attio field mapping. An overlay in `~/.fund-os/knowledge/` wins over the bundled copy:
+
+   ```bash
+   cat ~/.fund-os/knowledge/startup-scoring-matrix.md 2>/dev/null \
+     || cat "${CLAUDE_PLUGIN_ROOT}/skills/deal-startup-score/knowledge/startup-scoring-matrix.md"
+   cat ~/.fund-os/knowledge/investment-thesis.md 2>/dev/null \
+     || cat "${CLAUDE_PLUGIN_ROOT}/skills/deal-flow-triage/knowledge/investment-thesis.md"
+   ```
+
+   If the matrix cannot be read, stop — do not score from memory.
 
 1. **Determine screening depth** from context:
    - **First screening** — name + website/LinkedIn only → expect 4–6 dimensions as "No information available" (score 0)
@@ -114,8 +123,8 @@ The fund configures which actual MCP server backs each capability via `.mcp.json
 
 ## Knowledge references
 
-- `knowledge/startup-scoring-matrix.md` — 10-dimension rubric, signal tables, output format, score bands, Attio mapping
-- `deal-flow-triage/knowledge/investment-thesis.md` — fund thesis, hard filters, sector archetypes
+- `${CLAUDE_PLUGIN_ROOT}/skills/deal-startup-score/knowledge/startup-scoring-matrix.md` — 10-dimension rubric, signal tables, output format, score bands, Attio mapping
+- `${CLAUDE_PLUGIN_ROOT}/skills/deal-flow-triage/knowledge/investment-thesis.md` — fund thesis, hard filters, sector archetypes
 
 ## Human-in-the-loop
 
