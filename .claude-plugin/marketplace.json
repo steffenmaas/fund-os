@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "Fund OS — 43 Claude Skills for VC fund operations, sourcing to wind-down.",
-    "version": "0.6.0"
+    "version": "0.6.1"
   },
   "plugins": [
     {
       "name": "fund-os",
       "source": "./plugins/fund-os",
       "description": "43 Claude Skills for VC fund operations - sourcing to wind-down.",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "category": "fund-operations",
       "license": "PolyForm-Noncommercial-1.0.0",
       "keywords": [

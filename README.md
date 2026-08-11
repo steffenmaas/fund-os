@@ -18,37 +18,32 @@ Three options — pick the one that fits your setup.
 
 ---
 
-### Option 1 — Upload via Claude Desktop UI (easiest, no terminal)
+### Option 1 — Marketplace (recommended)
 
-1. [**Download `fund-os.plugin`**](https://github.com/steffenmaas/fund-os/raw/main/fund-os.plugin) from GitHub
-2. Open **Claude Desktop** → click **Customize** in the left sidebar
-3. Click the **+** button next to **Personal Plugins**
-4. Hover over **Create plugin** → click **Upload plugin**
-5. Select the `fund-os.plugin` file
-6. Run the welcome wizard: type `fund-os:setup`
+In the Claude app: **Settings → Plugins → Add marketplace**
 
-That's it — no terminal, no git, no accounts needed beyond Claude Desktop access.
+```
+https://github.com/steffenmaas/fund-os
+```
+
+Then install **fund-os** from it. Updates arrive through the app from there on — an installed
+version always corresponds to a tagged commit.
+
+Finally, run the welcome wizard: type `fund-os:setup`.
 
 ---
 
-### Option 2 — Script install (no git required)
+### Option 2 — Upload the release bundle
 
-For teammates comfortable with a terminal but without git or the GitHub CLI:
+For anyone who cannot use the marketplace. Note that every update is then a manual re-upload.
 
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/steffenmaas/fund-os/main/install.sh)
-```
+1. Download `fund-os-<version>.plugin` from the [latest release](https://github.com/steffenmaas/fund-os/releases/latest)
+2. Open **Claude Desktop** → **Customize** → **+** next to **Personal Plugins**
+3. Hover **Create plugin** → **Upload plugin**, select the file
+4. Run the welcome wizard: `fund-os:setup`
 
-Downloads the latest release, places all files in the correct Claude directory, and registers the plugin. Requires only `curl` (pre-installed on macOS).
-
-Then reload and run the setup wizard:
-
-```
-/reload-plugins
-fund-os:setup
-```
-
----
+The bundle is built by CI from the tagged commit. Never build one by hand — a bundle without a
+commit behind it is how the version history came apart once already.
 
 ### Option 3 — Claude Code CLI (full developer install)
 
@@ -251,7 +246,6 @@ Claude activates the matching skill, requests any missing inputs, and walks you 
 | Path | Contents |
 |---|---|
 | [`plugins/fund-os/`](./plugins/fund-os/) | Plugin root — 42 SKILL.md files across 8 phases, plugin manifest, MCP config example |
-| [`install.sh`](./install.sh) | No-git installer — downloads and registers the plugin with one command |
 | [`plugins/fund-os/preferences/`](./plugins/fund-os/preferences/) | User preferences template (copied to `~/.fund-os-prefs.json` by the setup wizard) |
 | [`plugins/fund-os/README.md`](./plugins/fund-os/README.md) | Full skill inventory, 18 workflows, installation details |
 | [`plugins/fund-os/Fund_OS_Dashboard.html`](./plugins/fund-os/Fund_OS_Dashboard.html) | Interactive periodic table of all skills — open in any browser |

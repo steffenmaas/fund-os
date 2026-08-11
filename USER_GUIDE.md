@@ -27,11 +27,11 @@ You need one of:
 - **Claude.ai** with a Teams or Enterprise plan
 - **Claude Code** — for power users and developers
 
-You need a **`fund-os.plugin` file**. Two versions exist:
+If you use the release bundle rather than the marketplace, you need a **`fund-os-<version>.plugin` file** from the [latest release](https://github.com/steffenmaas/fund-os/releases/latest). Two flavours exist:
 
 | Version | What it contains | Where to get it |
 |---|---|---|
-| **Vanilla** | All 42 skills with generic starter templates — ready to use, configure after install | [Download from GitHub ↓](https://github.com/steffenmaas/fund-os/raw/main/fund-os.plugin) |
+| **Vanilla** | All 43 skills with generic starter templates — ready to use, configure after install | [Latest release](https://github.com/steffenmaas/fund-os/releases/latest) |
 | **Customised** | Vanilla + your fund's investment thesis, evaluation criteria, scoring rubric and tone guide pre-loaded | Ask the key Fund OS user at your firm |
 
 Start with the vanilla version if you're the first person at your fund to install Fund OS. Use the customised version if a colleague has already set up the knowledge documents — it saves you the knowledge configuration step.
