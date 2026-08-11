@@ -11,7 +11,7 @@ The O1 Startup Scoring model scores early-stage maritime-leisure SaaS startups a
 **Scoring methodology — CRITICAL RULES:**
 
 1. **Score ALL 10 dimensions on actual evidence, always.** Never zero out dimensions because of thesis mismatches (wrong geography, stage, model). Hard-pass filters belong ONLY in the O1 Thesis Fit star rating and Recommended action.
-2. **Total score = exact arithmetic sum of all 10 dimension numerators.** Do NOT set it manually. Compute it AFTER scoring all dimensions. Example: if numerators are 14+12+13+9+8+9+8+9+4+5 = 91, then total = 91.
+2. **Total score = exact arithmetic sum of all 10 dimension numerators.** Do NOT set it manually. Compute it AFTER scoring all dimensions. Example: if numerators are 14+12+13+9+8+9+4+4+4+5 = 82, then total = 82.
 3. **Technology & Product weight is /10 — ALWAYS.** Never write /15 for this dimension.
 4. **Score bands reflect company quality on the merits.** A company can score Strong Buy (90+) and still receive a ❌ Pass in Recommended action if it fails O1 thesis filters (e.g. a US Series B marina-booking platform can score 91/100 on the merits and still be a Hard Pass for a European pre-seed Fund I).
 
@@ -22,8 +22,8 @@ The O1 Startup Scoring model scores early-stage maritime-leisure SaaS startups a
 - Technology & Product: /10  ← ALWAYS /10, never /15
 - Business Model: /10
 - Traction & Validation: /10
-- Competition & Differentiation: /10
-- Go-to-Market Strategy: /10
+- Competition & Differentiation: /5
+- Go-to-Market Strategy: /5
 - Financial Planning & Use of Funds: /5
 - Exit Potential: /5
 - **TOTAL: /100**
@@ -154,7 +154,7 @@ Score for paying customer evidence, growth rate, and operator endorsement qualit
 
 ---
 
-### 7. Competition & Differentiation — Weight: 10%
+### 7. Competition & Differentiation — Weight: 5%
 
 Score for competitive positioning and moat durability. Maritime leisure is fragmented — incumbents are generic tools (Excel, Booking.com, generic marina software).
 
@@ -169,7 +169,7 @@ Score for competitive positioning and moat durability. Maritime leisure is fragm
 
 ---
 
-### 8. Go-to-Market Strategy — Weight: 10%
+### 8. Go-to-Market Strategy — Weight: 5%
 
 Score for GTM clarity, channel efficiency, and founder's access to the customer base.
 
@@ -259,8 +259,8 @@ Scoring breakdown:
 • Technology & Product:      +[X]/10   — [one-line reason]
 • Business Model:            +[X]/10   — [one-line reason]
 • Traction & Validation:     +[X]/10   — [one-line reason]
-• Competition:               +[X]/10   — [one-line reason]
-• Go-to-Market:              +[X]/10   — [one-line reason]
+• Competition:               +[X]/5    — [one-line reason]
+• Go-to-Market:              +[X]/5    — [one-line reason]
 • Financial Planning:        +[X]/5    — [one-line reason]
 • Exit Potential:            +[X]/5    — [one-line reason]
 

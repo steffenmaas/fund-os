@@ -1,5 +1,5 @@
 # LP Investor Scoring Matrix — Ocean One Fund I
-# Version: 7
+# Version: 8
 # Last updated: 2026-07-08
 #
 # HOW TO USE: Edit this file to update scoring rules without re-deploying the skill.
@@ -188,7 +188,15 @@ Dealroom longlist proxy (default, LPs only): rank ≤150 → 7 pts | rank ≤300
 
 ## Score Tiers & Recommended Actions
 
-Sum all 8 dimensions for the final score (0–100) — same math for every Relationship Type. Tier and recommended action are assigned off that single score, with the action label reflecting the relationship type.
+The eight dimension caps sum to a **raw maximum of 120** (20+20+20+15+8+15+15+7). The final score is that raw sum normalised to a 0–100 scale:
+
+```
+final = round(raw / 120 × 100)
+```
+
+Always report both, so a score can be audited back to its dimensions: `77/100 (raw 92/120)`.
+
+Same math for every Relationship Type. Tier and recommended action are assigned off the **normalised** score, with the action label reflecting the relationship type.
 
 | Score | Tier | LP Action | Co-Investor / Strategic Partner Action |
 |---|---|---|---|
@@ -198,7 +206,7 @@ Sum all 8 dimensions for the final score (0–100) — same math for every Relat
 | 20–39 | 👁 Watchlist | Monitor; revisit for Fund II | Ecosystem-map only; light-touch relationship |
 | 1–19 | ❌ Low Fit | Do not prioritise for LP outreach | Not a near-term priority; keep on file |
 
-No score is ever 0 or "disqualified" by policy — the floor across all 8 dimensions (2+1+0+1+1+2+0+0 = 7) means even a weak-fit entity lands with a nonzero score. An entity that turns out to be a non-investor (individual, duplicate, unrelated business) is a data-hygiene removal, not a score of 0 — flag it as such in the evaluation notes.
+No score is ever 0 or "disqualified" by policy — the floor across all 8 dimensions (2+1+0+1+1+2+0+0 = 7 raw → 6/100) means even a weak-fit entity lands with a nonzero score. An entity that turns out to be a non-investor (individual, duplicate, unrelated business) is a data-hygiene removal, not a score of 0 — flag it as such in the evaluation notes.
 
 ---
 

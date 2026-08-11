@@ -16,8 +16,7 @@ Score investor and co-investor prospects for **Ocean One Fund I**, a first-time 
 ## Step 0 — Load preferences and scoring matrix
 
 ```bash
-cat ~/.fund-os/user-config.json 2>/dev/null \
-  || cat "${CLAUDE_PLUGIN_ROOT}/preferences/user-config.json" 2>/dev/null
+cat ~/.fund-os/user-config.json
 ```
 
 If neither exists, stop and say: *"Fund OS is not configured — run `fund-os:setup` first."* Do not continue with defaults.
@@ -61,7 +60,7 @@ Apply in order:
 1. **Investor Relationship Type check** — classify as LP (default), Co-Investor, or Strategic Partner using the signals in the scoring matrix (e.g. "Vehicle: Startups" with no fund vehicle, "co-investor - NOT an LP", accelerator/advisor framing → Co-Investor or Strategic Partner). This only affects the label on the output and the Dimension 1 rationale — not the math. If the entity turns out not to be an investor at all (individual, duplicate CRM entry, unrelated business), flag it for removal in the evaluation notes instead of scoring it.
 2. **Institutional Asset Owner Override check** — if Investor Type = Pension Fund / Insurance / Sovereign Wealth Fund / Endowment >€1B AuM and there is no confirmed emerging-manager program evidence, apply the Dimension 2 / 6 / 8 caps from the scoring matrix before proceeding
 3. **Apply all 8 dimensions** — award points per scoring matrix tables, identical tables and identical math regardless of Relationship Type
-4. **Sum, cap at 100 — this is the final score**
+4. **Sum the eight dimensions (raw, 0–120), then normalise:** `final = round(raw / 120 × 100)`. Never cap — capping at 100 is what hid the scale defect before v8. Report both numbers.
 5. **Output evaluation block** (format below)
 
 ### Evaluation output format
@@ -69,7 +68,7 @@ Apply in order:
 Use this exact structure and alignment — labels padded so all `+` signs line up in one column:
 
 ```
-O1 LP Fit Score: [SCORE]/100
+O1 LP Fit Score: [SCORE]/100  (raw [RAW]/120)
 [🤝 Co-Investor / Strategic Partner — [1-line reason for classification]  ← only if not LP]
 [🏛 Institutional Asset Owner Override applied — [reason]  ← only if override applies]
 
@@ -87,13 +86,13 @@ Fund of Funds Fit: [★★★★★] — [1-sentence summary]
 Maritime Leisure Fit: [★★★★★] — [1-sentence summary]
 
 Recommended action: [emoji + tier label, LP or Co-Investor wording per Relationship Type]
-Evaluated: [YYYY-MM-DD] | Ocean One Fund I LP scoring v7
+Evaluated: [YYYY-MM-DD] | Ocean One Fund I LP scoring v8
 ```
 
 **Worked example** (follow this formatting exactly — same label padding, same line breaks, same level of detail per rationale):
 
 ```
-O1 LP Fit Score: 92/100
+O1 LP Fit Score: 77/100  (raw 92/120)
 
 Scoring breakdown:
 • Fund of Funds Fit:    +20/20 — fund-of-funds
@@ -108,8 +107,8 @@ Scoring breakdown:
 Fund of Funds Fit: ★★★★★ — fund-of-funds (Dim 1 = 20/20)
 Maritime Leisure Fit: ★★★★★ — dedicated ocean/blue-economy mandate
 
-Recommended action: 🔥 Priority outreach — anchor LP candidate
-Evaluated: 2026-06-30 | Ocean One Fund I LP scoring v7
+Recommended action: ⭐ High Fit — active pipeline; personalised approach
+Evaluated: 2026-08-11 | Ocean One Fund I LP scoring v8
 ```
 
 Note the padding: each dimension label plus its trailing spaces totals 22 characters before the `+`, so every point value and every em dash lines up down the block. Rationales stay short — a few words is enough (see "fund-of-funds", "Tier 3", "recent activity" above); reserve longer explanations for cases that genuinely need them (e.g. Institutional Asset Owner Override applying).

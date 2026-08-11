@@ -26,11 +26,7 @@ Run this skill when the user says any of:
 
 ## Key instructions
 
-0. **Load configuration.** Resolve in this order, first hit wins:
-   1. `~/.fund-os/user-config.json` — the fund's own config; survives every plugin update
-   2. `${CLAUDE_PLUGIN_ROOT}/preferences/user-config.json` — bundled fallback
-
-   If neither exists, say so and stop: *"Fund OS is not configured — run `fund-os:setup` first."* Do not silently continue with defaults; an unconfigured run produces a memo with the wrong fund name, wrong ticket sizes and the wrong save location.
+0. **Load configuration** from `~/.fund-os/user-config.json` — the fund's own config, outside the plugin, so it survives every update. If it is missing, say so and stop: *"Fund OS is not configured — run `fund-os:setup` first."* Do not silently continue with defaults; an unconfigured run produces a memo with the wrong fund name, wrong ticket sizes and the wrong save location.
 
    From the config, apply `brandGuidelines.tone` to all prose. Use `storagePaths.deals` for DD artefacts and `storagePaths.drafts` for the memo draft. Reference `systems.crm`, `systems.documentStorage` and `systems.meetingNotes` by their configured names. From `knowledge.manifest`, load `evaluation-criteria`, `investment-thesis`, `dd-framework`, `saas-benchmarks` and `memo-template` from Drive if present — a Drive document always wins over the bundled copy.
 
@@ -49,8 +45,6 @@ Run this skill when the user says any of:
    **Section order (O1 format):** Header (company, tagline, sector, Round/Ticket/Post-Money/Equity grid, HQ/Legal Entity/Website) — Analysis Status + Summary Findings — 1. Executive Summary — 2. O1 Framework Overall Scorecard — 3. Detailed Assessment by Dimension — 4. Competitive Analysis — 5. Valuation Analysis — 6. Opportunities & Risks — 7. Recommendation + Next Steps.
 
 5. **O1 Scorecard (mandatory).** Score all 10 dimensions and compute the weighted total /100. Weights: Team 20%, Market Opportunity 15%, Problem–Solution Fit 15%, Technology & Product 10%, Business Model 10%, Traction & Validation 10%, Competition & Differentiation 5%, Go-to-Market 5%, Financial Planning & Use of Funds 5%, Exit Potential 5% — these sum to 100% (+ optional Storytelling & Design bonus, 0% weight). Bands: ≥90 Strong Conviction · 75–89 Investable — Minor Gaps · 60–74 Watchlist — Material Gaps · <60 Pass. Each dimension gets a two-column table: positive signals (+) vs. negative signals / risks (−).
-
-   > **Known divergence:** `deal-startup-score` currently uses 10% for both Competition and Go-to-Market, which makes its dimension caps sum to 110 rather than 100. Until that is resolved, a memo score and a startup score for the same company are not directly comparable — say so explicitly if you quote both in one document.
 
 6. **Follow-on mode** appends the follow-on rationale and a reserve simulation (pro-rata / super-pro-rata / pass).
 

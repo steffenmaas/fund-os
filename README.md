@@ -273,18 +273,22 @@ Single source of truth: [`plugins/fund-os/.claude-plugin/plugin.json`](./plugins
 
 Run through this every time you ship a new version:
 
-- [ ] Edit skills / add new skills in `plugins/fund-os/skills/`
-- [ ] Bump version in `plugins/fund-os/.claude-plugin/plugin.json`
-- [ ] Bump version in `.claude-plugin/marketplace.json`
-- [ ] Update all `skill_version: <slug>@x.y.z` and footer lines in SKILL.md files (`sed -i '' 's/@x.old/@x.new/g'`)
-- [ ] Sync repo → cache: `cp -r plugins/fund-os/. ~/.claude/plugins/cache/fund-os-marketplace/fund-os/1.5.0/`
-- [ ] Bump version in `~/.claude/plugins/cache/fund-os-marketplace/fund-os/1.5.0/.claude-plugin/plugin.json`
-- [ ] Bump version in `~/.claude/plugins/installed_plugins.json`
-- [ ] **Rebuild `fund-os.plugin`**: `cd plugins/fund-os && zip -r ../../fund-os.plugin . --exclude "*.DS_Store"`
-- [ ] Update skill count in both READMEs if skills were added or removed
-- [ ] Commit and push to `main`
+1. Edit skills in `plugins/fund-os/skills/`. The `SKILL.md` **is** the source — there is no generator.
+2. Add a `## x.y.z` section to `CHANGELOG.md`.
+3. Bump the version in `plugins/fund-os/.claude-plugin/plugin.json` **and** `.claude-plugin/marketplace.json`.
+4. Run `python3 tools/validate.py` until it is green.
+5. Commit and push to `main`.
 
-Clients with `autoUpdate: true` in their marketplace settings pick up the new version automatically. Users on the `.plugin` file install (Option 1) download the updated file from GitHub and re-upload.
+That is the whole process. Pushing a new version in `plugin.json` **is** the release trigger:
+CI validates, tags `fund-os/v<version>`, builds `fund-os-<version>.plugin` and attaches it to a
+GitHub Release.
+
+**Never build a `.plugin` by hand, and never copy files into `~/.claude/plugins/` or into the
+Desktop app's session directories.** That is exactly how the 0.2.2 / 0.3.7 split happened: bundles
+were produced from a working copy that no commit ever captured, and the running version drifted
+nine weeks ahead of git. Every bundle must have a commit behind it.
+
+Run `fund-os:update` to see whether a newer release exists and what changed. It reports the update path for the install method in use; it never patches the installed plugin in place.
 
 ## VC-Skills.md Community Integration
 

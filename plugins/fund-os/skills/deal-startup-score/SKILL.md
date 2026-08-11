@@ -46,8 +46,8 @@ Run this skill when the user says any of:
    - Technology & Product: /10  ← always /10, never /15
    - Business Model: /10
    - Traction & Validation: /10
-   - Competition & Differentiation: /10
-   - Go-to-Market Strategy: /10
+   - Competition & Differentiation: /5
+   - Go-to-Market Strategy: /5
    - Financial Planning & Use of Funds: /5
    - Exit Potential: /5
    - **TOTAL: /100**
@@ -81,8 +81,8 @@ Run this skill when the user says any of:
    • Technology & Product:      +X/10   — [reason]
    • Business Model:            +X/10   — [reason]
    • Traction & Validation:     +X/10   — [reason]
-   • Competition:               +X/10   — [reason]
-   • Go-to-Market:              +X/10   — [reason]
+   • Competition:               +X/5    — [reason]
+   • Go-to-Market:              +X/5    — [reason]
    • Financial Planning:        +X/5    — [reason]
    • Exit Potential:            +X/5    — [reason]
 
