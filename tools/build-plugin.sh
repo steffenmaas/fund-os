@@ -11,8 +11,13 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-OUT_DIR="${1:-$ROOT/dist}"
 PLUGIN_DIR="$ROOT/plugins/fund-os"
+
+# The zip below runs in a subshell that cd's into the plugin directory, so the output
+# path must be absolute. Resolve it before anything else.
+OUT_DIR="${1:-$ROOT/dist}"
+mkdir -p "$OUT_DIR"
+OUT_DIR="$(cd "$OUT_DIR" && pwd)"
 
 VERSION=$(python3 -c "import json;print(json.load(open('$PLUGIN_DIR/.claude-plugin/plugin.json'))['version'])")
 OUT="$OUT_DIR/fund-os-$VERSION.plugin"
@@ -22,7 +27,6 @@ echo "Fund OS — building v$VERSION"
 # Never ship a bundle that has not passed validation.
 python3 "$ROOT/tools/validate.py"
 
-mkdir -p "$OUT_DIR"
 rm -f "$OUT"
 
 # A .plugin is a zip of the plugin directory contents. Exclude OS noise and any
