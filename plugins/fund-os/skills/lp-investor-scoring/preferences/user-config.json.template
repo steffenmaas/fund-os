@@ -1,0 +1,25 @@
+{
+  "fund": {
+    "name": "Ocean One Fund I",
+    "targetSize": "€15–30M",
+    "idealTicket": "€250K–€3M",
+    "vehicle": "First-time fund",
+    "hq": "Hamburg, Germany",
+    "thesis": "[sector]"
+  },
+  "scoring": {
+    "priorityThreshold": 80,
+    "highFitThreshold": 60,
+    "qualifiedThreshold": 40,
+    "watchlistThreshold": 20
+  },
+  "output": {
+    "csvColumns": ["Name", "Domain", "[crm-fit-field]", "[crm-fit-field]_evaluation"],
+    "matchKey": "Name",
+    "batchSize": 300,
+    "saveCheckpointEvery": 300
+  },
+  "network": {
+    "knownInvestors": []
+  }
+}

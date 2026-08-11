@@ -1,0 +1,161 @@
+---
+name: lp-investor-scoring
+description: Score and evaluate LP investor prospects for Ocean One Fund I. Use this skill whenever the user wants to score investors, evaluate LP fit, rate a new investor, screen a prospect list, add scores to a CSV, or assess whether an investor is a good LP candidate for Ocean One. Also use proactively when working with investor CSVs, Attio LP lists, or Dealroom exports where [crm-fit-field] is missing. Trigger on phrases like "score these investors", "LP fit", "add scoring", "evaluate this investor", "who should we approach".
+---
+
+# LP Investor Scoring — Ocean One Fund I
+
+Score investor and co-investor prospects for **Ocean One Fund I**, a first-time VC fund focused exclusively on **[sector]**. This covers the fund's full blue-economy relationship universe: LPs who might invest into the fund, and Co-Investors/Strategic Partners the fund might work alongside.
+
+**Critical positioning rule**: Ocean One is the ONLY VC fund focused on [sector]. Never describe it as "maritime technology" — the uniqueness is leisure, not tech.
+
+**No entity is ever scored 0 or disqualified.** Every scored entity is a potential relationship of some kind — see Investor Relationship Type below. All relationship types are scored on the same 8 dimensions with no separate multiplier or adjustment; Dimension 1 (Fund of Funds/LP Fit) naturally differentiates LPs from Co-Investors on its own.
+
+---
+
+## Step 0 — Load preferences and scoring matrix
+
+```bash
+cat ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/preferences/user-config.json 2>/dev/null
+```
+
+Then load the scoring matrix:
+
+```bash
+cat ~/.claude/plugins/cache/fund-os-marketplace/fund-os/*/skills/lp-investor-scoring/knowledge/lp-scoring-matrix.md 2>/dev/null
+```
+
+If the preferences file is absent, proceed with defaults — run `fund-os:setup` to create it.
+Apply `brandGuidelines.tone` to all prose output if present.
+
+The scoring matrix in `knowledge/lp-scoring-matrix.md` is the authoritative source for:
+- Investor Relationship Type classification (LP / Co-Investor / Strategic Partner) — a labeling and routing step only, not a scoring adjustment
+- Institutional Asset Owner Override (Pension Fund / Insurance / Sovereign Wealth Fund / large Endowment dampening)
+- All 8 dimension point tables
+- Score tier thresholds and recommended actions (separate action wording for LP vs. Co-Investor, same score thresholds)
+- Validation reference scores
+- Misclassification warnings (maritime tech ≠ [sector])
+
+---
+
+## Step 1 — Identify input
+
+| Input type | Action |
+|---|---|
+| Single investor name / description | Score inline; output full evaluation block |
+| CSV file path | Run batch workflow (Step 3) |
+| Attio LP list | Pull unscored rows; run batch workflow |
+| Free-text description | Parse fields; score inline |
+
+---
+
+## Step 2 — Score a single investor
+
+Apply in order:
+
+1. **Investor Relationship Type check** — classify as LP (default), Co-Investor, or Strategic Partner using the signals in the scoring matrix (e.g. "Vehicle: Startups" with no fund vehicle, "co-investor - NOT an LP", accelerator/advisor framing → Co-Investor or Strategic Partner). This only affects the label on the output and the Dimension 1 rationale — not the math. If the entity turns out not to be an investor at all (individual, duplicate CRM entry, unrelated business), flag it for removal in the evaluation notes instead of scoring it.
+2. **Institutional Asset Owner Override check** — if Investor Type = Pension Fund / Insurance / Sovereign Wealth Fund / Endowment >€1B AuM and there is no confirmed emerging-manager program evidence, apply the Dimension 2 / 6 / 8 caps from the scoring matrix before proceeding
+3. **Apply all 8 dimensions** — award points per scoring matrix tables, identical tables and identical math regardless of Relationship Type
+4. **Sum, cap at 100 — this is the final score**
+5. **Output evaluation block** (format below)
+
+### Evaluation output format
+
+Use this exact structure and alignment — labels padded so all `+` signs line up in one column:
+
+```
+O1 LP Fit Score: [SCORE]/100
+[🤝 Co-Investor / Strategic Partner — [1-line reason for classification]  ← only if not LP]
+[🏛 Institutional Asset Owner Override applied — [reason]  ← only if override applies]
+
+Scoring breakdown:
+• Fund of Funds Fit:    +[pts]/20 — [1-line rationale]
+• Emerging Manager Fit: +[pts]/20 — [1-line rationale]
+• [sector] Fit: +[pts]/20 — [1-line rationale]
+• Geography:            +[pts]/15 — [1-line rationale]
+• AuM / Ticket Size:    +[pts]/8  — [1-line rationale]
+• Investor Strength:    +[pts]/15 — [1-line rationale]
+• Network Proximity:    +[pts]/15 — [1-line rationale]
+• Activity Signal:      +[pts]/7  — [1-line rationale]
+
+Fund of Funds Fit: [★★★★★] — [1-sentence summary]
+[sector] Fit: [★★★★★] — [1-sentence summary]
+
+Recommended action: [emoji + tier label, LP or Co-Investor wording per Relationship Type]
+Evaluated: [YYYY-MM-DD] | Ocean One Fund I LP scoring v7
+```
+
+**Worked example** (follow this formatting exactly — same label padding, same line breaks, same level of detail per rationale):
+
+```
+O1 LP Fit Score: 92/100
+
+Scoring breakdown:
+• Fund of Funds Fit:    +20/20 — fund-of-funds
+• Emerging Manager Fit: +18/20 — explicit/known emerging-manager appetite
+• [sector] Fit: +20/20 — dedicated ocean/blue-economy mandate
+• Geography:            +15/15 — DACH — home market
+• AuM / Ticket Size:    +4/8  — ticket fit estimated from profile
+• Investor Strength:    +7/15 — Tier 3
+• Network Proximity:    +3/15 — identifiable decision-maker
+• Activity Signal:      +5/7  — recent activity
+
+Fund of Funds Fit: ★★★★★ — fund-of-funds (Dim 1 = 20/20)
+[sector] Fit: ★★★★★ — dedicated ocean/blue-economy mandate
+
+Recommended action: 🔥 Priority outreach — anchor LP candidate
+Evaluated: 2026-06-30 | Ocean One Fund I LP scoring v7
+```
+
+Note the padding: each dimension label plus its trailing spaces totals 22 characters before the `+`, so every point value and every em dash lines up down the block. Rationales stay short — a few words is enough (see "fund-of-funds", "Tier 3", "recent activity" above); reserve longer explanations for cases that genuinely need them (e.g. Institutional Asset Owner Override applying).
+
+Star ratings: ★★★★★ = perfect, ★★★★☆ = strong, ★★★☆☆ = moderate, ★★☆☆☆ = weak, ★☆☆☆☆ = none/unknown
+
+---
+
+## Step 3 — Batch workflow (CSV)
+
+Use when scoring a list. Output columns: `Name`, `Domain`, `[crm-fit-field]`, `[crm-fit-field]_evaluation`.
+
+```
+1. Investor Relationship Type check — classify LP / Co-Investor / Strategic Partner per row for
+   labeling purposes only; flag confirmed non-investors for removal instead of scoring them
+2. Parse each row — extract Name, Investor Type, HQ Country, AuM, thesis/description
+3. Institutional Asset Owner Override check — Pension Fund / Insurance / Sovereign Wealth Fund /
+   Endowment >€1B without confirmed EM program evidence → apply Dimension 2/6/8 caps
+4. Apply all 8 dimensions — award points, note rationale per dimension. Same math for every row.
+5. Write [crm-fit-field] (integer, never 0) and [crm-fit-field]_evaluation (full text)
+6. Sort descending by score
+7. Save checkpoint after every 300 rows — partial results are never lost
+8. Output Attio-ready update CSV: Name, Domain, [crm-fit-field], [crm-fit-field]_evaluation
+```
+
+**Attio import**: match on `Name` or `Domain`. Include only score fields + match key to avoid overwriting other fields.
+
+**Re-scoring note**: any row whose `[crm-fit-field]_evaluation` cites "scoring v3", "v4", "v5", or "v6" was scored under a prior matrix version — re-score under v7 before comparing or using in a ranked/exported list. v6 introduced a 0.75x Co-Investor multiplier that v7 removed; any v6-scored Co-Investor rows should be re-scored to drop that adjustment.
+
+### Dealroom thesis string parsing
+
+When `Investment thesis` contains a Dealroom longlist string, extract:
+- `rank N` → Dimension 6 (Investor Strength) and Dimension 8 (Activity proxy) — subject to the fund-count-vs-rank conflict rule and Institutional Asset Owner Override
+- `AuM: $XM/B` → Dimension 5 (AuM/Ticket Size)
+- `VC AuM: $XM/B` → fallback for Dimension 5
+- `VC firms backed: N` → fallback for Dimension 6, and the primary signal used against `rank N` in the conflict rule
+- `Type: [type]` → input for Dimension 1 (Fund of Funds Fit) and for triggering the Institutional Asset Owner Override
+- `HQ: [country]` → input for Dimension 4 (Geography)
+
+Relationship Type routing: if thesis contains `"EQUITY-INVESTOR LEAD"`, `"startup investor, NOT a fund LP"`, or `"co-investor - NOT an LP"` → classify as Co-Investor and label the output accordingly, but score all 8 dimensions exactly as for any other entity. Do not zero the score, and do not apply any multiplier.
+
+---
+
+## Step 4 — Validation
+
+After scoring a batch, validate against reference scores in `knowledge/lp-scoring-matrix.md`, including the institutional asset owner reference range (25–40 for statutory pension funds/insurers without confirmed EM evidence) and the Co-Investor reference range (e.g. [reference investor], 50–65, no multiplier applied). If any reference investor scores outside its expected range, review the dimension assignments for that investor type before proceeding.
+
+---
+
+## Required MCP capabilities
+
+- Bash (file read/write for CSV processing)
+- Google Drive MCP (optional — for reading/writing CSVs from Drive)
+- Attio MCP (optional — for direct CRM updates)

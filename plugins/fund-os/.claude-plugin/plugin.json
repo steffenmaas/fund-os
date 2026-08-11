@@ -1,8 +1,8 @@
 {
   "name": "fund-os",
   "displayName": "Fund OS",
-  "version": "0.2.2",
-  "description": "42 Claude Skills for VC fund operations across 8 lifecycle phases. Built on the open VC-Skills.md community convention. Fund-side scope only - Founder OS coaching skills are a separate bundle.",
+  "version": "0.3.7",
+  "description": "41 Claude Skills for VC fund operations across 8 lifecycle phases. Built on the open VC-Skills.md community convention. Fund-side scope only. (0.3.7: lp-investor-scoring SKILL.md evaluation output format now includes a concrete worked example with exact label padding/alignment, so scored outputs are formatted consistently. Scoring logic unchanged from 0.3.6.)",
   "author": {
     "name": "Ocean One Ventures"
   },
@@ -28,20 +28,20 @@
         "prompt": "Triage this inbound deal against our thesis"
       },
       {
-        "label": "Portfolio health check",
-        "prompt": "Run a portfolio health check"
+        "label": "Score a startup",
+        "prompt": "Score this startup against our O1 thesis"
       },
       {
-        "label": "Update Fund OS",
-        "prompt": "fund-os:update"
+        "label": "Portfolio health check",
+        "prompt": "Run a portfolio health check"
       }
     ],
     "featured_skills": [
       "setup",
       "deal-flow-triage",
-      "deal-thesis-screen",
+      "deal-startup-score",
       "portfolio-health-check",
-      "deal-due-diligence"
+      "deal-investment-memo-draft"
     ]
   }
 }
