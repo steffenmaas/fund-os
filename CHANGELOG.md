@@ -1,6 +1,22 @@
 # Changelog
 
-## Unreleased
+## 0.9.0 - 2026-08-18
+
+**The git history was rewritten.** Every commit SHA changed. An existing clone cannot be
+pulled — `git pull` will conflict; re-clone instead. Three commits disappeared because they
+only ever touched files that are now gone (the committed `.plugin` bundles and `docs/`).
+
+The repository went public on 11 August carrying its full history. The 0.5.0 cleanup had made
+the working tree fund-neutral and left the history untouched, so the fund's own scoring matrix,
+an internal Drive path, live CRM identifiers, an individual's name and a named investor beside
+a score stayed readable in earlier commits. The rewrite removes all of it from every commit:
+paths deleted outright, the fund-specific LP matrix versions replaced by the shipped template
+so the file's development history stays readable without the anchors, and the remaining terms
+substituted. `tools/validate.py` at the tip is the one file preserved byte-for-byte — it
+carries those terms as its own rule set.
+
+Everything below in this entry is the working-tree half of the same cleanup.
+
 
 Removes fund-specific data that survived the 0.5.0 template cleanup, and closes the gaps in
 `validate.py` that let it survive. The repository went public on 11 August with its full

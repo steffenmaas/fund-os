@@ -1,7 +1,7 @@
 {
   "name": "fund-os",
   "displayName": "Fund OS",
-  "version": "0.8.2",
+  "version": "0.9.0",
   "description": "43 Claude Skills for VC fund operations across 8 lifecycle phases. Built on the open VC-Skills.md community convention. Fund-side scope only. (0.5.0: the plugin now ships fund-neutral templates only — scoring matrices, memo template and thesis are placeholders. A fund's own documents live in ~/.fund-os/ or its Drive knowledge folder. CRM field slugs come from crmFields in the configuration.)",
   "author": {
     "name": "Ocean One Ventures"
