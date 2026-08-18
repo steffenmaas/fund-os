@@ -78,7 +78,7 @@ Shortlist (ranked by thesis fit):
 | Co-investor      | Fit  | Last co-invest    | Why now                |
 | [Co-Investor A]  | 5/5  | 2025 Berlin SaaS  | Lead-on-lead history   |
 | [Co-Inv. B]      | 4/5  | 2024 DACH B2B     | Stage + geography fit  |
-| EIF              | 4/5  | -                 | Female-founder mandate |
+| [DFI]            | 4/5  | -                 | Diversity mandate      |
 
 3 personalised notes drafted, all in review.
 Do-not-share: [Fund C] (passed similar deal 2025).

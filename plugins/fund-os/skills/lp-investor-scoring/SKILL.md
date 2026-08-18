@@ -154,7 +154,9 @@ Relationship Type routing: if thesis contains `"EQUITY-INVESTOR LEAD"`, `"startu
 
 ## Step 4 — Validation
 
-After scoring a batch, validate against reference scores in `knowledge/lp-scoring-matrix.md`, including the institutional asset owner reference range (25–40 for statutory pension funds/insurers without confirmed EM evidence) and the Co-Investor reference range (e.g. [reference investor], 50–65, no multiplier applied). If any reference investor scores outside its expected range, review the dimension assignments for that investor type before proceeding.
+After scoring a batch, validate against the reference ranges recorded in `knowledge/lp-scoring-matrix.md` — one per investor type, filled in by the fund from its own calibration. If any reference investor scores outside its expected range, review the dimension assignments for that investor type before proceeding.
+
+Reference investors and their ranges are fund-specific calibration data: keep them in the matrix overlay under `~/.fund-os/knowledge/` or the Drive knowledge folder, never in this skill and never in this repository. A named investor next to a score is the single artefact that must not be shared.
 
 ---
 

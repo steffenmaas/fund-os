@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Fund OS pre-commit hook — runs the repository's own validator before a commit lands.
+#
+# Install once:
+#   git config core.hooksPath tools/hooks
+#
+# It exists because the fund-neutrality rule and the investor-beside-a-score rule are cheap to
+# run and expensive to skip: a named investor with a score, once pushed to a public repository,
+# cannot be taken back by a later commit.
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "pre-commit: python3 not found — skipping validate.py" >&2
+  exit 0
+fi
+
+if ! python3 "$repo_root/tools/validate.py"; then
+  cat >&2 <<'MSG'
+
+pre-commit: validate.py failed — commit refused.
+
+If a finding is a false positive, fix the rule in tools/validate.py rather than
+bypassing it. To commit anyway (and you should have a reason):
+
+    git commit --no-verify
+
+MSG
+  exit 1
+fi

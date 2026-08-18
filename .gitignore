@@ -21,3 +21,6 @@ plugins/fund-os/preferences/user-config.json
 
 # Build output
 dist/
+
+# Bundles are built by CI and attached to the release — never committed
+*.plugin

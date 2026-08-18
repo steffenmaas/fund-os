@@ -82,7 +82,7 @@ CO-INVESTING FUNDS (3 active):
 
 CHECK-IN PLAN (next 30d):
   [Sector Lab]    revive call, propose new collaboration angle
-  TUM            invite to founder dinner 2026-06-12
+  [Uni Lab]      invite to founder dinner 2026-06-12
 ```
 
 ## Audit trail
