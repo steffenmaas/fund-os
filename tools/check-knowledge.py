@@ -73,10 +73,10 @@ def index_shared_drive(knowledge: Path) -> dict[str, str]:
 
     A document does not have to live in the knowledge folder. Pointing the manifest at the
     original wherever it already lives is better than keeping a copy here — a copy silently
-    stops tracking its source, which is how the folder ended up holding an
-    "O1_Investment_Hypothesis (COPY)" that no longer matched the data room.
+    stops tracking its source, which is how the folder ended up holding a duplicate of a
+    thesis document that no longer matched the data room.
     """
-    root = knowledge.parent.parent          # .../Ocean One Ventures
+    root = knowledge.parent.parent          # the shared drive root above the knowledge folder
     out: dict[str, str] = {}
     for p in root.rglob("*"):
         if not p.is_file() or p.name.startswith("."):

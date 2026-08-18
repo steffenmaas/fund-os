@@ -2,8 +2,8 @@
 """
 validate.py — self-check for the Fund OS plugin.
 
-Every check here exists because the corresponding defect actually shipped. See
-docs/version-audit-2026-08-11.md for what each one is guarding against.
+Every check here exists because the corresponding defect actually shipped; the comment on
+each check says which one.
 
     python3 tools/validate.py
 
@@ -271,31 +271,38 @@ def check_secrets() -> None:
 
 # ---------------------------------------------------------- fund-neutral -----
 def check_fund_neutral() -> None:
-    """The plugin ships templates, not one fund's filled-in documents.
+    """The repository ships templates, not one fund's filled-in documents.
 
-    This repository is shared with other funds. A fund's own thesis, scoring signals, sector
-    language and CRM slugs belong in ~/.fund-os/ or the Drive knowledge folder — never here.
-    Attribution (author, copyright) is the one legitimate exception.
+    Scans the **whole tree**, not just plugins/. The earlier version exempted docs/ and
+    CHANGELOG.md, and that is exactly where an internal Drive path and the fund's CRM slugs
+    survived the 0.5.0 cleanup. An exemption is a place where the rule stops being true.
+    Attribution — author field, copyright line, the fund's own website — is the one exception.
     """
     terms = [
         (re.compile(r"\bOcean One\b", re.I), "names the publishing fund as if it were the user's fund"),
+        (re.compile(r"\bOcean\s+14\b", re.I), "names a real investor"),
         (re.compile(r"maritime\s+leisure", re.I), "hardcodes one fund's sector"),
+        (re.compile(r"\bblue\s+economy\b", re.I), "hardcodes one fund's sector"),
         (re.compile(r"\bO1\s+(Framework|Startup Scoring|LP|Thesis Fit)\b"), "hardcodes one fund's framework name"),
-        (re.compile(r"\bo1_[a-z_]+\b"), "hardcodes one fund's CRM field slug — read it from crmFields instead"),
+        (re.compile(r"\bo1[-_][a-z-]+\b", re.I), "hardcodes one fund's CRM slug or document name — read it from crmFields instead"),
         (re.compile(r"\b(Steffen Maas|Dietlind)\b"), "names an individual"),
+        (re.compile(r"SHARED ASSETS|FUND OS Collab"), "names an internal Drive folder"),
+        (re.compile(r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b"),
+         "looks like a live CRM/Drive object id"),
     ]
     # Attribution is legitimate; a fund still authors the plugin it publishes.
     allow = [
         re.compile(r'"name":\s*"Ocean One Ventures"'),      # plugin.json author
         re.compile(r"©\s*(\d{4}\s+)?Ocean One Ventures"),      # README copyright, with or without year
+        re.compile(r"Copyright \(c\) \d{4} Ocean One Ventures"),  # LICENSE / NOTICE
         re.compile(r'"author"'),
     ]
     bad = []
     n = 0
-    for f in walk(".md", ".json", ".template", ".html", ".example"):
+    for f in walk(".md", ".json", ".template", ".html", ".example", ".yml", ".py", ".sh"):
         r = rel(f)
-        if r.startswith("docs/") or r == "CHANGELOG.md" or not r.startswith("plugins/"):
-            continue
+        if r == "tools/validate.py":
+            continue        # this file carries the patterns by definition
         n += 1
         for i, line in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
             if any(a.search(line) for a in allow):
@@ -306,6 +313,61 @@ def check_fund_neutral() -> None:
                     bad.append(f"{r}:{i}: '{m.group(0)}' {why}")
                     break
     report("Shipped content is fund-neutral", bad, n)
+
+
+# --------------------------------------------- no named investor beside a score -
+# An investor name next to a score is the single most sensitive artefact the system
+# produces, and it is the one the 0.5.0 cleanup missed: a co-investor reference range
+# sat in lp-investor-scoring/SKILL.md for three months because the fund-neutral check
+# only knew the fund's own name. This rule keys on shape, not on a blocklist.
+# A name token is capitalised OR numeric: real firm names mix them freely — "Ocean 14 Capital",
+# "Point Nine Capital", "83North". Requiring every token to start with a capital letter is how
+# the first draft of this rule missed the exact line it was written for.
+_NAME_TOKEN = r"(?:[A-Z][\w&.'-]*|\d{1,4})"
+INVESTOR_SUFFIX = re.compile(
+    rf"\b{_NAME_TOKEN}(?:\s+{_NAME_TOKEN}){{0,3}}\s+"
+    r"(Capital|Ventures|Partners|Invest|Investments|Bank|Group|Holdings|VC)\b"
+)
+SCORE_SHAPE = re.compile(
+    r"(?<![\w/])(?:\d{1,3}\s*[–—-]\s*\d{1,3}|\d{1,3}\s*/\s*(?:100|120|20|15|10)"
+    r"|\d{1,3}\s*(?:pts|points|Pkt))(?![\w])"
+)
+# Generic institutions used as category labels, not as scored entities.
+INVESTOR_OK = re.compile(
+    r"\b(the Fund|The Fund|Fund I|Fund II|a Fund|this Fund|Sample|Example|Placeholder)\b"
+)
+# A name followed by a year or quarter is a citation ("SaaS Capital 2025", "Bessemer Q1 2026"),
+# not an entity being scored. Shape-based, so new benchmark publishers need no allowlist entry.
+CITATION_SHAPE = re.compile(r"\s*(Q[1-4]\s*)?(19|20)\d{2}\b")
+
+
+def check_no_investor_scores() -> None:
+    """No line may carry a named investor and a score at the same time.
+
+    Keys on shape — an entity name ending in Capital/Ventures/Partners/... on the same line
+    as a score-shaped number — so it catches names nobody thought to blocklist. Calibration
+    anchors belong in the fund's own overlay under ~/.fund-os/, never here.
+    """
+    bad = []
+    n = 0
+    # Proximity, not line: the dashboard keeps all 43 skills on one minified JSON line, where
+    # line-based matching pairs any name with any unrelated number. A score that belongs to a
+    # name sits next to it.
+    WINDOW = 60
+    for f in walk(".md", ".html", ".template"):
+        r = rel(f)
+        n += 1
+        for i, line in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            for m in INVESTOR_SUFFIX.finditer(line):
+                if INVESTOR_OK.search(m.group(0)):
+                    continue
+                if CITATION_SHAPE.match(line[m.end():]):
+                    continue
+                near = line[max(0, m.start() - WINDOW):m.end() + WINDOW]
+                if SCORE_SHAPE.search(near):
+                    bad.append(f"{r}:{i}: '{m.group(0).strip()}' appears beside a score")
+                    break
+    report("No named investor beside a score", bad, n)
 
 
 # ------------------------------------------------------- readme inventory ----
@@ -402,6 +464,7 @@ def main() -> int:
     check_skills_have_anchor()
     check_skill_crossrefs()
     check_fund_neutral()
+    check_no_investor_scores()
     check_dashboard()
     check_readme_inventory()
     check_no_committed_bundle()

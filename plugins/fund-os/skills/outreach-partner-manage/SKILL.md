@@ -71,18 +71,18 @@ New partnership commitments require partner sign-off.
 # Partnership register - 2026-05-19
 
 ACCELERATORS (4 active):
-  Techstars (vertical)   Last 2026-04-22  3 intros Q1     HIGH
-  Lloyd's Lab           Last 2026-03-10  0 - STALE       LOW
+  [Accelerator A]   Last 2026-04-22  3 intros Q1     HIGH
+  [Sector Lab]           Last 2026-03-10  0 - STALE       LOW
 
 UNIVERSITIES (2 active):
-  TUM Venture Labs      Last 2026-05-02  2 intros Q1     MEDIUM
+  [University Lab]      Last 2026-05-02  2 intros Q1     MEDIUM
 
 CO-INVESTING FUNDS (3 active):
-  Cherry Ventures       Last 2026-05-15  2 deals         HIGH
+  [Co-Investor A]       Last 2026-05-15  2 deals         HIGH
 
 CHECK-IN PLAN (next 30d):
-  Lloyd's Lab    revive call, propose new collaboration angle
-  TUM            invite to founder dinner 2026-06-12
+  [Sector Lab]    revive call, propose new collaboration angle
+  [Uni Lab]      invite to founder dinner 2026-06-12
 ```
 
 ## Audit trail

@@ -72,7 +72,7 @@ No outreach without approval - this skill only produces a shortlist.
 | Resolutee  | Seed    | Legal AI, DACH, female co-founder  | Inbound likely      |
 | Nordwind   | Pre-S   | Climate data, Lisbon               | Cold from network   |
 
-Sources: Dealroom DACH/Climate, Specter signals, TUM Venture Labs, Slush 2026.
+Sources: Dealroom DACH/Climate, Specter signals, [University Lab], Slush 2026.
 ```
 
 ## Audit trail
