@@ -43,6 +43,11 @@ rewrite and the release/tag cleanup are separate steps.
   the first draft of this rule missed, because it required every token to start with a capital
   letter. (This paragraph was itself rejected by the check on the first attempt, for naming the
   firm. That is the rule working.)
+- **Individuals are matched by hash, not by name.** The check previously carried two names in
+  plain text, which is a blocklist disclosing exactly what it exists to protect. Names are now
+  stored as SHA-256 of the lowercased form, candidates on each line are hashed and compared, and
+  a finding reports the location without echoing the name — otherwise the CI log becomes the
+  new leak. Add one with `python3 tools/validate.py --hash-name "Firstname Lastname"`.
 - A pre-commit hook runs both, so this fails before the commit rather than in CI.
 - `.gitignore` now covers `*.plugin`. The rule already existed as a validator check; it did not
   exist as an ignore, which is the difference between catching a mistake and preventing it.

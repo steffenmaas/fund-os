@@ -12,6 +12,7 @@ Exit code 0 = clean, 1 = at least one check failed.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -270,6 +271,33 @@ def check_secrets() -> None:
 
 
 # ---------------------------------------------------------- fund-neutral -----
+# Individuals must not be named in shipped content — but a blocklist of names in a public file
+# discloses exactly what it exists to protect. The names are therefore stored as SHA-256 of the
+# lowercased name. To add one:  python3 tools/validate.py --hash-name "Firstname Lastname"
+BLOCKED_NAME_HASHES = {
+    "686b51d8967750d05ad8611a9e590af558e504b45a7e6a87361fb73ed5b969ca",
+    "cf1d36d26836986bbc3eafbfd0211d25d499038cdd9fa8adb3762d769e880105",
+    "acf4be72ec717755d66e42e73dd4d0c67c3c971c2c8bf3e41a6d0f68a109c6da",
+    "26b4eee2a0762dec10c5866f7fbf800de39fea17a4ecf50e1ac5bcc8decb5e86",
+}
+_NAME_CANDIDATE = re.compile(r"\b[A-Z][a-z]{2,}(?:\s+[A-Z]\.?)?(?:\s+[A-Z][a-z]{2,})?\b")
+
+
+def _name_hash(s: str) -> str:
+    return hashlib.sha256(" ".join(s.lower().split()).encode("utf-8")).hexdigest()
+
+
+def blocked_names_in(line: str) -> str | None:
+    for m in _NAME_CANDIDATE.finditer(line):
+        cand = m.group(0)
+        parts = cand.split()
+        for k in range(len(parts), 0, -1):
+            frag = " ".join(parts[:k])
+            if _name_hash(frag) in BLOCKED_NAME_HASHES:
+                return frag
+    return None
+
+
 def check_fund_neutral() -> None:
     """The repository ships templates, not one fund's filled-in documents.
 
@@ -285,7 +313,6 @@ def check_fund_neutral() -> None:
         (re.compile(r"\bblue\s+economy\b", re.I), "hardcodes one fund's sector"),
         (re.compile(r"\bO1\s+(Framework|Startup Scoring|LP|Thesis Fit)\b"), "hardcodes one fund's framework name"),
         (re.compile(r"\bo1[-_][a-z-]+\b", re.I), "hardcodes one fund's CRM slug or document name — read it from crmFields instead"),
-        (re.compile(r"\b(Steffen Maas|Dietlind)\b"), "names an individual"),
         (re.compile(r"SHARED ASSETS|FUND OS Collab"), "names an internal Drive folder"),
         (re.compile(r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b"),
          "looks like a live CRM/Drive object id"),
@@ -306,6 +333,10 @@ def check_fund_neutral() -> None:
         n += 1
         for i, line in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
             if any(a.search(line) for a in allow):
+                continue
+            hit = blocked_names_in(line)
+            if hit:
+                bad.append(f"{r}:{i}: names an individual")
                 continue
             for pat, why in terms:
                 m = pat.search(line)
@@ -477,4 +508,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if len(sys.argv) == 3 and sys.argv[1] == "--hash-name":
+        print(_name_hash(sys.argv[2]))
+        sys.exit(0)
     sys.exit(main())
