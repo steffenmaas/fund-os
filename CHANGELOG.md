@@ -68,8 +68,9 @@ rewrite and the release/tag cleanup are separate steps.
 - `.gitignore` now covers `*.plugin`. The rule already existed as a validator check; it did not
   exist as an ignore, which is the difference between catching a mistake and preventing it.
 
-The version is deliberately **not** bumped: a bump is the release trigger, and a release cut
-before the history rewrite would immediately re-publish a bundle built from the old tree.
+This work was held back from any release until the history rewrite had landed: a version bump
+is the release trigger, and a release cut earlier would have republished a bundle built from
+the old tree. `0.9.0` is that release.
 
 
 ## 0.8.2 - 2026-08-11
