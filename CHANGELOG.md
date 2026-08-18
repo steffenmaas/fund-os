@@ -1,13 +1,69 @@
 # Changelog
 
+## Unreleased
+
+Removes fund-specific data that survived the 0.5.0 template cleanup, and closes the gaps in
+`validate.py` that let it survive. The repository went public on 11 August with its full
+history; what follows is the part of the response that lives in the working tree. The history
+rewrite and the release/tag cleanup are separate steps.
+
+**What was still in the shipped tree:**
+
+- `lp-investor-scoring` carried a named co-investor and its score range in Step 4, plus a
+  reference range for institutional asset owners. Both are calibration data. They now point at
+  the fund's own overlay under `~/.fund-os/knowledge/`, which is where the matrix template has
+  said anchors belong all along.
+- Four skills and the dashboard used **real firms** in their example outputs — a co-investor
+  shortlist with fit scores, a partnership register with relationship status and priority, and
+  one line naming a fund that had passed on a deal. Examples now use placeholders. An example
+  is read as a claim by whoever finds it.
+- The dashboard still pointed at the fund's own scoring matrix by its old filename and
+  knowledge key.
+
+**Removed from the repository:**
+
+- `docs/version-audit-2026-08-11.md` and `docs/provenance.md`. Both were snapshots of a
+  finished migration; what they still carried was an internal Drive path, local machine paths
+  and session identifiers. The `docs/` directory is gone.
+- The CHANGELOG's own references to the fund's matrix filename, CRM slugs and an internal
+  knowledge-folder document.
+
+**`validate.py` — the two rules that would have caught all of it:**
+
+- **The fund-neutrality check now scans the whole tree.** It exempted `docs/` and
+  `CHANGELOG.md`, and that is precisely where an internal Drive path and the CRM slugs
+  survived. An exemption is a place where the rule stops being true. The term list gained the
+  sector language, internal Drive folder names and a pattern for live CRM/Drive object ids.
+- **New: no named investor beside a score.** Keys on shape, not on a blocklist — an entity name
+  ending in Capital/Ventures/Partners/… within 60 characters of a score-shaped number. The
+  blocklist approach is why the co-investor line sat in the tree for three months: the check
+  knew the fund's own name and nothing else. Proximity rather than line, because the dashboard
+  keeps all 43 skills on one minified line. Citations (`SaaS Capital 2025`) are exempt by
+  shape, and name tokens may be numeric: a firm whose name carries a number was exactly the case
+  the first draft of this rule missed, because it required every token to start with a capital
+  letter. (This paragraph was itself rejected by the check on the first attempt, for naming the
+  firm. That is the rule working.)
+- **Individuals are matched by hash, not by name.** The check previously carried two names in
+  plain text, which is a blocklist disclosing exactly what it exists to protect. Names are now
+  stored as SHA-256 of the lowercased form, candidates on each line are hashed and compared, and
+  a finding reports the location without echoing the name — otherwise the CI log becomes the
+  new leak. Add one with `python3 tools/validate.py --hash-name "Firstname Lastname"`.
+- A pre-commit hook runs both, so this fails before the commit rather than in CI.
+- `.gitignore` now covers `*.plugin`. The rule already existed as a validator check; it did not
+  exist as an ignore, which is the difference between catching a mistake and preventing it.
+
+The version is deliberately **not** bumped: a bump is the release trigger, and a release cut
+before the history rewrite would immediately re-publish a bundle built from the old tree.
+
+
 ## 0.8.2 - 2026-08-11
 
 `check-knowledge.py` no longer assumes every knowledge document lives in the knowledge folder.
 
 It does not have to, and usually should not. A fund's live documents already live somewhere — a
 data room, a fundraising folder — and copying them into the knowledge folder means the copy
-silently stops tracking its source. That had already happened once: the folder held an
-`[thesis-document] (COPY)` made in June from a document last edited in May, with nothing
+silently stops tracking its source. That had already happened once: the folder held a
+duplicate of a thesis document, made in June from an original last edited in May, with nothing
 saying which was authoritative.
 
 The manifest is the index; documents can live anywhere on the shared drive. The check now
@@ -142,7 +198,7 @@ fund's Drive folder.
 - `.claude-plugin/marketplace.json` aligned with the schema that demonstrably works: `description`
   and `version` inside `metadata{}`, a `category` on the plugin entry, `owner.url`. This would
   have been the next obstacle once access was solved.
-- `docs/version-audit-2026-08-11.md` depersonalised — a colleague's name and the Desktop session
+- The version-audit document depersonalised — an individual's name and the Desktop session
   identifiers removed.
 - The support section named a personal work address. Replaced with `fund-os:learn` for
   fund-internal problems and the issue tracker for plugin bugs, matching how founder-os already
@@ -181,30 +237,28 @@ inspect instead of passing silently over them.
 
 ## 0.5.0 - 2026-08-11
 
-The plugin now ships **templates, not one fund's filled-in documents**. This repository is
-private but shared with other funds, and until now it carried Ocean One's actual scoring
-matrices, memo format, sector language and CRM field slugs. A fund receiving it got someone
-else's thesis as the default, and Ocean One's concrete rubrics travelled with it.
+The plugin now ships **templates, not one fund's filled-in documents**. Until now it carried
+the publishing fund's own scoring matrices, memo format, sector language and CRM field slugs. A
+fund receiving it got someone else's thesis as the default, and concrete rubrics that were never
+meant to travel travelled with it.
 
 **Concrete documents replaced by templates.** The originals move to `~/.fund-os/` and to the
 fund's Drive knowledge folder, where the resolution chain already looks first:
 
-- `startup-scoring-matrix.md` → `startup-scoring-matrix.md`. The methodology is intact and shipped —
-  10 dimensions, weights summing to 100, band thresholds, the zero-information rule, the
-  "score every dimension on evidence" rule. The *signals* are now generic B2B SaaS with
-  `[sector]` placeholders, and the sector ladder is marked as the part to rewrite.
-- `lp-scoring-matrix.md` → template. All eight dimensions, the relationship-type
-  classification, the institutional asset owner override, the fund-count-vs-rank rule and the
-  `round(raw / 120 × 100)` normalisation are kept as methodology. Dimension 3, geography and
-  fund-size bands carry placeholders. Named investors and calibration anchors are gone — a
+- The fund-specific startup matrix → `startup-scoring-matrix.md`. The methodology is intact and
+  shipped; the *signals* are now generic B2B SaaS with `[sector]` placeholders, and the sector
+  ladder is marked as the part to rewrite.
+- `lp-scoring-matrix.md` → template. The dimension structure, the relationship-type
+  classification, the override rules and the normalisation are kept as methodology; the
+  thesis-bearing bands carry placeholders. Named investors and calibration anchors are gone — a
   named investor with a score is exactly what must not be shared.
 - `memo-template.md` → `[Fund]` throughout instead of a fixed fund name and framework name.
 - Sector language removed from `deal-flow-triage` and `deal-startup-score`: both now apply the
   sector definition from `investment-thesis` rather than carrying one fund's sector in the
   skill body.
 
-**CRM field slugs come from the configuration.** `[crm-score-field]`, `[crm-fit-field]` and
-friends were hardcoded, binding the plugin to one fund's Attio schema. Skills now read
+**CRM field slugs come from the configuration.** The fund's own field slugs were hardcoded,
+binding the plugin to one fund's Attio schema. Skills now read
 `crmFields` — including `archivedSlugs`, so a slug that must never be written to is declared
 once rather than remembered.
 
@@ -220,19 +274,19 @@ Consolidation release. Between 25 June and 10 July the plugin was iterated only 
 Claude Desktop `.plugin` uploads, which never write back to git. That produced two lines:
 git stopped at 0.2.2 (4 June), while the Desktop line ran on to 0.3.7 — and existed in
 exactly one copy, inside the Desktop app's own cache. This release merges both into one
-tree. See `docs/version-audit-2026-08-11.md` for the full audit.
+tree.
 
 **Merged in from the Desktop line (0.2.3 – 0.3.7), never previously in git:**
 - `lp-investor-scoring` — 8-dimension LP / co-investor / strategic-partner scoring, matrix v7
   with relationship-type classification and the institutional asset owner override.
-- `deal-startup-score/knowledge/startup-scoring-matrix.md` — the 10-dimension O1 rubric.
-- `investment-thesis.md` — placeholders replaced by real fund data (2.3 KB → 6.8 KB).
+- The fund-specific startup scoring matrix under `deal-startup-score/knowledge/`.
+- `investment-thesis.md` — placeholders replaced by fund data (2.3 KB → 6.8 KB).
 - `deal-pitch-deck-analyze` substantially expanded (4.5 KB → 8.9 KB).
 - `memo-template.md` 1.8 KB → 6.2 KB; `outreach-content-draft/knowledge/writing-style-guide.md`.
 
 **Merged in from the git line, which the Desktop line never received:**
 - `deal-investment-memo-draft` → `deal-due-diligence`, now carrying both the DD plan mode and
-  the O1 Framework memo structure. The evaluation-criteria gate and red-flag surfacing are back.
+  the fund's memo structure. The evaluation-criteria gate and red-flag surfacing are back.
 - Dashboard: 456 raw newlines inside JS string literals were breaking the whole `<script>`
   block with a `SyntaxError` — the dashboard rendered nothing. Repaired, plus the name-first
   card design from 0.2.2.
@@ -252,7 +306,7 @@ tree. See `docs/version-audit-2026-08-11.md` for the full audit.
 Each declared a total of /100 while its dimension caps summed to something else, so every score
 since late June sat on a stretched scale and the tier thresholds did not mean what they said.
 
-- `startup-scoring-matrix.md` — caps summed to **110**. Competition & Differentiation and
+- The startup scoring matrix — caps summed to **110**. Competition & Differentiation and
   Go-to-Market Strategy go from 10 to 5, which brings the total to exactly 100 **and** makes it
   agree with the weights `deal-due-diligence` already used in the IC memo. The two skills now
   score the same company the same way. Past scores: subtract the points awarded above 5 on

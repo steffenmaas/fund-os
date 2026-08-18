@@ -265,9 +265,19 @@ running version once drifted nine weeks ahead of git.
 |---|---|
 | `.claude-plugin/marketplace.json` | marketplace definition — name must match the repository |
 | `plugins/fund-os/` | the plugin: skills, knowledge templates, dashboard |
-| `tools/` | `validate.py`, `check-knowledge.py`, `build-plugin.sh` |
-| `docs/` | the version audit and the provenance index behind the current design |
+| `tools/` | `validate.py`, `check-knowledge.py`, `build-plugin.sh`, `hooks/pre-commit` |
 | `USER_GUIDE.md` | end-user guide — day-to-day usage, skill reference, troubleshooting |
+
+### Before your first commit
+
+```bash
+git config core.hooksPath tools/hooks
+```
+
+Runs `validate.py` before every commit. Two of its checks guard the boundary between what this
+repository ships and what stays in the fund: shipped content must be fund-neutral, and no line
+may carry a named investor next to a score. Both are cheap to run and cannot be undone once a
+commit is public.
 
 ---
 

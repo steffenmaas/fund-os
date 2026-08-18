@@ -2,8 +2,8 @@
 """
 validate.py — self-check for the Fund OS plugin.
 
-Every check here exists because the corresponding defect actually shipped. See
-docs/version-audit-2026-08-11.md for what each one is guarding against.
+Every check here exists because the corresponding defect actually shipped; the comment on
+each check says which one.
 
     python3 tools/validate.py
 
@@ -12,6 +12,7 @@ Exit code 0 = clean, 1 = at least one check failed.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -270,35 +271,72 @@ def check_secrets() -> None:
 
 
 # ---------------------------------------------------------- fund-neutral -----
-def check_fund_neutral() -> None:
-    """The plugin ships templates, not one fund's filled-in documents.
+# Individuals must not be named in shipped content — but a blocklist of names in a public file
+# discloses exactly what it exists to protect. The names are therefore stored as SHA-256 of the
+# lowercased name. To add one:  python3 tools/validate.py --hash-name "Firstname Lastname"
+BLOCKED_NAME_HASHES = {
+    "686b51d8967750d05ad8611a9e590af558e504b45a7e6a87361fb73ed5b969ca",
+    "cf1d36d26836986bbc3eafbfd0211d25d499038cdd9fa8adb3762d769e880105",
+    "acf4be72ec717755d66e42e73dd4d0c67c3c971c2c8bf3e41a6d0f68a109c6da",
+    "26b4eee2a0762dec10c5866f7fbf800de39fea17a4ecf50e1ac5bcc8decb5e86",
+}
+_NAME_CANDIDATE = re.compile(r"\b[A-Z][a-z]{2,}(?:\s+[A-Z]\.?)?(?:\s+[A-Z][a-z]{2,})?\b")
 
-    This repository is shared with other funds. A fund's own thesis, scoring signals, sector
-    language and CRM slugs belong in ~/.fund-os/ or the Drive knowledge folder — never here.
-    Attribution (author, copyright) is the one legitimate exception.
+
+def _name_hash(s: str) -> str:
+    return hashlib.sha256(" ".join(s.lower().split()).encode("utf-8")).hexdigest()
+
+
+def blocked_names_in(line: str) -> str | None:
+    for m in _NAME_CANDIDATE.finditer(line):
+        cand = m.group(0)
+        parts = cand.split()
+        for k in range(len(parts), 0, -1):
+            frag = " ".join(parts[:k])
+            if _name_hash(frag) in BLOCKED_NAME_HASHES:
+                return frag
+    return None
+
+
+def check_fund_neutral() -> None:
+    """The repository ships templates, not one fund's filled-in documents.
+
+    Scans the **whole tree**, not just plugins/. The earlier version exempted docs/ and
+    CHANGELOG.md, and that is exactly where an internal Drive path and the fund's CRM slugs
+    survived the 0.5.0 cleanup. An exemption is a place where the rule stops being true.
+    Attribution — author field, copyright line, the fund's own website — is the one exception.
     """
     terms = [
         (re.compile(r"\bOcean One\b", re.I), "names the publishing fund as if it were the user's fund"),
+        (re.compile(r"\bOcean\s+14\b", re.I), "names a real investor"),
         (re.compile(r"maritime\s+leisure", re.I), "hardcodes one fund's sector"),
+        (re.compile(r"\bblue\s+economy\b", re.I), "hardcodes one fund's sector"),
         (re.compile(r"\bO1\s+(Framework|Startup Scoring|LP|Thesis Fit)\b"), "hardcodes one fund's framework name"),
-        (re.compile(r"\bo1_[a-z_]+\b"), "hardcodes one fund's CRM field slug — read it from crmFields instead"),
-        (re.compile(r"\b([Managing Partner]|[Partner])\b"), "names an individual"),
+        (re.compile(r"\bo1[-_][a-z-]+\b", re.I), "hardcodes one fund's CRM slug or document name — read it from crmFields instead"),
+        (re.compile(r"SHARED ASSETS|FUND OS Collab"), "names an internal Drive folder"),
+        (re.compile(r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b"),
+         "looks like a live CRM/Drive object id"),
     ]
     # Attribution is legitimate; a fund still authors the plugin it publishes.
     allow = [
         re.compile(r'"name":\s*"Ocean One Ventures"'),      # plugin.json author
         re.compile(r"©\s*(\d{4}\s+)?Ocean One Ventures"),      # README copyright, with or without year
+        re.compile(r"Copyright \(c\) \d{4} Ocean One Ventures"),  # LICENSE / NOTICE
         re.compile(r'"author"'),
     ]
     bad = []
     n = 0
-    for f in walk(".md", ".json", ".template", ".html", ".example"):
+    for f in walk(".md", ".json", ".template", ".html", ".example", ".yml", ".py", ".sh"):
         r = rel(f)
-        if r.startswith("docs/") or r == "CHANGELOG.md" or not r.startswith("plugins/"):
-            continue
+        if r == "tools/validate.py":
+            continue        # this file carries the patterns by definition
         n += 1
         for i, line in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
             if any(a.search(line) for a in allow):
+                continue
+            hit = blocked_names_in(line)
+            if hit:
+                bad.append(f"{r}:{i}: names an individual")
                 continue
             for pat, why in terms:
                 m = pat.search(line)
@@ -306,6 +344,61 @@ def check_fund_neutral() -> None:
                     bad.append(f"{r}:{i}: '{m.group(0)}' {why}")
                     break
     report("Shipped content is fund-neutral", bad, n)
+
+
+# --------------------------------------------- no named investor beside a score -
+# An investor name next to a score is the single most sensitive artefact the system
+# produces, and it is the one the 0.5.0 cleanup missed: a co-investor reference range
+# sat in lp-investor-scoring/SKILL.md for three months because the fund-neutral check
+# only knew the fund's own name. This rule keys on shape, not on a blocklist.
+# A name token is capitalised OR numeric: real firm names mix them freely — "Ocean 14 Capital",
+# "Point Nine Capital", "83North". Requiring every token to start with a capital letter is how
+# the first draft of this rule missed the exact line it was written for.
+_NAME_TOKEN = r"(?:[A-Z][\w&.'-]*|\d{1,4})"
+INVESTOR_SUFFIX = re.compile(
+    rf"\b{_NAME_TOKEN}(?:\s+{_NAME_TOKEN}){{0,3}}\s+"
+    r"(Capital|Ventures|Partners|Invest|Investments|Bank|Group|Holdings|VC)\b"
+)
+SCORE_SHAPE = re.compile(
+    r"(?<![\w/])(?:\d{1,3}\s*[–—-]\s*\d{1,3}|\d{1,3}\s*/\s*(?:100|120|20|15|10)"
+    r"|\d{1,3}\s*(?:pts|points|Pkt))(?![\w])"
+)
+# Generic institutions used as category labels, not as scored entities.
+INVESTOR_OK = re.compile(
+    r"\b(the Fund|The Fund|Fund I|Fund II|a Fund|this Fund|Sample|Example|Placeholder)\b"
+)
+# A name followed by a year or quarter is a citation ("SaaS Capital 2025", "Bessemer Q1 2026"),
+# not an entity being scored. Shape-based, so new benchmark publishers need no allowlist entry.
+CITATION_SHAPE = re.compile(r"\s*(Q[1-4]\s*)?(19|20)\d{2}\b")
+
+
+def check_no_investor_scores() -> None:
+    """No line may carry a named investor and a score at the same time.
+
+    Keys on shape — an entity name ending in Capital/Ventures/Partners/... on the same line
+    as a score-shaped number — so it catches names nobody thought to blocklist. Calibration
+    anchors belong in the fund's own overlay under ~/.fund-os/, never here.
+    """
+    bad = []
+    n = 0
+    # Proximity, not line: the dashboard keeps all 43 skills on one minified JSON line, where
+    # line-based matching pairs any name with any unrelated number. A score that belongs to a
+    # name sits next to it.
+    WINDOW = 60
+    for f in walk(".md", ".html", ".template"):
+        r = rel(f)
+        n += 1
+        for i, line in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            for m in INVESTOR_SUFFIX.finditer(line):
+                if INVESTOR_OK.search(m.group(0)):
+                    continue
+                if CITATION_SHAPE.match(line[m.end():]):
+                    continue
+                near = line[max(0, m.start() - WINDOW):m.end() + WINDOW]
+                if SCORE_SHAPE.search(near):
+                    bad.append(f"{r}:{i}: '{m.group(0).strip()}' appears beside a score")
+                    break
+    report("No named investor beside a score", bad, n)
 
 
 # ------------------------------------------------------- readme inventory ----
@@ -402,6 +495,7 @@ def main() -> int:
     check_skills_have_anchor()
     check_skill_crossrefs()
     check_fund_neutral()
+    check_no_investor_scores()
     check_dashboard()
     check_readme_inventory()
     check_no_committed_bundle()
@@ -414,4 +508,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if len(sys.argv) == 3 and sys.argv[1] == "--hash-name":
+        print(_name_hash(sys.argv[2]))
+        sys.exit(0)
     sys.exit(main())
