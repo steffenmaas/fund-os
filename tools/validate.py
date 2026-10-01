@@ -311,7 +311,10 @@ def check_fund_neutral() -> None:
         (re.compile(r"\bOcean\s+14\b", re.I), "names a real investor"),
         (re.compile(r"maritime\s+leisure", re.I), "hardcodes one fund's sector"),
         (re.compile(r"\bblue\s+economy\b", re.I), "hardcodes one fund's sector"),
-        (re.compile(r"\bO1\s+(Framework|Startup Scoring|LP|Thesis Fit)\b"), "hardcodes one fund's framework name"),
+        # Was an allow-list of follow-on words, which let "O1 Investment Score" and "O1 thesis"
+        # through for months. The prefix itself is the fund's, whatever follows it.
+        (re.compile(r"\bO1\b"), "hardcodes one fund's framework name"),
+        (re.compile(r"\b(vc_deal_flow|ai_investment_score)\b"), "hardcodes one fund's CRM list or an archived field slug"),
         (re.compile(r"\bo1[-_][a-z-]+\b", re.I), "hardcodes one fund's CRM slug or document name — read it from crmFields instead"),
         (re.compile(r"SHARED ASSETS|FUND OS Collab"), "names an internal Drive folder"),
         (re.compile(r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b"),
@@ -472,6 +475,29 @@ def check_scoring_matrices() -> None:
                 bad.append(f"{rel(path)}: still says 'cap at 100' — capping hides the scale defect instead of fixing it")
         elif "raw" in text and re.search(r"round\(\s*raw\s*/", text):
             bad.append(f"{rel(path)}: caps already sum to 100, so it must not also normalise")
+    # The startup matrix carries two further rubrics that also declare caps summing to 100.
+    # They are scored, stored and sorted on exactly like the quality dimensions, so they get the
+    # same arithmetic guarantee -- the defect this check exists for does not care which rubric
+    # it lands in.
+    startup = SKILLS / "deal-startup-score" / "knowledge" / "startup-scoring-matrix.md"
+    if startup.exists():
+        text = startup.read_text(encoding="utf-8")
+        sub_cap = re.compile(r"^### .+ — (\d+)\s*$", re.M)
+        for section in ("Thesis Fit", "Urgency"):
+            checked += 1
+            m = re.search(rf"^## {re.escape(section)} — 0–100$(.*?)(?=^## )", text, re.M | re.S)
+            if not m:
+                bad.append(f"{rel(startup)}: no '{section} — 0–100' section — the heading may have changed")
+                continue
+            caps = [int(x) for x in sub_cap.findall(m.group(1))]
+            if not caps:
+                bad.append(f"{rel(startup)}: {section} has no dimension caps — the '### Name — N' pattern may have changed")
+            elif sum(caps) != 100:
+                bad.append(
+                    f"{rel(startup)}: {section} has {len(caps)} caps summing to {sum(caps)}, not 100 — "
+                    f"a rubric that declares 0-100 while its caps say otherwise puts every score on a stretched scale"
+                )
+
     report("Scoring matrices add up", bad, checked)
 
 

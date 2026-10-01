@@ -1,5 +1,71 @@
 # Changelog
 
+## Unreleased
+
+**A deal now carries three scores instead of one score and a star rating.** Quality, Thesis Fit and
+Urgency, each 0–100, each stored with the written evaluation that produced it.
+
+Thesis Fit used to be ★/5 printed inside the quality scorecard, which made "good company" and "our
+company" read as one judgement. They are different questions, and a fund that cannot separate them
+cannot see its own best referrals: an excellent company outside the thesis scored low overall and
+quietly disappeared, when the right answer was to pass it to a co-investor.
+
+- **Thesis Fit — 0–100.** Sector /30, Stage /25, Geography /20, Business model /15,
+  Ticket & ownership /10. Hard filters stay separate and override the verdict, but no longer force
+  the score to zero: the number records how close the company is, which is what makes a re-score
+  meaningful when the blocking fact changes.
+- **Urgency — 0–100.** The distance to the close of the next round. Round status /35, Time to
+  close /25, Allocation remaining /15, Runway pressure /10, Competitive tension /15.
+- **The recommended action is now a Quality × Thesis Fit table**, not a quality band. It has a cell
+  the old model had no way to express: *Refer out* — a strong company that is not ours, worth
+  passing to a co-investor and logging rather than rejecting in silence.
+
+**Two rules keep urgency from going quietly wrong:**
+
+- **Unknown is not the same as not urgent.** The zero-information rule applies to quality, not to
+  urgency: scoring an unasked-about round as 0 buries deals nobody has chased yet. Urgency is
+  instead labelled `observed` or `inferred`, and an inferred score above 60 is an instruction to go
+  and ask rather than a basis for acting.
+- **Urgency expires.** It is the only score that becomes wrong because time passed. It carries an
+  as-of date, is void after 30 days or on any change in round status, and must be re-scored rather
+  than carried forward.
+
+**Urgency never moves the verdict.** It sets the *Next step by* date. A deal that only looks
+attractive because it closes on Friday is a deadline talking.
+
+**`deal-flow-triage` scores from the same rubric.** The First Screening Card carries Thesis Fit and
+Urgency as numbers instead of a PASS/CONDITIONAL/FAIL flag, and priority routing became a
+Thesis Fit × Urgency table. Quality is deliberately *not* scored at triage depth — the inbox does
+not hold the evidence — so triage answers "is this ours, and how fast is the clock" and hands
+quality on. Two scoring schemes for one entity is how scores stop being comparable, so triage reads
+`startup-scoring-matrix` rather than carrying its own.
+
+**Defects found in `deal-pitch-deck-analyze` while adding the fields there:**
+
+- It wrote the score to a slug the fund had **archived**. Writes to an archived field succeed and
+  land nowhere, so this skill had been silently discarding deck scores.
+- It hardcoded the CRM list and used `update-list-entry-by-record-id`, the method the matrix
+  explicitly names as the wrong one. Both now come from `crmFields` and the list-entry method.
+- Two of its three knowledge references pointed at keys that do not exist — `investment-hypothesis`
+  and `investment-criteria` — so the documents it claimed to load never loaded.
+
+**`validate.py`:**
+
+- The fund-neutrality check matched the fund's framework prefix only when it was followed by one
+  of four specific words. Two other phrasings sat in a shipped skill and in a user-facing suggested
+  prompt for months. An allow-list of follow-on words was the wrong shape: the prefix is the fund's
+  whatever follows it, so the check now matches the prefix itself — along with the hardcoded CRM
+  list name and the archived field slug above.
+- The matrix arithmetic check covered the ten quality dimensions only. The two new rubrics declare
+  caps summing to 100 and are scored and sorted on exactly like the quality dimensions, so they get
+  the same guarantee — the defect this check exists for does not care which rubric it lands in.
+
+**Configuration:** `crmFields` gains `thesisFit`, `thesisFitEvaluation`, `urgency`,
+`urgencyEvaluation`, `urgencyAsOf` and `dealStage`. An empty slug means the fund has not created
+that field; the write is skipped and reported, never redirected into another field. Where no
+as-of date field exists, the urgency evaluation text must open with the date so the age survives.
+
+
 ## 0.9.0 - 2026-08-18
 
 **The git history was rewritten.** Every commit SHA changed. An existing clone cannot be

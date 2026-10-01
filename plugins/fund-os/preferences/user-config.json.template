@@ -50,6 +50,12 @@
     "dealList": "",
     "startupScore": "",
     "startupSummary": "",
+    "thesisFit": "",
+    "thesisFitEvaluation": "",
+    "urgency": "",
+    "urgencyEvaluation": "",
+    "urgencyAsOf": "",
+    "dealStage": "",
     "investorFit": "",
     "investorFitEvaluation": "",
     "archivedSlugs": []
