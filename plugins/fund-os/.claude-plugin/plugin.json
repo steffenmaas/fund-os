@@ -29,7 +29,7 @@
       },
       {
         "label": "Score a startup",
-        "prompt": "Score this startup against our O1 thesis"
+        "prompt": "Score this startup: quality, thesis fit and urgency"
       },
       {
         "label": "Portfolio health check",

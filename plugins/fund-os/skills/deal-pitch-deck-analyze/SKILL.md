@@ -24,7 +24,7 @@ Resolve in this order, first hit wins:
 cat ~/.fund-os/user-config.json
 ```
 If neither exists, stop and say: *"Fund OS is not configured — run `fund-os:setup` first."* Do not continue with defaults.
-Apply `brandGuidelines.tone` to all prose output. Note `storagePaths.rootFolderId`, `storagePaths.deals`, and `systems.crm` — these are used in later steps. From `knowledge.manifest`, load: `investment-hypothesis`, `investment-criteria`, `memo-template`. A document found via the Drive manifest always wins over the bundled copy.
+Apply `brandGuidelines.tone` to all prose output. Note `storagePaths.rootFolderId`, `storagePaths.deals`, and `systems.crm` — these are used in later steps. From `knowledge.manifest`, load: `investment-thesis`, `startup-scoring-matrix`, `memo-template`. A document found via the Drive manifest always wins over the bundled copy.
 
 ---
 
@@ -75,14 +75,14 @@ for i, slide in enumerate(prs.slides, 1):
 
 ### 2. Load knowledge documents
 From `knowledge.manifest`, download and read:
-- `investment-criteria` — O1 10-dimension scoring rubric, positive/negative signals, score interpretation table
-- `investment-hypothesis` — O1 thesis, conviction pillars, geography mandate, dual-use rationale
+- `startup-scoring-matrix` — the shared rubrics: 10 quality dimensions, Thesis Fit, Urgency, with signals and bands
+- `investment-thesis` — the fund's thesis, conviction pillars, geography mandate
 - `memo-template` — blank DOCX output template (download binary, save to `/tmp/template.docx`)
 
 ---
 
 ### 3. Score the deck
-Apply the O1 Venture Investmentkriterien (10 fixed dimensions):
+Apply the quality rubric from `startup-scoring-matrix` (10 fixed dimensions). Thesis Fit and Urgency are scored from the same file — see step 5 below.
 
 | Dim | Category | Weight |
 |---|---|---|
@@ -149,7 +149,7 @@ Note the returned file `viewUrl` — include it in the Attio evaluation entry an
 
 ### 6. CRM — Attio
 
-After scoring and saving, perform these steps using the Attio MCP (`systems.crm`). The Startups list slug is `vc_deal_flow` (object: `companies`).
+After scoring and saving, perform these steps using the CRM capability (`systems.crm`). The deal list comes from `crmFields.dealList` — never hardcode a list slug.
 
 **Step A — Look up company:**
 ```
@@ -166,7 +166,7 @@ create-record → object: "companies"
 
 **Step C — Add to Startups list:**
 ```
-add-record-to-list → list: "vc_deal_flow", parent_object: "companies", parent_record_id: <record_id>
+add-record-to-list → list: crmFields.dealList, parent_object: "companies", parent_record_id: <record_id>
 ```
 If already in the list, catch the error and continue.
 
@@ -175,14 +175,18 @@ Read the current `crmFields.startupSummary` value. If a prior evaluation exists,
 
 **Step E — Write score, evaluation, and stage:**
 ```
-update-list-entry-by-record-id
-  list: "vc_deal_flow"
-  parent_object: "companies"
-  parent_record_id: <record_id>
+update-list-entry-by-id
+  list: crmFields.dealList
+  entry_id: <list entry id>
   entry_values:
-    ai_investment_score: <total score as integer>
-    crmFields.startupSummary: <formatted evaluation — see format below>
-    deal_stage: "Screening"
+    crmFields.startupScore:        <quality score as integer>
+    crmFields.startupSummary:      <formatted evaluation — see format below>
+    crmFields.thesisFit:           <thesis fit as integer>
+    crmFields.thesisFitEvaluation: <the Why: block>
+    crmFields.urgency:             <urgency as integer>
+    crmFields.urgencyEvaluation:   <the Why: block, opening with the as-of date and observed|inferred>
+    crmFields.urgencyAsOf:         <YYYY-MM-DD>
+    crmFields.dealStage:           "Screening"
 ```
 
 **Evaluation text format:**
@@ -209,7 +213,7 @@ Drive: <viewUrl of the investment note DOCX>
 | Artefact | Location |
 |---|---|
 | Investment Note DOCX | Google Drive: `rootFolder/Deals/<CompanyName>/<CompanyName>_Investment_Note_EN_<date>.docx` |
-| Attio entry | `vc_deal_flow` list: score, evaluation, deal stage = Screening |
+| CRM entry | `crmFields.dealList`: the three scores with their evaluations, deal stage = Screening |
 
 ## Required MCP capabilities
 
@@ -218,19 +222,28 @@ Drive: <viewUrl of the investment note DOCX>
 - Web Search (market validation, competitive cross-check)
 - Bash (python-pptx extraction, binary handling)
 
-## Attio field reference (vc_deal_flow list)
+## CRM field reference
 
-| Field | API slug | Type | Notes |
+All slugs come from `crmFields` in the configuration. Never hardcode one, and check
+`crmFields.archivedSlugs` before every write — writing to an archived field looks successful and
+lands nowhere.
+
+| Field | Config key | Type | Notes |
 |---|---|---|---|
-| O1 Investment Score | `ai_investment_score` | number | Integer 0–100 |
+| Quality score | `crmFields.startupScore` | number | Integer 0–100 |
 | Investment evaluation | `crmFields.startupSummary` | text | Timestamped; append history; includes Drive link |
-| Deal Stage | `deal_stage` | status | Set to `"Screening"` post-analysis |
+| Thesis Fit | `crmFields.thesisFit` | number | Integer 0–100 |
+| Thesis Fit evaluation | `crmFields.thesisFitEvaluation` | text | |
+| Urgency | `crmFields.urgency` | number | Integer 0–100; perishable, void after 30 days |
+| Urgency evaluation | `crmFields.urgencyEvaluation` | text | Opens with the as-of date and `observed`/`inferred` |
+| Urgency as-of date | `crmFields.urgencyAsOf` | date | |
+| Deal Stage | `crmFields.dealStage` | status | Set to `"Screening"` post-analysis |
 
 ## Knowledge references
 
-- `investment-hypothesis` — O1 thesis, conviction pillars, dual-use rationale
-- `investment-criteria` — O1 scoring rubric (10 dimensions, weights, signals)
-- `memo-template` — blank DOCX in the O1 Investment Note format
+- `investment-thesis` — the fund's thesis, conviction pillars and hard filters
+- `startup-scoring-matrix` — all three rubrics (Quality, Thesis Fit, Urgency), weights and signals
+- `memo-template` — blank DOCX in the fund's investment-note format
 
 ## Human-in-the-loop
 
