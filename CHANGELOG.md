@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.1 - 2026-10-01
 
 **A deal now carries three scores instead of one score and a star rating.** Quality, Thesis Fit and
 Urgency, each 0–100, each stored with the written evaluation that produced it.
