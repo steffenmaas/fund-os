@@ -174,6 +174,8 @@ fund-os:lp-quarterly-report
 
 **Fund OS never sends or publishes anything without your explicit approval.** Every document that leaves the fund — LP reports, capital call notices, legal documents, audit trail entries — is produced as a **draft** and held for partner sign-off before delivery.
 
+The one exception is opt-in and per module: the Phase 09 autopilot skills run on a schedule and, only where a partner has switched a module to `on` in the Inbox, send inside fixed guardrails with every act on record first (see `ops-autopilot-runbook`). Every module starts at `off`.
+
 ---
 
 ## 6. Skill quick reference
@@ -247,6 +249,17 @@ fund-os:lp-quarterly-report
 | Share deals with co-investors | `deal-co-investor-syndicate` | "Match this deal with co-investors" |
 | Curate the weekly watchlist | `deal-watchlist-curate` | "Curate this week's watchlist" |
 | Manage accelerator and partner relationships | `outreach-partner-manage` | "Update the partner overview" |
+
+### I'm running the autopilot (optional)
+
+| Task | Skill | What to say |
+|---|---|---|
+| Set up switches, guardrails and Routines | `ops-autopilot-runbook` | "Set up the autopilot" / "Write the autopilot ADR" |
+| Inbound founder mails, scheduled | `ops-dealflow-inbound` | fired by a Routine; by hand: "Run the inbound autopilot" |
+| Investor first touches and follow-ups, scheduled | `ops-investor-outreach` | fired by a Routine; by hand: "Run the investor autopilot" |
+| Weekly newsletter draft, scheduled | `ops-newsletter` | fired by a Routine; by hand: "Run the newsletter autopilot" |
+
+The module skills call the fund's scoring CLIs, which are published separately and ship in a later release.
 
 ### Other
 

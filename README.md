@@ -1,6 +1,6 @@
 # Fund OS
 
-**43 Claude Skills for VC fund operations**, from first sourcing signal to wind-down, across eight
+**47 Claude Skills for VC fund operations**, from first sourcing signal to wind-down, across nine
 lifecycle phases. Built on the open [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md)
 community convention. Fund-side scope only — founder coaching is a separate bundle.
 
@@ -166,6 +166,15 @@ Model exit scenarios and scan the secondary market.
 - [`exit-scenario-model`](./plugins/fund-os/skills/exit-scenario-model/SKILL.md) — Exit Scenario Model
 - [`exit-secondary-market-scan`](./plugins/fund-os/skills/exit-secondary-market-scan/SKILL.md) — Exit Secondary Market Scan
 
+### Phase 09 — Autopilot (human on the loop)
+
+Scheduled, switch-governed modules for inbound dealflow, investor outreach and the newsletter, and the runbook that governs them. Optional; see [Autopilot modules](#autopilot-modules). The module skills call the fund's scoring CLIs, which are published separately (intended home `tools/ops/`) and ship in a later release.
+
+- [`ops-autopilot-runbook`](./plugins/fund-os/skills/ops-autopilot-runbook/SKILL.md) — Autopilot Runbook
+- [`ops-dealflow-inbound`](./plugins/fund-os/skills/ops-dealflow-inbound/SKILL.md) — Inbound Dealflow Run
+- [`ops-investor-outreach`](./plugins/fund-os/skills/ops-investor-outreach/SKILL.md) — Investor Outreach Run
+- [`ops-newsletter`](./plugins/fund-os/skills/ops-newsletter/SKILL.md) — Newsletter Run
+
 ---
 
 ## Workflows
@@ -195,7 +204,7 @@ The skills compose into 18 cross-skill workflows you can wire up (cron / Agent S
 
 ## Autopilot modules
 
-Four explanatory graphics for the optional autopilot layer — switch per module, audit feed, human on the loop: [`docs/modules/README.md`](./docs/modules/README.md).
+Four explanatory graphics for the optional autopilot layer — switch per module, audit feed, human on the loop: [`docs/modules/README.md`](./docs/modules/README.md). The runbooks that implement it are the four Phase 09 skills above; start with `ops-autopilot-runbook`.
 
 ---
 
