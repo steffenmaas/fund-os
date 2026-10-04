@@ -193,6 +193,12 @@ The skills compose into 18 cross-skill workflows you can wire up (cron / Agent S
 
 ---
 
+## Autopilot modules
+
+Four explanatory graphics for the optional autopilot layer — switch per module, audit feed, human on the loop: [`docs/modules/README.md`](./docs/modules/README.md).
+
+---
+
 ## Customisation
 
 Three ways, in increasing order of permanence:
