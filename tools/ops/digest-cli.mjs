@@ -35,6 +35,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { allowedHosts, ap, die, fundName, loadConfig, need, parseArgs, readJson, strings, urlProblems } from "./lib/common.mjs";
+import { fold } from "./lib/text.mjs";
 
 const DEFAULT_MAX_PICKS = 7;
 const DEFAULT_LIMIT = 25;
@@ -333,8 +334,14 @@ const MONEY_RES = [
   /\b(?:valuations?|bewertung|bewertet|pre-money|post-money|premoney|postmoney)\b/i,
 ];
 const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-/** Case, runs of whitespace and hyphens are not a way round a name: "Example-Startup" is "example startup". */
-const squash = (t) => String(t).toLowerCase().replace(/[\s\-\u2010-\u2015_]+/g, " ").trim();
+/**
+ * Case, runs of whitespace and hyphens are not a way round a name: "Example-Startup" is "example startup". Both sides are
+ * folded first (NFKC, zero-width and bidi controls removed, dash variants to "-"): "Alder\u200BRobotics" and fullwidth
+ * "\uFF21lder Robotics" are "alder robotics".
+ */
+const squash = (t) => fold(t).toLowerCase().replace(/[\s\-_]+/g, " ").trim();
+/** Both readings of an invisible character: dropped ("Al\u200Bder") and standing for a space ("Alder\u200BRobotics"). */
+const squashes = (t) => [...new Set([squash(t), squash(String(t).replace(/[\u00AD\u200B-\u200F\u2060-\u206F\uFEFF]/g, " "))])];
 const wordRe = (s, flags) => new RegExp(`(?<![\\p{L}\\p{N}])${escRe(s)}(?![\\p{L}\\p{N}])`, `u${flags}`);
 
 /**
@@ -389,8 +396,10 @@ export function checkDigest(digest, ranked, cfg) {
 
   const li = typeof digest.linkedin === "string" ? digest.linkedin : "";
   const secret = new Set(confidentialStages(cfg));
+  // Fail closed: with no stage named, the LinkedIn check below would pass every text.
+  if (secret.size === 0) r.push("config: autopilot.digest.liveStages, autopilot.digest.confidentialStages or autopilot.crm.stages.committed must name at least one stage (the check cannot run fail-open)");
   for (const row of rows) {
-    if (row.stage && secret.has(row.stage) && isStr(row.name) && wordRe(squash(row.name), "").test(squash(li))) r.push(`linkedin names ${row.name}, whose stage is ${row.stage}`);
+    if (row.stage && secret.has(row.stage) && isStr(row.name) && squashes(row.name).some((n) => squashes(li).some((l) => wordRe(n, "").test(l)))) r.push(`linkedin names ${row.name}, whose stage is ${row.stage}`);
   }
 
   const texts = [...(picks ?? []).flatMap((p) => (p && typeof p === "object" ? [p.name, p.what, p.whyNow, p.next] : [])), digest.internal, digest.coInvestor, digest.linkedin, digest.notes].filter((t) => typeof t === "string");

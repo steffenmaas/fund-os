@@ -414,6 +414,7 @@ export function noteProblems(note, cfg, now) {
     const crm = ap(cfg).crm ?? {};
     const allowed = [...strings(crm.stageList), ...strings(crm.statusList)];
     const committed = [...strings(crm.stages?.committed), ...strings(crm.statuses?.committed)];
+    if (committed.length === 0) reasons.push("config: autopilot.crm.stages.committed or autopilot.crm.statuses.committed must name at least one stage/status (the check cannot run fail-open)");
     if (typeof note.proposedStatus !== "string" || !allowed.includes(note.proposedStatus)) reasons.push(`proposedStatus "${note.proposedStatus}" is not one of the fund's stages or statuses (autopilot.crm.stageList, autopilot.crm.statusList)`);
     else if (committed.includes(note.proposedStatus)) reasons.push(`proposedStatus "${note.proposedStatus}" is a committed stage or status that only a person sets`);
   }
