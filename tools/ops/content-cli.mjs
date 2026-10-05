@@ -3,7 +3,7 @@
  * Fund OS autopilot: the Content CLI. Pure, no dependencies, no network.
  *
  * The Content page (newsletter.html) records a website request on the item in the shared list of content items (the Drive
- * knowledge folder, file name in CONFIG.indexFile): a publications entry {channel, at, by, status: "requested", kind: "website"}.
+ * knowledge folder, fixed file name pr-index.json): a publications entry {channel, at, by, status: "requested", kind: "website"}.
  * A session of the fund's website repository reads the list from Drive, saves it to a file and runs:
  *
  *   website-requests --index <index.json> [--all]

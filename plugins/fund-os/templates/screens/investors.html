@@ -1671,7 +1671,7 @@
   const isDomainApproval = (a) => Boolean(a) && typeof a === "object" && (a.kind === "investor-status" || (a.kind === "email" && (a.module === "investors" || a.target?.list === INVESTORS)));
   const recordName = (rec) => rows.find((x) => x.recordId === rec)?.name ?? "";                 // the name of the record the Inbox is filtered on, when the page knows it
 
-  // ==== store-tabs:begin ==== (F017: Inbox and Autopilot of one domain on the page's own store; F027: mirrored byte for byte in deal-cockpit.html and investors.html, held by tools/check-screen-templates.sh; the unescaped-value scan of check-artifacts reads this region)
+  // ==== store-tabs:begin ==== (F017: Inbox and Autopilot of one domain on the page's own store; F027: mirrored byte for byte in deal-cockpit.html and investors.html, held by tools/check-screen-templates.sh; the source project scans this region for unescaped values)
   let db = null, actor = "unbekannt", canEdit = false;
   let approvals = [], auditDocs = [], runsDocs = [], autopilotRaw = null;
   let ibFilter = "pending", ibSelected = null, ibNew = null, ibShown = "", ibRecord = null;

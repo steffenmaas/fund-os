@@ -35,6 +35,20 @@ command -v python3 >/dev/null 2>&1 || { echo "python3 is required"; exit 1; }
 # names, slugs and ids go into a local denylist that is never committed: tools/.fund-denylist (git-ignored), or the
 # file named by FUND_OS_DENYLIST; one extended regex per line, matched case-insensitively.
 DENYLIST="${FUND_OS_DENYLIST:-$ROOT/tools/.fund-denylist}"
+# An explicitly named denylist that does not exist is an error (a typo would silently turn the scan off); no denylist at
+# all is only a warning (the generic patterns still run, but the fund's own names are not checked).
+# denylist_status <explicit path or empty> <default path>: prints the message, returns 1 (error), 2 (warning) or 0.
+denylist_status() {
+  if [ -n "$1" ]; then
+    if [ ! -f "$1" ]; then echo "FAIL: FUND_OS_DENYLIST names a file that does not exist: $1"; return 1; fi
+  elif [ ! -f "$2" ]; then
+    echo "WARNING: no local denylist (set FUND_OS_DENYLIST or create tools/.fund-denylist): only the generic patterns are checked, not this fund's own names"
+    return 2
+  fi
+  return 0
+}
+denylist_status "${FUND_OS_DENYLIST:-}" "$ROOT/tools/.fund-denylist"
+if [ $? -eq 1 ]; then exit 1; fi
 SCAN="$WORK/scan-neutral.py"
 cat > "$SCAN" <<'PY'
 import re, sys
@@ -154,6 +168,19 @@ selftest "Drive folder link" "AbCdEfGhIj12" "$WORK/p5.html"
 printf '%s\n' 'Quartalsbericht der Beispielgesellschaft' > "$WORK/p6.html"
 printf '%s\n' 'beispielgesellschaft' > "$WORK/deny.txt"
 if [ "$(DENYLIST="$WORK/deny.txt" neutral_hits "$WORK/p6.html" | wc -l)" -ne 1 ]; then fail "fund-neutral self-test: the local denylist did not catch a planted name"; fi
+# the denylist file check: a named file that is missing is an error, no denylist at all is a warning, a present file is silent
+denylist_status "$WORK/no-such-denylist.txt" "$WORK/none" >/dev/null; rc=$?
+if [ "$rc" -ne 1 ]; then fail "denylist self-test: a missing FUND_OS_DENYLIST file did not give an error (status $rc)"; fi
+msg=$(denylist_status "$WORK/no-such-denylist.txt" "$WORK/deny.txt"); case "$msg" in FAIL:*) ;; *) fail "denylist self-test: the error for a missing FUND_OS_DENYLIST file has no FAIL message";; esac
+denylist_status "" "$WORK/none" >/dev/null; rc=$?
+if [ "$rc" -ne 2 ]; then fail "denylist self-test: no denylist at all did not give a warning (status $rc)"; fi
+denylist_status "$WORK/deny.txt" "$WORK/none" >/dev/null; rc=$?
+if [ "$rc" -ne 0 ]; then fail "denylist self-test: an existing FUND_OS_DENYLIST file was not accepted (status $rc)"; fi
+denylist_status "" "$WORK/deny.txt" >/dev/null; rc=$?
+if [ "$rc" -ne 0 ]; then fail "denylist self-test: an existing default denylist was not accepted (status $rc)"; fi
+# end to end: the script itself must exit 1 on a missing named file
+FUND_OS_DENYLIST="$WORK/no-such-denylist.txt" bash "${BASH_SOURCE[0]}" >/dev/null 2>&1; rc=$?
+if [ "$rc" -ne 1 ]; then fail "denylist self-test: the script did not exit 1 on a missing FUND_OS_DENYLIST file (status $rc)"; fi
 
 # 4. the scoring mirror must not drift from tools/ops/lib/scoring.mjs
 if out=$(node "$ROOT/tools/check-scoring-mirror.mjs" 2>&1); then
@@ -229,7 +256,7 @@ for what, start, end, pages, norm in REGIONS:
     if rm is None or first_diff(norm(ra), norm(rm)) is None:
         print(f"{what}: negative control failed (a drifted region would pass)"); bad += 1; continue
     print(f"ok  {what} identical in {', '.join(p + '.html' for p in pages)} ({len(ra.splitlines())} lines)")
-# the Start entry first in every side menu: the six pages carry item("start", ...), and CONFIG.links has the seventh URL
+# the Start entry first in every side menu: the seven pages carry item("start", ...), and CONFIG.links has the start URL
 for p in ALL:
     t = open(f"{d}/{p}.html", encoding="utf-8").read()
     has_item = 'item("start", "Start")' in t

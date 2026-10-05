@@ -105,7 +105,7 @@ switch is read a second time right before every write, so a switch moved during 
 at once. The module never sends a mail or an invite.
 
 - **Trigger:** weekday run over the last day's meetings.
-- **Connectors:** meeting-notes tool, CRM, calendar (attendees), document store (tone), the Inbox store.
+- **Connectors:** meeting-notes tool, CRM, calendar (attendees), document store (tone), the Agent Workbench store.
 - **Skills composed:** none of the interactive ones; the scheduled counterpart of taking notes by hand. Runbook: `ops-meeting-notes`.
 - **Modes:** `off` — note, tasks and moves queued for a person · `review-first` — note filed on a sure match, tasks queued · `on` — note and tasks filed on a sure match.
 - **Guardrails:** never a mail or an invite; the switch read again before every write; stage and status moves are approvals only, never into a committed stage; no transcript, address, phone number or link in a note; the switch is changed only by a person.
@@ -123,7 +123,7 @@ own mailbox. The module has no switch: it is always an approval, and it never se
 posts by itself.
 
 - **Trigger:** weekly run, Monday morning.
-- **Connectors:** CRM (the deal list), document store (thesis, criteria, tone), the Inbox store.
+- **Connectors:** CRM (the deal list), document store (thesis, criteria, tone), the Agent Workbench store.
 - **Skills composed:** none of the interactive ones; the scheduled counterpart of curating the watchlist and drafting content by hand. Runbook: `ops-weekly-digest`.
 - **Modes:** none; the digest behaves as `off` in every mode — one approval, nothing sent.
 - **Guardrails:** an approval in every mode; at most seven picks, each a ranked name; no e-mail address or foreign link; no CRM write of any kind; a text that fails the check twice is not queued.

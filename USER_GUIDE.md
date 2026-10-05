@@ -174,7 +174,7 @@ fund-os:lp-quarterly-report
 
 **Fund OS never sends or publishes anything without your explicit approval.** Every document that leaves the fund — LP reports, capital call notices, legal documents, audit trail entries — is produced as a **draft** and held for partner sign-off before delivery.
 
-The one exception is opt-in and per module: the Phase 09 autopilot skills run on a schedule and, only where a partner has switched a module to `on` in the Inbox, send inside fixed guardrails with every act on record first (see `ops-autopilot-runbook`). Every module starts at `off`.
+The one exception is opt-in and per module: the Phase 09 autopilot skills run on a schedule and, only where a partner has switched a module to `on` in the Agent Workbench, send inside fixed guardrails with every act on record first (see `ops-autopilot-runbook`). Every module starts at `off`.
 
 ---
 
