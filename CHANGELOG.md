@@ -1,5 +1,70 @@
 # Changelog
 
+## 0.10.0 - 2026-10-05
+
+**Fund OS can now run the routine part of the work on a schedule, with a person on the loop
+instead of in it.** An optional autopilot layer: four skills that a scheduled session follows, the
+command-line guardrails those skills call, and the five Operations screens where a partner
+approves, undoes and reads the feed. Nothing in it is on by default: every module starts `off`.
+
+The skills already did the work when someone asked. What was missing was the part around them
+that makes it safe to let them run unasked: a switch that is read before every act, a feed that
+is written before the act rather than after, and arithmetic that a prompt cannot talk its way
+around.
+
+**Phase 09 - Autopilot, four skills** (the plugin now has 47):
+
+- **`ops-dealflow-inbound`** - find new founder mails and form submissions, file them in the CRM,
+  score them, and reply as far as the module's switch allows.
+- **`ops-investor-outreach`** - first touch to the best-fit LP targets, follow-ups on quiet
+  conversations, replies to booked calls, new LP candidates scored and filed.
+- **`ops-newsletter`** - screen the public channels for what is new in the fund's themes, draft
+  one issue in the fund's layout, hand it over as an approval and a partner draft.
+- **`ops-autopilot-runbook`** - the operating model: the three switch modes (`off` queues,
+  `review-first` drafts, `on` sends inside the guardrails), the guardrails with default values,
+  the Inbox store contract, the feed with undo and follow-up, how to register a scheduled Routine
+  per module, and a copy-ready decision record.
+
+Every fund value is a key under a new `autopilot` section of `~/.fund-os/user-config.json`; CRM
+slugs reuse `crmFields`. The skills name no sender, list, stage or link host of their own.
+
+**`tools/ops/` - the guardrails as executable, fund-neutral CLIs** (Node 18 or later, no
+dependencies, no network): `deal-score-cli.mjs`, `investor-cli.mjs`, `newsletter-cli.mjs`. They
+hold what must not depend on a model's mood: scoring totals, bands and the Quality x Thesis Fit
+action table, the mail and invite checks (one recipient, no cc/bcc, no repeat inside the
+no-repeat window, allowed link hosts only, no score quoted to a founder), the switch and the
+daily cap, and the stage and status moves an agent may make. Point them at a configuration with
+`--config` or `FUND_OS_CONFIG`. `bash tools/check-ops-tools.sh` runs a happy path per subcommand
+and the runs that must be refused, against invented fixtures; it is a step in the validate workflow.
+
+**`plugins/fund-os/templates/screens/` - the Operations screens as fund-neutral templates.**
+Deal Cockpit, Investor Relations, Inbox, Knowledge and Profil: single-file pages published as
+Claude artifacts that call the viewer's own Attio, Gmail, Drive and Calendar connectors.
+Every fund-specific value (fund name, list and attribute slugs, stage and status names, Drive
+folder, workspace and object ids, the side-menu links) is lifted into one `CONFIG` block at the
+top of each script. The README beside them covers what each screen does, the capabilities to
+declare at publish, how to fill `CONFIG`, and the order to publish in (all five first, then
+paste the five URLs into every page). The Newsletter screen follows in a later release.
+
+- The pure code regions (the Attio text parser, the scoring mirror, the knowledge and scorecard
+  builders, the Inbox guards and autopilot contract, the Profil tools catalogue) are kept as in
+  the source pages; the few lines in them that carried a fund value now read `CONFIG`.
+- **`tools/check-screen-templates.sh`** checks each page: the script parses, `CONFIG` is declared
+  exactly once, and the fund-neutral grep (fund and person names, artifact links, object ids) is
+  empty. It is a step in the validate workflow.
+
+**`docs/modules/` - one explanatory graphic per module** (inbound dealflow, investor outreach,
+newsletter, and the switch with the audit feed). Each animates a single item along the module's
+path; with `prefers-reduced-motion` the still frame shows the same information.
+
+**The skill count was wrong in three places, and is now one number.** The README said 47, the
+plugin manifest 47 and the marketplace listing 43, while the skills directory held 47 once the
+autopilot skills landed. All three now say 47, and both now say ten lifecycle phases (00-09)
+where they said nine. Versions: plugin manifest and marketplace 0.9.1 -> 0.10.0.
+
+**`validate.py`:** the fund-neutrality scan now covers `.mjs` files, so the CLIs are held to the
+same rule as the skills.
+
 ## 0.9.1 - 2026-10-01
 
 **A deal now carries three scores instead of one score and a star rating.** Quality, Thesis Fit and

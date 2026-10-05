@@ -20,6 +20,9 @@ jobs:
       - name: Autopilot CLIs (tools/ops)
         run: bash tools/check-ops-tools.sh
 
+      - name: Operations screen templates
+        run: bash tools/check-screen-templates.sh
+
       - name: Dashboard script parses
         run: |
           python3 - <<'PY'

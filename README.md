@@ -1,6 +1,6 @@
 # Fund OS
 
-**47 Claude Skills for VC fund operations**, from first sourcing signal to wind-down, across nine
+**47 Claude Skills for VC fund operations**, from first sourcing signal to wind-down, across ten
 lifecycle phases. Built on the open [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md)
 community convention. Fund-side scope only — founder coaching is a separate bundle.
 
@@ -205,6 +205,8 @@ The skills compose into 18 cross-skill workflows you can wire up (cron / Agent S
 ## Autopilot modules
 
 Four explanatory graphics for the optional autopilot layer — switch per module, audit feed, human on the loop: [`docs/modules/README.md`](./docs/modules/README.md). The runbooks that implement it are the four Phase 09 skills above; start with `ops-autopilot-runbook`.
+
+The partners' screens for it (deal cockpit, investor relations, inbox with approvals and the audit feed, knowledge, profile) ship as fund-neutral templates in [`plugins/fund-os/templates/screens/`](./plugins/fund-os/templates/screens/README.md); the executable guardrails the skills call are in [`tools/ops/`](./tools/ops/README.md).
 
 ---
 
