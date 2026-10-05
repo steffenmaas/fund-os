@@ -51,7 +51,14 @@ paste the five URLs into every page). The Newsletter screen follows in a later r
   the source pages; the few lines in them that carried a fund value now read `CONFIG`.
 - **`tools/check-screen-templates.sh`** checks each page: the script parses, `CONFIG` is declared
   exactly once, and the fund-neutral grep (fund and person names, artifact links, object ids) is
-  empty. It is a step in the validate workflow.
+  empty. It also runs `tools/check-scoring-mirror.mjs`, which compares the scoring mirror in the
+  Deal Cockpit with `tools/ops/lib/scoring.mjs` (rubric tables, pin, bands, the Quality x Thesis
+  Fit table, the urgency clock, the line format) and fails on any difference. It is a step in the
+  validate workflow.
+- Investor Relations: quiet statuses are the first four active statuses, configurable
+  (`CONFIG.quietStatuses`; empty means the first four of `CONFIG.activeStatuses`, whatever the fund
+  names them). The deferral for low-fit targets reads `CONFIG.fund.nextFundName`. Profil takes its
+  default language and time zone from `CONFIG.locale`.
 
 **`docs/modules/` - one explanatory graphic per module** (inbound dealflow, investor outreach,
 newsletter, and the switch with the audit feed). Each animates a single item along the module's

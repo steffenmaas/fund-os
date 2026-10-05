@@ -181,40 +181,43 @@
     investorList: "",        // Attio list slug of the investor / LP list (crmFields.investorList)
     statuses: ["Target", "Outreach", "Active discussion", "Due diligence", "Soft commitment", "Hard commitment", "Closed", "Passive"],  // investor status titles in pipeline order; must match the Attio status titles exactly
     statusRoles: {           // which of the titles above plays which role; every value must be one of CONFIG.statuses
-      target: "Target",
-      discussion: "Active discussion",
-      diligence: "Due diligence",
-      soft: "Soft commitment",
-      hard: "Hard commitment",
-      closed: "Closed",
-      passive: "Passive",
+      target: "Target",             // not yet approached; targets at or above fitThreshold are loaded with the active ones
+      discussion: "Active discussion",  // a conversation is running; counted in the "Gespräche laufen" tile
+      diligence: "Due diligence",   // the investor is examining the fund; next action is answering questions
+      soft: "Soft commitment",      // verbally committed; next action is the written confirmation
+      hard: "Hard commitment",      // signed; next action is subscription and KYC
+      closed: "Closed",             // funded and onboarded
+      passive: "Passive",           // parked; excluded from "unscored" and given no next action
     },
     activeStatuses: ["Outreach", "Active discussion", "Due diligence", "Soft commitment", "Hard commitment", "Closed"],  // statuses that are loaded first
-    quietStatuses: ["Outreach", "Active discussion", "Due diligence", "Soft commitment"],  // statuses that count as "quiet" after 30 days without contact
+    quietStatuses: [],       // statuses that count as "quiet" after 30 days without contact; empty = the first four activeStatuses, whatever the fund names them
+    fund: {
+      nextFundName: "the next fund",  // what a low-fit target is deferred to (the "next action" column)
+    },
     boardColumns: ["Target", "Outreach", "Active discussion", "Due diligence", "Soft commitment", "Hard commitment", "Closed"],  // columns of the status board, left to right
     fitThreshold: 60,        // targets with an LP fit at or above this value are loaded with the active ones
     fields: {                // list-entry attribute slugs of the investor list (crmFields in the Fund OS configuration; Attio: list settings, attribute API slug)
       status: "",
       fit: "",               // LP fit score, 0-100 (crmFields.investorFit)
       fitEval: "",           // written LP fit evaluation (crmFields.investorFitEvaluation)
-      statusNotes: "",
-      focus: "",
-      targets: "",
-      thesis: "",
-      portfolio: "",
-      criteria: "",
-      ticket: "",
-      funded: "",
-      lifecycle: "",
-      createdAt: "",
+      statusNotes: "",       // free-text notes on the current status
+      focus: "",             // investment focus, shown in the table and the search
+      targets: "",           // what the investor is aiming for (goals), shown on the card
+      thesis: "",            // the investor's own investment thesis, shown on the card
+      portfolio: "",         // known portfolio companies, shown on the card
+      criteria: "",          // the investor's selection criteria, shown on the card
+      ticket: "",            // typical ticket size, shown in the table and on the card
+      funded: "",            // amount committed so far ("Zugesagt")
+      lifecycle: "",         // lifecycle stage of the investor (e.g. LP, co-investor), shown on the card
+      createdAt: "",         // when the investor entered the list
     },
-  links: {  // The five side-menu URLs. Publish all screens first, then paste the five URLs here in EVERY screen (README.md).
-    deals: "",
-    investors: "",
-    inbox: "",
-    knowledge: "",
-    profile: "",
-  },
+    links: {  // The five side-menu URLs. Publish all screens first, then paste the five URLs here in EVERY screen (README.md).
+      deals: "",
+      investors: "",
+      inbox: "",
+      knowledge: "",
+      profile: "",
+    },
   };
   const LINKS = CONFIG.links;  // the five side-menu URLs, set in CONFIG.links when publishing
   const HERE = "investors";
@@ -234,7 +237,8 @@
   const SERVER = "Attio", LIST = CONFIG.investorList, PAGE = 50;
   const STATUSES = CONFIG.statuses, ST = CONFIG.statusRoles, FIELD = CONFIG.fields;
   const ACTIVE = CONFIG.activeStatuses;
-  const TIERS = [["Priority", 80, "Immediate warm outreach; anchor LP candidate", "Immediate outreach; priority co-investment relationship"], ["High Fit", 60, "Active pipeline; personalised approach", "Active co-investor pipeline; build the relationship"], ["Qualified", 40, "Outreach when capacity allows; thesis tailoring needed", "Worth a warm intro; monitor for co-investment opportunities"], ["Watchlist", 20, "Monitor; revisit for Fund II", "Ecosystem-map only; light-touch relationship"], ["Low Fit", -1, "Do not prioritise for LP outreach", "Not a near-term priority; keep on file"]];
+  const QUIET_STATUSES = CONFIG.quietStatuses.length ? CONFIG.quietStatuses : ACTIVE.slice(0, 4);
+  const TIERS = [["Priority", 80, "Immediate warm outreach; anchor LP candidate", "Immediate outreach; priority co-investment relationship"], ["High Fit", 60, "Active pipeline; personalised approach", "Active co-investor pipeline; build the relationship"], ["Qualified", 40, "Outreach when capacity allows; thesis tailoring needed", "Worth a warm intro; monitor for co-investment opportunities"], ["Watchlist", 20, `Monitor; revisit for ${CONFIG.fund.nextFundName}`, "Ecosystem-map only; light-touch relationship"], ["Low Fit", -1, "Do not prioritise for LP outreach", "Not a near-term priority; keep on file"]];
   const tierIdx = (fit) => fit === null ? 4 : TIERS.findIndex((t) => fit >= t[1]);
   const QUIET_DAYS = 30;
   const attioUrl = (id) => `https://app.attio.com/${CONFIG.attioWorkspace}/company/${id}/overview`;
@@ -300,7 +304,7 @@
     if (r.status === ST.soft) return "Zusage schriftlich bestätigen";
     if (r.status === ST.diligence) return "DD-Fragen beantworten";
     if (r.fit === null) return "LP scoren";
-    if (r.status === ST.target) return t <= 1 ? "First-touch entwerfen" : t === 2 ? "Bei Kapazität anschreiben" : "Fund II";
+    if (r.status === ST.target) return t <= 1 ? "First-touch entwerfen" : t === 2 ? "Bei Kapazität anschreiben" : CONFIG.fund.nextFundName;
     if (quiet !== null && quiet > QUIET_DAYS) return `Follow-up, still seit ${quiet} Tagen`;
     return "Nächsten Schritt vereinbaren";
   }
@@ -367,7 +371,7 @@
 
   // ── Darstellung ──────────────────────────────────────────────────────────────
   function freshness() { const p = $("fresh"); if (!storedAt) { p.hidden = true; return; } const mins = Math.round((Date.now() - storedAt) / 60000); $("freshText").textContent = mins < 1 ? "gerade gelesen" : `gelesen vor ${mins} min`; p.className = "pill " + (mins > 30 ? "wait" : "ok"); p.hidden = false; }
-  const isQuiet = (r) => CONFIG.quietStatuses.includes(r.status) && (daysSince(parseWhen(r.lastInteraction)) ?? 0) > QUIET_DAYS;
+  const isQuiet = (r) => QUIET_STATUSES.includes(r.status) && (daysSince(parseWhen(r.lastInteraction)) ?? 0) > QUIET_DAYS;
   function tiles() {
     const K = [
       ["all", rows.length, "Geladen", loadedAll ? "alle Einträge" : "aktive Stufen + Targets ≥ 60", "accent"],

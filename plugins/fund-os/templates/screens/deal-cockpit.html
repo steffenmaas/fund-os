@@ -193,26 +193,26 @@
     passedStages: ["Rejected", "Lost"],            // stages that count as passed
     rejectedStage: "Rejected",                     // the passed stage that means "we declined" (the other passed stages mean "we lost it")
     fields: {                // list-entry attribute slugs (crmFields in the Fund OS configuration; Attio: list settings, attribute API slug)
-      dealStage: "",
+      dealStage: "",         // deal stage (status attribute); the only field the screen writes besides the six score fields
       quality: "",           // Quality score, 0-100
       thesisFit: "",         // Thesis Fit score, 0-100
       urgency: "",           // Urgency score, 0-100
       summary: "",           // written scorecard
       thesisEval: "",        // written Thesis Fit evaluation
       urgencyEval: "",       // written Urgency evaluation (must contain "as of YYYY-MM-DD")
-      sector: "",
-      round: "",
-      raise: "",
-      source: "",
-      createdAt: "",
+      sector: "",            // sector / category text, shown in the table and the search
+      round: "",             // funding round, e.g. Seed; shown in the table and the search
+      raise: "",             // amount being raised; shown on the deal card
+      source: "",            // where the deal came from; shown on the deal card as "via ..."
+      createdAt: "",         // when the deal entered the list; written into the scoring prompt as "Added to pipeline"
     },
-  links: {  // The five side-menu URLs. Publish all screens first, then paste the five URLs here in EVERY screen (README.md).
-    deals: "",
-    investors: "",
-    inbox: "",
-    knowledge: "",
-    profile: "",
-  },
+    links: {  // The five side-menu URLs. Publish all screens first, then paste the five URLs here in EVERY screen (README.md).
+      deals: "",
+      investors: "",
+      inbox: "",
+      knowledge: "",
+      profile: "",
+    },
   };
   // ── Die anderen Domänen. Ein Artefakt je Domäne; die Links stehen in CONFIG.links und werden beim Publizieren gesetzt. ──
   const LINKS = CONFIG.links;
@@ -248,7 +248,7 @@
   const OUTCOME = ["Act now", "Answer fast", "Track", "Pass with care"];
   const attioUrl = (id) => `https://app.attio.com/${CONFIG.attioWorkspace}/company/${id}/overview`;
 
-  // ==== scoring-mirror:begin ==== (verbatim mirror of functions/src/ops/agents/scoring.ts, ADR-0004; held still by scripts/check-artifact-scoring.mjs)
+  // ==== scoring-mirror:begin ==== (mirror of the arithmetic in tools/ops/lib/scoring.mjs, the one scoring implementation; held still by tools/check-screen-templates.sh, which runs both on the same cases)
   const QUALITY_DIMENSIONS = [
     ["Team & Founder-Market Fit", 20],
     ["Market Opportunity", 15],
@@ -353,7 +353,7 @@
   }
   // ==== scoring-mirror:end ====
 
-  // ==== knowledge:begin ==== (pure: no DOM, no mcp; the Drive adapter is passed in; held still by scripts/check-artifact-scoring.mjs)
+  // ==== knowledge:begin ==== (pure: no DOM, no mcp; the Drive adapter is passed in)
   const KNOWLEDGE_KEYS = ["investment-thesis", "evaluation-criteria", "startup-scoring-matrix"];
   const KNOWLEDGE_FOLDER = CONFIG.driveFolderId;
   const KNOWLEDGE_MAX = 40000;
@@ -448,7 +448,7 @@
   }
   // ==== knowledge:end ====
 
-  // ==== scorecard:begin ==== (pure: no DOM, no mcp, no $; may call the scoring-mirror and knowledge functions; mirrors assemble() in functions/src/ops/agents/dealScore.ts; held still by scripts/check-artifact-scoring.mjs)
+  // ==== scorecard:begin ==== (pure: no DOM, no mcp, no $; may call the scoring-mirror and knowledge functions; assembles the scoring prompt and the written scorecard)
   const SKILL_VERSION = "deal-score/artifact-1.0";
   const SCREENING_DEPTHS = ["First screening", "Pitch deck screening", "Due diligence screening"];
   const BRIEF_MAX = 3000;

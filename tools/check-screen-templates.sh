@@ -3,6 +3,8 @@
 #   1. the extracted <script> of each page parses (node --check)
 #   2. the fund-neutral grep is empty (no fund name, person, artifact link or object id)
 #   3. `const CONFIG = {` is present exactly once per page
+#   4. the scoring mirror in deal-cockpit.html gives the same bands, actions, pin and clock as
+#      tools/ops/lib/scoring.mjs on the inline cases of tools/check-ops-tools.sh (tools/check-scoring-mirror.mjs)
 #
 #   bash tools/check-screen-templates.sh
 
@@ -56,6 +58,13 @@ PY
   n=$(grep -cE '^[[:space:]]*const CONFIG = \{' "$f")
   if [ "$n" -ne 1 ]; then fail "$name.html declares CONFIG $n times (expected 1)"; fi
 done
+
+# 4. the scoring mirror must not drift from tools/ops/lib/scoring.mjs
+if out=$(node "$ROOT/tools/check-scoring-mirror.mjs" 2>&1); then
+  echo "  $out"
+else
+  fail "scoring mirror in deal-cockpit.html differs from tools/ops/lib/scoring.mjs"; echo "$out" | head -12 | sed 's/^/      /'
+fi
 
 # a page nobody listed must not slip in unchecked
 for f in "$DIR"/*.html; do

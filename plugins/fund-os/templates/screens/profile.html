@@ -164,6 +164,7 @@
   // ══ CONFIG ══ Everything that belongs to one fund. Fill it in before publishing (README.md); nothing below this block names a fund.
   const CONFIG = {
     fundName: "",            // shown in the side menu, e.g. "Example Fund"
+    locale: { lang: "de", tz: "Europe/Berlin" },  // default language ("de" or "en") and time zone of the Profil page, used until a viewer picks their own
     scoreFields: [],         // the six deal score list-entry slugs the agents may write without approval, shown in the rules table (crmFields: startupScore, startupSummary, thesisFit, thesisFitEvaluation, urgency, urgencyEvaluation)
     investorFitFields: [],   // the two investor fit slugs (crmFields: investorFit, investorFitEvaluation)
     archivedFields: [],      // slugs that are archived and must never be written (crmFields.archivedSlugs)
@@ -172,13 +173,13 @@
       investors: "",
       newsletter: "",
     },
-  links: {  // The five side-menu URLs. Publish all screens first, then paste the five URLs here in EVERY screen (README.md).
-    deals: "",
-    investors: "",
-    inbox: "",
-    knowledge: "",
-    profile: "",
-  },
+    links: {  // The five side-menu URLs. Publish all screens first, then paste the five URLs here in EVERY screen (README.md).
+      deals: "",
+      investors: "",
+      inbox: "",
+      knowledge: "",
+      profile: "",
+    },
   };
   const LINKS = CONFIG.links;  // the five side-menu URLs, set in CONFIG.links when publishing
   const HERE = "profile";
@@ -207,7 +208,8 @@
   // Einstellungen: nur Komfort, nur dieser Browser.
   const PREFS = "fundOs.ops.prefs";
   let prefs = {}; try { prefs = JSON.parse(localStorage.getItem(PREFS) || "{}") || {}; } catch { prefs = {}; }
-  $("lang").value = prefs.lang ?? "de"; $("tz").value = prefs.tz ?? "Europe/Berlin";
+  const tzPref = prefs.tz ?? CONFIG.locale.tz; if (![...$("tz").options].some((o) => o.value === tzPref)) $("tz").add(new Option(tzPref)); // a configured zone outside the three listed is added, not dropped
+  $("lang").value = prefs.lang ?? CONFIG.locale.lang; $("tz").value = tzPref;
   const savePrefs = () => { prefs = { lang: $("lang").value, tz: $("tz").value }; try { localStorage.setItem(PREFS, JSON.stringify(prefs)); } catch { /* privates Fenster */ } };
   $("lang").addEventListener("change", savePrefs); $("tz").addEventListener("change", savePrefs);
 
@@ -254,11 +256,11 @@
   }
   // ── Werkzeuge pro Modul (F016, docs/specs/F016-profile-tools-per-module.md): der Speichervertrag settings/tools. ──
   // TOOLS_CATALOGUE ist eine Kopie von preferences/tools-catalogue.json, TOOLS_DEFAULTS von preferences/ops-config.json → tools.modules;
-  // npm run check:artifacts hält beide gleich. Rein: kein DOM, kein db, kein mcp.
+  // tools/check-screen-templates.sh prüft diese Kopie nicht (nur Parse, Neutralität und das Scoring-Spiegelbild von Deal Cockpit). Rein: kein DOM, kein db, kein mcp.
   const TOOLS_DOC = "settings/tools";
   // ==== tools:begin ====
   const TOOLS_CATALOGUE = {
-    "_note": "F016. The tools every module needs, per role: the claude.ai connector display name, the read-only tool the Profile may call to check it (null = cannot be checked from a page) and the setup hint. No secrets. artifacts/ops/profile.html embeds a copy (TOOLS_CATALOGUE); npm run check:artifacts holds the two equal.",
+    "_note": "F016. The tools every module needs, per role: the claude.ai connector display name, the read-only tool the Profile may call to check it (null = cannot be checked from a page) and the setup hint. No secrets. This page embeds a copy (TOOLS_CATALOGUE); nothing checks the copy against its source, so change both together.",
     "roles": {
       "crm": {
         "label": "CRM",
