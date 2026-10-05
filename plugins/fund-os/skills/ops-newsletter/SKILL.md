@@ -65,7 +65,7 @@ A failed call is noted in the run summary and skipped; the run goes on. Then: dr
 
 ## 3. Knowledge
 
-Load `tone-guide` once per run, overlay first: `~/.fund-os/knowledge/tone-guide.md`, then the Drive document named in `knowledge.manifest` (or found with `search_files {query: "parentId = '<knowledge.driveFolderId>'", pageSize: 50, excludeContentSnippets: true}` by matching the title as lower case, extension cut, separators to hyphens; Drive lists it with its extension, `tone-guide.md`): `download_file_content {fileId}`, decode `content` from base64 to UTF-8, save as `$WORK/tone-guide.md`. There is no bundled copy: without a fund copy, write a one-line `$WORK/tone-guide.md` from `brandGuidelines.tone` and say so in the run summary.
+Load `tone-guide` once per run, overlay first: `~/.fund-os/knowledge/tone-guide.md`, then the Drive document named in `knowledge.manifest` (or found with `search_files {query: "parentId = '<knowledge.driveFolderId>'", pageSize: 50, excludeContentSnippets: true}` by matching the title as lower case, extension cut, separators to hyphens; Drive lists it with its extension, `tone-guide.md`): `download_file_content {fileId}`; save the connector's answer to `$WORK/tone-guide.json` exactly as returned (the session writes the tool result to a file; it never retypes it and never decodes base64 by hand), then `node "$OPS_CLI/deal-score-cli.mjs" drive-text --json `$WORK/tone-guide.json` --out `$WORK/tone-guide.md` --expect-title tone-guide` (prints `OK <bytes> <title>`). There is no bundled copy: without a fund copy, or on exit 1, write a one-line `$WORK/tone-guide.md` from `brandGuidelines.tone` and put `knowledge: tone-guide fallback=brandGuidelines reason=<the FAIL line, or missing>` in the run summary.
 
 ## 4. Draft
 
