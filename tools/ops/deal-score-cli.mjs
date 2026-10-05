@@ -62,6 +62,13 @@
  *                 autopilot.stores.<m>, else autopilot.inboxStore (the older name autopilot.inboxStoreUrl is still read).
  *                 Exit 1 when neither is set.
  *
+ *   drive-text    --json <saved connector answer> --out <file> [--expect-title <name>]
+ *                 decodes the `content` of a Google Drive `download_file_content` answer (base64 of UTF-8 bytes) and writes the text
+ *                 to <file>; prints `OK <bytes> <title>`. The session saves the tool result to a file and never retypes it.
+ *                 Exit 1 + one `FAIL:` line (nothing written) on invalid JSON, a missing/empty `content`, invalid base64, invalid
+ *                 UTF-8, a NUL byte, or, with --expect-title, a `title` whose key differs (lower case, .md/.markdown/.txt cut,
+ *                 separators to hyphens, as the screens' keyOf()). The skill then uses the bundled copy and names it.
+ *
  * <dir> holds <key>.md (investment-thesis, evaluation-criteria, startup-scoring-matrix) plus an optional
  * <key>.meta.json ({source: "fund"|"bundled"|"missing", title, modifiedTime}).
  * deal.json: {name, domain, sector, stage, round, raise, source, createdAt, notes?, summary?, thesisEval?, urgencyEval?}.
@@ -823,11 +830,59 @@ function cmdStoreUrl(args) {
   process.stdout.write(`${url}\n`);
 }
 
+// ── drive-text ────────────────────────────────────────────────────────────────
+/** The screens' keyOf(): extension cut, lower case, separators to hyphens (`Tone Guide.md` -> `tone-guide`). */
+export function driveKeyOf(title) {
+  return String(title ?? "").replace(/\.(md|markdown|txt)$/i, "").toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+/**
+ * Decodes a saved `download_file_content` answer. The answer is the plain object {id, title, mimeType, content}, or the
+ * wrapped shape [{type:"text", text:"<that object as a JSON string>"}]. Returns {ok:true, text, bytes, title} or {ok:false, reason}.
+ */
+export function decodeDriveText(raw, expectTitle) {
+  let answer = raw;
+  if (Array.isArray(answer) && typeof answer[0]?.text === "string") {
+    try { answer = JSON.parse(answer[0].text); } catch { return { ok: false, reason: "the wrapped answer's text is not JSON" }; }
+  }
+  if (answer === null || typeof answer !== "object" || Array.isArray(answer)) return { ok: false, reason: "the answer is not a JSON object" };
+  const title = typeof answer.title === "string" ? answer.title : "";
+  if (expectTitle !== undefined) {
+    const want = driveKeyOf(expectTitle);
+    if (!want || driveKeyOf(title) !== want) return { ok: false, reason: `title "${title.slice(0, 80)}" is not "${String(expectTitle).slice(0, 80)}"` };
+  }
+  if (typeof answer.content !== "string" || !answer.content.trim()) return { ok: false, reason: "the answer has no content" };
+  const b64 = answer.content.replace(/\s+/g, "");
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(b64) || b64.length % 4 !== 0) return { ok: false, reason: "content is not valid base64" };
+  const buf = Buffer.from(b64, "base64");
+  if (!buf.length) return { ok: false, reason: "content decodes to nothing" };
+  let text;
+  try { text = new TextDecoder("utf-8", { fatal: true }).decode(buf); } catch { return { ok: false, reason: "content is not valid UTF-8" }; }
+  if (text.includes("\u0000")) return { ok: false, reason: "content holds a NUL byte (a binary file, not text)" };
+  return { ok: true, text, bytes: buf.length, title };
+}
+
+function cmdDriveText(args) {
+  const json = need(args, "json");
+  const out = need(args, "out");
+  const expect = args["expect-title"];
+  if (expect !== undefined && typeof expect !== "string") die("FAIL: --expect-title needs a value");
+  let raw;
+  try { raw = JSON.parse(readFileSync(resolve(json), "utf8")); }
+  catch (e) { die(`FAIL: cannot read ${json} as JSON: ${e.message}`); }
+  const r = decodeDriveText(raw, expect);
+  if (!r.ok) die(`FAIL: ${r.reason}`);
+  mkdirSync(dirname(resolve(out)), { recursive: true });
+  writeFileSync(out, r.text);
+  process.stdout.write(`OK ${r.bytes} ${r.title}\n`);
+}
+
 // ── Dispatch ──────────────────────────────────────────────────────────────────
 const COMMANDS = {
   prompt: cmdPrompt, assemble: cmdAssemble, "reply-prompt": cmdReplyPrompt, "check-mail": cmdCheckMail,
   "extract-recipient": cmdExtractRecipient, "extract-deck": cmdExtractDeck, "deck-text": cmdDeckText,
   switch: cmdSwitch, gate: cmdGate, "check-write": cmdCheckWrite, "store-url": cmdStoreUrl,
+  "drive-text": cmdDriveText,
 };
 
 // Run as a command, not when another CLI imports mailProblems().

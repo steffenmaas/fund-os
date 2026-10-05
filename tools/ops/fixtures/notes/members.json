@@ -1,0 +1,7 @@
+[
+  { "workspace_membership_id": "2b3a7ab0-5efb-4f94-8c92-d4781ec6bab5", "name": "Alex Example", "email": "alex.example@example.com", "access_level": "admin" },
+  { "workspace_membership_id": "05cef27f-cda4-4569-9cb7-9b9dbee34b7c", "name": "Sam Sample", "email": "sam.sample@example.com", "access_level": "admin" },
+  { "workspace_membership_id": "88fc7629-1a55-42c1-ac97-0b994588d8ba", "name": "Alex Other", "email": "alex.other@example.com", "access_level": "member" },
+  { "workspace_membership_id": "679ac1da-6c50-4b32-96ac-ad7490295c15", "name": "Jörg Beispiel", "email": "joerg.beispiel@example.com", "access_level": "member" },
+  { "workspace_membership_id": "86029277-db4b-4bf9-a62d-017a5a65bfc4", "name": "Fallback, Pat", "email": "fallback@example.com", "access_level": "member" }
+]

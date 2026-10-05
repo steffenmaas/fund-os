@@ -23,7 +23,8 @@
  *                {summary, decisions[], nextSteps[{text, owner?, due?}], openQuestions[], proposedStatus?}
  *   check-note   --note <note.json> [--config <path>] [--now <iso>] [--meeting <meeting.json>]
  *                with --meeting the meeting title goes through the same email/URL/phone/markup checks (reasons start "meeting title");
- *                exit 0 + "OK", or exit 1 + one "FAIL:" line per reason: summary 40-1 500 chars, <= 8 next steps,
+ *                exit 0 + "OK", or one "FAIL:" line per reason with exit 2 when any reason is about the meeting title (whatever else fails,
+ *                the title cannot be fixed by a redraft) and exit 1 when only the draft fails: summary 40-1 500 chars, <= 8 next steps,
  *                <= 12 decisions and <= 12 open questions, every decision, question, step text and owner <= 300 chars,
  *                every due an ISO date 1-60 days after --now, no email address, no URL (http(s)://, www.,
  *                mailto:, javascript:, //host.tld, host.tld/path), no markdown link or image (`](`), no HTML tag, no phone number
@@ -38,22 +39,35 @@
  *   recheck      --before <settings.json> --after <settings.json> [--module notes] [--config <path>]
  *                exit 0 + "SAME <mode>" when the module's effective mode and its updatedAt are the same in both reads of
  *                settings/autopilot; exit 1 + "CHANGED: <why>" otherwise (the run continues as off)
- *   tasks        --note <note.json> --now <iso> --assignee <workspace member id> --record <record id (lower-case uuid)> --object companies|people
- *                prints the CRM create-task payloads, one per next step: [{content ("Follow-up: <text>", <= 120
+ *   tasks        --note <note.json> --now <iso> --record <record id (lower-case uuid)> --object companies|people
+ *                (--assignee <workspace member id> | --members <members file> [--meeting <meeting.json>] [--config <path>])
+ *                prints the CRM create-task payloads, one per next step that has an assignee: [{content ("Follow-up: <text>", <= 120
  *                chars), deadline_at (ISO, the step's due or --now + 7 days), assignee_workspace_member_id,
- *                linked_record_object, linked_record_id}]. The connector takes a workspace member id, not an
- *                address: resolve autopilot.notes.taskAssignee with the CRM's member list first.
+ *                linked_record_object, linked_record_id}]. The connector takes a workspace member id, not an address.
+ *                With --assignee alone every step goes to that member. With --members (the CRM's workspace-member list saved to a
+ *                file: a text table [n]{workspace_membership_id,name,email,access_level}: or a JSON array) each step is routed:
+ *                (a) the step's owner, as the drafter wrote it, against the members: an address exactly, else a first name or a
+ *                full name after folding case, diacritics and whitespace, a unique match only (an ambiguous name is no match);
+ *                (b) else the fund people who were in the meeting (--meeting: participants and calendar attendees whose address
+ *                is a member's, the note creator first): the first is the assignee (create-task takes one member), the others are
+ *                named at the end of the task text ("(also: <names>)"); (c) else the fallback, the member whose address is
+ *                autopilot.notes.taskAssignee (a value that starts with "<" is the unset placeholder), else --assignee when given.
+ *                A step without any of the three gets no task and stays in the note; stderr says how many were routed how.
+ *   members      --members <members file>
+ *                prints the workspace members as JSON [{id, name, email}] (the file as written by the skill; the text table or a JSON array)
  *   parse-granola --text <file> [--ids <id,id,...>]
  *                turns a Granola list_meetings / get_meetings answer (the XML-like <meetings_data> text, saved to a file)
- *                into {meetings, skipped, suspicious?}: meetings is a JSON array of meeting.json objects without
+ *                into {meetings, skipped, skippedReasons, suspicious?}: meetings is a JSON array of meeting.json objects without
  *                calendarAttendees: [{id, title, date (ISO, or null when the attribute does not parse), url,
  *                participants: [{name?, email?, company?, creator?: true}], summary}]; creator is set on the
  *                "(note creator)" entry. A meeting whose id is not ^[\w-]{1,64}$ is dropped
  *                and counted in skipped. A summary runs from <summary> to the first </summary>, which must be followed by
  *                </meeting>; a "<meeting" inside it is text. Text outside the blocks, an unterminated block, a duplicate id
- *                or more blocks than the count attribute of <meetings_data>, a meeting tag with a duplicate attribute, an attribute value with
- *                <, > or id=, or anything in the tag that is not name="value" say a summary or title tried to forge markup: then
+ *                or more blocks than the count attribute of <meetings_data> say a summary tried to forge markup: then
  *                meetings is [] (fail closed), skipped counts every block and suspicious names the reason.
+ *                A meeting tag with a duplicate attribute, an attribute value with <, > or id=, or anything in the tag that is
+ *                not name="value" spoils that meeting only: it is dropped, counted in skipped and named in skippedReasons
+ *                (one short "meeting <n>: <why>" per skipped meeting); the other meetings are kept.
  *                --ids (the ids the session asked get_meetings for) also drops any meeting not in the list, counted in skipped.
  *                Tolerant otherwise: a meeting without participants or summary gets [] and ""; text without a meeting, an
  *                empty file and <meetings_data count="0" /> give {meetings: [], skipped: 0}. It filters nothing else
@@ -229,7 +243,9 @@ export const MEETING_ID_RE = /^[\w-]{1,64}$/;
  * it runs from <summary> to the first </summary>, which must be followed by </meeting>; "<meeting" inside it is text.
  * Anything that looks like a summary forging markup (text between blocks, an unterminated block, a duplicate id, more
  * blocks than the count attribute) empties the answer: {meetings: [], skipped: <all blocks>, suspicious: <why>}.
- * A meeting whose id is not MEETING_ID_RE is dropped and counted in skipped (the id is never a path component).
+ * A meeting that is dropped on its own (a tag whose attributes are not strict, an id that is not MEETING_ID_RE, an id
+ * outside --ids) is counted in skipped with a short reason in skippedReasons; the other meetings are kept. The block
+ * still counts against the declared count, so the count guard holds (the id is never a path component).
  */
 export function parseGranola(text, { ids: wanted } = {}) {
   const src = String(text ?? "");
@@ -260,7 +276,9 @@ export function parseGranola(text, { ids: wanted } = {}) {
       }
     }
     const parsed = attributesOf(o[1]);
-    if (parsed.bad) { suspicious = parsed.bad; blocks.push({ attrs: {} }); break; } // the bad block counts in skipped
+    // A bad attribute spoils this meeting only: its block boundaries were found by the strict scan above, so the
+    // block is skipped (counted, with a reason) and the others are kept. It still counts against the declared count.
+    if (parsed.bad) { blocks.push({ attrs: {}, bad: parsed.bad }); continue; }
     blocks.push({ attrs: parsed.attrs, pre, summary });
   }
   if (!suspicious && blocks.length && src.slice(pos).replace("</meetings_data>", "").trim()) suspicious = "text after the last meeting";
@@ -269,9 +287,11 @@ export function parseGranola(text, { ids: wanted } = {}) {
   const ids = blocks.map((x) => x.attrs.id).filter((id) => MEETING_ID_RE.test(id ?? ""));
   if (!suspicious && new Set(ids).size !== ids.length) suspicious = "a meeting id appears twice";
   if (suspicious) return { meetings: [], skipped: blocks.length, suspicious };
-  const meetings = [];
-  for (const { attrs, pre, summary } of blocks) {
-    if (!MEETING_ID_RE.test(attrs.id ?? "") || (wanted && !wanted.includes(attrs.id))) continue;
+  const meetings = [], skippedReasons = [];
+  for (const [i, { attrs, pre, summary, bad }] of blocks.entries()) {
+    if (bad) { skippedReasons.push(`meeting ${i + 1}: ${bad}`); continue; }
+    if (!MEETING_ID_RE.test(attrs.id ?? "")) { skippedReasons.push(`meeting ${i + 1}: the id is missing or not a plain id`); continue; }
+    if (wanted && !wanted.includes(attrs.id)) { skippedReasons.push(`meeting ${i + 1}: the id was not asked for`); continue; }
     const people = /<known_participants>([\s\S]*?)<\/known_participants>/.exec(pre);
     meetings.push({
       id: attrs.id,
@@ -282,7 +302,7 @@ export function parseGranola(text, { ids: wanted } = {}) {
       summary: summary === null ? "" : dedent(unescapeXml(summary)),
     });
   }
-  return { meetings, skipped: blocks.length - meetings.length };
+  return { meetings, skipped: blocks.length - meetings.length, skippedReasons };
 }
 
 function cmdParseGranola(args) {
@@ -422,11 +442,12 @@ export function noteProblems(note, cfg, now) {
 }
 
 function cmdCheckNote(args) {
-  const reasons = noteProblems(readJson(need(args, "note"), "note"), loadConfig(args), dateArg(args, "now"));
-  if (typeof args.meeting === "string") reasons.push(...titleProblems(readJson(args.meeting, "meeting")));
+  const draft = noteProblems(readJson(need(args, "note"), "note"), loadConfig(args), dateArg(args, "now"));
+  const title = typeof args.meeting === "string" ? titleProblems(readJson(args.meeting, "meeting")) : [];
+  const reasons = [...draft, ...title];
   if (reasons.length) {
     process.stdout.write(`${reasons.map((r) => `FAIL: ${r}`).join("\n")}\n`);
-    process.exit(1);
+    process.exit(title.length ? 2 : 1); // 2: the title (no redraft helps), 1: the draft only (one more draft)
   }
   process.stdout.write("OK\n");
 }
@@ -466,24 +487,152 @@ export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
 const clip = (s, max) => { const t = String(s ?? "").trim(); return t.length > max ? `${t.slice(0, max - 1).trimEnd()}…` : t; };
 const dayStart = (d) => `${d.toISOString().slice(0, 10)}T00:00:00.000Z`;
 
-export function taskPayloads(note, { now, assignee, recordId, object }) {
-  return (note.nextSteps ?? []).map((s) => ({
-    content: clip(`Follow-up: ${s.text}`, TASK_CONTENT_MAX),
-    deadline_at: s.due ? dayStart(new Date(s.due.length === 10 ? `${s.due}T00:00:00Z` : s.due)) : dayStart(new Date(now.getTime() + DUE_DEFAULT_DAYS * DAY_MS)),
-    assignee_workspace_member_id: assignee,
-    linked_record_object: object,
-    linked_record_id: recordId,
-  }));
+// ── Task routing ───────────────────────────────────────────────────────
+const unquote = (v) => { const t = String(v).trim(); return t.length >= 2 && t.startsWith('"') && t.endsWith('"') ? t.slice(1, -1).replace(/\\(["\\])/g, "$1") : t; };
+// One comma-separated row, a field in double quotes may carry commas.
+const splitRow = (line) => {
+  const out = []; let cur = "", q = false;
+  for (const ch of String(line)) {
+    if (ch === '"') { q = !q; cur += ch; } else if (ch === "," && !q) { out.push(cur); cur = ""; } else cur += ch;
+  }
+  out.push(cur);
+  return out.map(unquote);
+};
+const memberOf = (r) => {
+  const id = String(r?.workspace_membership_id ?? r?.workspace_member_id ?? r?.id ?? "").trim().toLowerCase();
+  const email = addressOf(r?.email);
+  return UUID_RE.test(id) && email.includes("@") ? { id, name: String(r?.name ?? "").trim(), email } : null;
+};
+/**
+ * The workspace members of one list-workspace-members answer of the CRM connector (tools/ops/fixtures/notes/members.txt): the text table
+ * "[n]{workspace_membership_id,name,email,access_level}:" with one comma-separated row per member, or a JSON array (or {members: […]})
+ * of objects with the same keys. A row without a lower-case uuid id or without an address is dropped; ids are unique. → [{id, name, email}].
+ */
+export function parseMembers(text) {
+  const src = String(text ?? "").replace(/\r\n/g, "\n").trim();
+  let rows = null;
+  if (/^[[{]/.test(src)) {
+    try { const j = JSON.parse(src); rows = Array.isArray(j) ? j : Array.isArray(j?.members) ? j.members : null; } catch { /* the text table also starts with [ */ }
+  }
+  if (!rows) {
+    rows = [];
+    const lines = src.split("\n");
+    const at = lines.findIndex((l) => /^\s*(?:[A-Za-z_]\w*)?\[\d+\]\{[^}]*\}:\s*$/.test(l));
+    if (at >= 0) {
+      const head = /^(\s*)(?:[A-Za-z_]\w*)?\[(\d+)\]\{([^}]*)\}:/.exec(lines[at]);
+      const cols = head[3].split(",").map((c) => c.trim());
+      for (const line of lines.slice(at + 1)) {
+        if (!line.trim() || /^\s*/.exec(line)[0].length <= head[1].length || rows.length >= Number(head[2])) break;
+        const cells = splitRow(line.trim());
+        rows.push(Object.fromEntries(cols.map((c, i) => [c, cells[i] ?? ""])));
+      }
+    }
+  }
+  const seen = new Set(), out = [];
+  for (const r of rows) {
+    const m = memberOf(r);
+    if (m && !seen.has(m.id)) { seen.add(m.id); out.push(m); }
+  }
+  return out;
+}
+
+// Case, diacritics, punctuation and whitespace folded away: "  Jörg  MÜLLER " → "jorg muller".
+export const foldName = (s) => String(s ?? "").normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/ß/g, "ss").toLowerCase().replace(/[^\p{L}\p{N}@.+_-]+/gu, " ").replace(/\s+/g, " ").trim();
+/** The one member an owner names: an address exactly, else a first or a full name; null when none or more than one member fits. */
+export function memberForOwner(owner, members) {
+  const raw = String(owner ?? "").trim();
+  if (!raw) return null;
+  if (raw.includes("@")) return members.find((m) => m.email === addressOf(raw)) ?? null;
+  const o = foldName(raw);
+  if (!o) return null;
+  const hits = members.filter((m) => { const n = foldName(m.name); return n && (n === o || n.split(" ")[0] === o); });
+  return hits.length === 1 ? hits[0] : null;
+}
+/** The fund people of the meeting as members: the Granola participants (the note creator first), then the calendar attendees; each member once. */
+export function membersInMeeting(meeting, members) {
+  const parts = [...(meeting?.participants ?? [])].sort((a, b) => Number(isCreator(b)) - Number(isCreator(a)));
+  const addresses = [...parts.map((p) => addressOf(p?.email)), ...calendarEmails(meeting)];
+  const out = [];
+  for (const a of addresses) {
+    const m = members.find((x) => x.email === a);
+    if (m && !out.includes(m)) out.push(m);
+  }
+  return out;
+}
+/** The fallback member: autopilot.notes.taskAssignee when it is an address of a member ("<…>" is the unset placeholder), else the explicit id, else null. */
+export function fallbackMember(cfg, members, assigneeId) {
+  const v = String(ap(cfg).notes?.taskAssignee ?? "").trim();
+  if (v && !v.startsWith("<") && v.includes("@")) return members.find((m) => m.email === addressOf(v)) ?? null;
+  return assigneeId ? { id: assigneeId, name: "", email: "" } : null;
+}
+/** Per next step: {via: "owner"|"participants"|"fallback"|null, member, others}. Pure; the rule is (a) owner, (b) fund people in the call, (c) fallback. */
+export function routeNextSteps(note, { members, meeting, fallback }) {
+  const inCall = membersInMeeting(meeting, members);
+  return (note?.nextSteps ?? []).map((s) => {
+    const owner = memberForOwner(s?.owner, members);
+    if (owner) return { via: "owner", member: owner, others: [] };
+    if (inCall.length) return { via: "participants", member: inCall[0], others: inCall.slice(1) };
+    if (fallback) return { via: "fallback", member: fallback, others: [] };
+    return { via: null, member: null, others: [] };
+  });
+}
+const TASK_ALSO_MAX = 60;
+const alsoSuffix = (others) => {
+  if (!others.length) return "";
+  const full = others.map((m) => m.name || m.email), first = others.map((m) => (m.name || m.email).split(" ")[0]);
+  for (const names of [full, first]) { const s = ` (also: ${names.join(", ")})`; if (s.length <= TASK_ALSO_MAX) return s; }
+  for (let n = first.length - 1; n >= 1; n--) { const s = ` (also: ${first.slice(0, n).join(", ")}, +${first.length - n})`; if (s.length <= TASK_ALSO_MAX) return s; }
+  return ` (also: +${first.length})`;
+};
+
+export function taskPayloads(note, { now, assignee, recordId, object, routes }) {
+  return (note.nextSteps ?? []).flatMap((s, i) => {
+    const route = routes ? routes[i] : { member: { id: assignee }, others: [] };
+    if (!route?.member) return [];
+    const suffix = alsoSuffix(route.others ?? []);
+    return [{
+      content: `${clip(`Follow-up: ${s.text}`, TASK_CONTENT_MAX - suffix.length)}${suffix}`,
+      deadline_at: s.due ? dayStart(new Date(s.due.length === 10 ? `${s.due}T00:00:00Z` : s.due)) : dayStart(new Date(now.getTime() + DUE_DEFAULT_DAYS * DAY_MS)),
+      assignee_workspace_member_id: route.member.id,
+      linked_record_object: object,
+      linked_record_id: recordId,
+    }];
+  });
+}
+
+const readMembers = (args) => {
+  let text;
+  try { text = readFileSync(resolve(need(args, "members")), "utf8"); }
+  catch (e) { return die(`cannot read members ${args.members}: ${e.message}`); }
+  const members = parseMembers(text);
+  return members.length ? members : die(`--members ${args.members}: no workspace member could be read (expected the list-workspace-members table or a JSON array)`);
+};
+
+function cmdMembers(args) {
+  process.stdout.write(`${JSON.stringify(readMembers(args), null, 2)}\n`);
 }
 
 function cmdTasks(args) {
   const note = readJson(need(args, "note"), "note");
-  const assignee = need(args, "assignee"), recordId = need(args, "record"), object = need(args, "object");
+  const recordId = need(args, "record"), object = need(args, "object");
+  const assignee = typeof args.assignee === "string" ? args.assignee : undefined;
   if (!UUID_RE.test(recordId)) die(`--record must be a record id (lower-case uuid), not "${recordId}"`);
-  if (!UUID_RE.test(assignee)) die(`--assignee must be a workspace_member_id (uuid), not "${assignee}": resolve the address with the CRM's member list first`);
+  if (assignee !== undefined && !UUID_RE.test(assignee)) die(`--assignee must be a workspace_member_id (uuid), not "${assignee}": resolve the address with the CRM's member list first`);
   if (!["companies", "people"].includes(object)) die(`--object must be companies or people, got "${object}"`);
   if (typeof args.now !== "string") die("missing --now");
-  process.stdout.write(`${JSON.stringify(taskPayloads(note, { now: dateArg(args, "now"), assignee, recordId, object }), null, 2)}\n`);
+  const now = dateArg(args, "now");
+  if (typeof args.members !== "string") {
+    if (assignee === undefined) die("missing --assignee (or --members <member list file> to route each step)");
+    process.stdout.write(`${JSON.stringify(taskPayloads(note, { now, assignee, recordId, object }), null, 2)}\n`);
+    return;
+  }
+  const members = readMembers(args);
+  const meeting = typeof args.meeting === "string" ? readJson(args.meeting, "meeting") : undefined;
+  const cfg = loadConfig(args, { required: false });
+  const routes = routeNextSteps(note, { members, meeting, fallback: fallbackMember(cfg, members, assignee) });
+  const count = (via) => routes.filter((r) => r.via === via).length;
+  process.stderr.write(`tasks: ${routes.filter((r) => r.member).length} of ${routes.length} next steps routed (owner ${count("owner")}, participants ${count("participants")}, fallback ${count("fallback")}); ${count(null)} stay in the note without a task\n`);
+  process.stdout.write(`${JSON.stringify(taskPayloads(note, { now, recordId, object, routes }), null, 2)}\n`);
 }
 
 // ── recheck ───────────────────────────────────────────────────────────────────
@@ -509,7 +658,7 @@ function cmdRecheck(args) {
 }
 
 // ── Dispatch ──────────────────────────────────────────────────────────────────
-const COMMANDS = { recheck: cmdRecheck, match: cmdMatch, "note-prompt": cmdNotePrompt, "check-note": cmdCheckNote, "note-body": cmdNoteBody, tasks: cmdTasks, "note-title": cmdNoteTitle, "parse-granola": cmdParseGranola };
+const COMMANDS = { recheck: cmdRecheck, match: cmdMatch, "note-prompt": cmdNotePrompt, "check-note": cmdCheckNote, "note-body": cmdNoteBody, tasks: cmdTasks, members: cmdMembers, "note-title": cmdNoteTitle, "parse-granola": cmdParseGranola };
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = parseArgs(process.argv.slice(2));
