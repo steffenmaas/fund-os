@@ -55,9 +55,6 @@
   .page { flex: 1; min-width: 0; padding: 18px 20px 40px; display: flex; flex-direction: column; gap: 16px; max-width: 1100px; }
   @media (max-width: 820px) {
     .app { flex-direction: column; }
-    .rail { width: auto; height: auto; position: static; flex-direction: row; flex-wrap: wrap; align-items: center; border-right: 0; border-bottom: 1px solid var(--line); padding: 10px 12px; padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
-    .rail .brand { padding: 0 6px; } .rail .lbl, .rail .foot, .rail .spacer { display: none; }
-    .rail a.item { padding: 6px 9px; font-size: 12.5px; }
     .page { padding-inline: 16px; }
   }
   h1 { font-size: 26px; font-weight: 600; margin: 0; line-height: 1.1; }
@@ -98,14 +95,30 @@
   .modtools { display: flex; flex-direction: column; gap: 6px; padding: 8px 0 12px; border-bottom: 1px solid var(--line); } .modtools:last-child { border-bottom: 0; padding-bottom: 0; }
   .modtools h3 { margin: 0; font-size: 14px; font-weight: 600; }
   pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-family: var(--mono); font-size: 11.5px; background: var(--panel-2); border-radius: 8px; padding: 8px; color: var(--muted); max-height: 160px; overflow: auto; }
+  /* F017 · burger + off-canvas rail on a phone. Shared verbatim by investors, knowledge, profile, newsletter; same class names as the cockpit
+     and the inbox (button.burger, .rail.open, .backdrop). Closes the stylesheet on purpose so it wins the cascade over the base rules above. */
+  .burger, .backdrop { display: none; }
+  @media (max-width: 820px) {
+    .burger { display: inline-flex; align-items: center; justify-content: center; position: fixed; top: calc(8px + env(safe-area-inset-top, 0px)); left: 12px; z-index: 30; width: 44px; height: 44px; padding: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--fg); }
+    .burger svg { width: 20px; height: 20px; }
+    .burger:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .rail { position: fixed; top: 0; left: 0; bottom: 0; z-index: 50; width: min(280px, 86vw); height: 100dvh; overflow-y: auto; overscroll-behavior: contain; padding-top: calc(18px + env(safe-area-inset-top, 0px)); padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); visibility: hidden; transform: translateX(-100%); transition: transform .2s ease, visibility 0s linear .2s; }
+    .rail.open { visibility: visible; transform: none; transition: transform .2s ease; box-shadow: 0 0 40px rgba(0, 0, 0, .35); }
+    .rail a.item { min-height: 44px; }
+    .backdrop:not([hidden]) { display: block; position: fixed; inset: 0; z-index: 40; background: rgba(2, 10, 14, .55); }
+    .page { padding-top: calc(8px + env(safe-area-inset-top, 0px)); }
+    .page h1[title] { display: flex; align-items: center; min-height: 44px; padding-left: 56px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .rail { transition: none; } .rail.open { transition: none; } }
 </style>
 
 <div class="app">
+  <button type="button" class="burger" id="burger" aria-label="Menü" aria-expanded="false" aria-controls="rail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <div class="backdrop" id="backdrop" hidden></div>
   <nav class="rail" aria-label="Bereiche" id="rail"></nav>
   <div class="page">
     <div>
-      <h1>Profil</h1>
-      <div class="sub">Wer hier arbeitet, welche Connectoren diese Ansicht erreicht, und was die Agenten ohne Freigabe dürfen. Alles auf dieser Seite gilt für dich; jede Partnerin sieht ihr eigenes Profil.</div>
+      <h1 title="Wer hier arbeitet, welche Connectoren diese Ansicht erreicht, und was die Agenten ohne Freigabe dürfen. Alles auf dieser Seite gilt für dich; jede Partnerin sieht ihr eigenes Profil.">Profil</h1>
     </div>
 
     <section class="card">
@@ -173,21 +186,23 @@
       investors: "",
       newsletter: "",
     },
-    links: {  // The five side-menu URLs. Publish all screens first, then paste the five URLs here in EVERY screen (README.md).
+    links: {  // The six side-menu URLs. Publish all screens first, then paste the six URLs here in EVERY screen (README.md).
       deals: "",
       investors: "",
       inbox: "",
       knowledge: "",
+      newsletter: "",
       profile: "",
     },
   };
-  const LINKS = CONFIG.links;  // the five side-menu URLs, set in CONFIG.links when publishing
+  const LINKS = CONFIG.links;  // the six side-menu URLs, set in CONFIG.links when publishing
   const HERE = "profile";
   const ICONS = {
     deals: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
     investors: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/></svg>',
     inbox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13l3-8h12l3 8v6H3z M3 13h5l2 3h4l2-3h5"/></svg>',
     knowledge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 012-2h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2z M8 7h8M8 11h8M8 15h5"/></svg>',
+    newsletter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
     profile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>',
   };
   const $ = (id) => document.getElementById(id);
@@ -196,9 +211,19 @@
   document.querySelectorAll("[data-cfg]").forEach((el) => { el.innerHTML = (CONFIG[el.dataset.cfg] ?? []).map((s) => `<code>${esc(s)}</code>`).join(", ") || "—"; });
   (function rail() {
     const item = (k, label) => `<a class="item ${k === HERE ? "on" : ""}" href="${live(k) ? LINKS[k] : "#"}" ${k === HERE ? 'aria-current="page"' : 'target="_blank" rel="noopener"'}>${ICONS[k]}${label}</a>`;
-    $("rail").innerHTML = `<div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 7c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg><span>${String(CONFIG.fundName || "Fund OS").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}<br>Operations</span></div><div class="lbl">Domänen</div>${item("deals", "Deal Cockpit")}${item("investors", "Investor Relations")}${item("inbox", "Inbox")}${item("knowledge", "Knowledge")}<div class="spacer"></div>${item("profile", "Profil")}<div class="foot">Fund OS · Operations</div>`;
+    $("rail").innerHTML = `<div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 7c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg><span>${String(CONFIG.fundName || "Fund OS").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}<br>Operations</span></div><div class="lbl">Domänen</div>${item("deals", "Deal Cockpit")}${item("investors", "Investor Relations")}${item("inbox", "Inbox")}${item("knowledge", "Knowledge")}${item("newsletter", "Newsletter")}<div class="spacer"></div>${item("profile", "Profil")}<div class="foot">Fund OS · Operations</div>`;
   })();
-  const DOMAINS = [["deals", "Deal Cockpit", "Startups-Liste nach Score × Urgency, Scorecards, Stage"], ["investors", "Investor Relations", "LP-Pipeline nach Status, LP-Fit, Outreach"], ["inbox", "Inbox", "Freigaben, Eingang, Runs und Audit"], ["knowledge", "Knowledge", "Die Dokumente, gegen die gescort wird"]];
+  // Off-canvas rail on a phone (F017): burger opens it, backdrop click, Escape, a rail link or a switch to a wide screen close it.
+  (function burger() {
+    const b = document.getElementById("burger"), r = document.getElementById("rail"), bd = document.getElementById("backdrop");
+    const set = (open) => { r.classList.toggle("open", open); b.setAttribute("aria-expanded", String(open)); bd.hidden = !open; };
+    b.addEventListener("click", () => set(!r.classList.contains("open")));
+    bd.addEventListener("click", () => set(false));
+    r.addEventListener("click", (e) => { if (e.target.closest("a.item")) set(false); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && r.classList.contains("open")) { set(false); b.focus(); } });
+    window.matchMedia("(min-width: 821px)").addEventListener("change", (e) => { if (e.matches) set(false); });
+  })();
+  const DOMAINS = [["deals", "Deal Cockpit", "Startups-Liste nach Score × Urgency, Scorecards, Stage"], ["investors", "Investor Relations", "LP-Pipeline nach Status, LP-Fit, Outreach"], ["inbox", "Inbox", "Freigaben, Eingang, Runs und Audit"], ["knowledge", "Knowledge", "Die Dokumente, gegen die gescort wird"], ["newsletter", "Newsletter", "Ausgaben, Vorlagen und Übergabe an die Partner"]];
   $("links").innerHTML = DOMAINS.map(([k, n, s]) => `<a class="${live(k) ? "" : "soon"}" href="${live(k) ? LINKS[k] : "#"}" ${live(k) ? 'target="_blank" rel="noopener"' : ""}><b>${n}</b><span class="s">${s}${live(k) ? "" : " · folgt"}</span></a>`).join("");
 
   let actor = "unbekannt";

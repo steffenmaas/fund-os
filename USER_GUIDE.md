@@ -261,7 +261,7 @@ The one exception is opt-in and per module: the Phase 09 autopilot skills run on
 | Meeting notes filed in the CRM, scheduled | `ops-meeting-notes` | fired by a Routine; by hand: "Run the meeting-notes autopilot" |
 | Monday deal digest as an approval, scheduled | `ops-weekly-digest` | fired by a Routine; by hand: "Run the weekly digest" |
 
-The module skills call the fund's scoring CLIs, which are published separately and ship in a later release.
+The module skills call the autopilot CLIs in `tools/ops/` of the Fund OS repository (scoring arithmetic, the deck, mail and invite checks, the switch and the store per module, the newsletter layout, meeting-note matching, the digest ranking). They are not part of the plugin bundle: clone the repository and set `OPS_CLI` to that directory (`tools/ops/README.md` lists every subcommand). The partners' screens for the autopilot (Deal Cockpit, Investor Relations, Inbox, Knowledge, Profil, Newsletter) are fund-neutral templates in `plugins/fund-os/templates/screens/`.
 
 ### Other
 

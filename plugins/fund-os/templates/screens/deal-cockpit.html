@@ -1,14 +1,17 @@
 <!--
   Deal Cockpit · capabilities declared at publish (see README.md in this folder)
   sample: {}
+  user: scopes [profile]
+  db: rules [{path: "", read: "interact", write: "admin"}]
   mcp.servers:
-    {server: "Attio",         tools: ["list-records-in-list", "get-records-by-ids", "update-list-entry-by-id", "create-note"]}
+    {server: "Attio",         tools: ["list-records-in-list", "get-records-by-ids", "update-list-entry-by-id", "create-note", "list-tasks", "create-task", "update-task", "list-workspace-members"]}
     {server: "Google Drive",  tools: ["search_files", "download_file_content"]}
+    {server: "Gmail",         tools: ["create_draft"]}
 -->
 <title>Deal Cockpit</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-  /* Layout: Seitenleiste mit den Domänen links, rechts das Instrumentenpanel: Kacheln, Wochenliste, Drawer. */
+  /* Layout: Seitenleiste mit den Domänen links (auf dem Telefon hinter dem Burger), rechts das Instrumentenpanel: vier Reiter (Deals, Aufgaben, Inbox, Autopilot), Kacheln, Wochenliste, Drawer. */
   :root {
     --bg: #04121a; --panel: #0a1c26; --panel-2: #0e2431; --line: rgba(255,255,255,0.09);
     --fg: #f1f6f8; --muted: rgba(241,246,248,0.58); --faint: rgba(241,246,248,0.36);
@@ -50,14 +53,14 @@
   .page { flex: 1; min-width: 0; padding: 18px 20px 40px; display: flex; flex-direction: column; gap: 16px; }
   @media (max-width: 820px) {
     .app { flex-direction: column; }
-    .rail { width: auto; height: auto; position: static; flex-direction: row; flex-wrap: wrap; align-items: center; border-right: 0; border-bottom: 1px solid var(--line); padding: 10px 12px; padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
-    .rail .brand { padding: 0 6px; } .rail .lbl, .rail .foot { display: none; } .rail .spacer { display: none; }
-    .rail a.item { padding: 6px 9px; font-size: 12.5px; }
-    .page { padding-inline: 16px; }
+    /* F017: the side menu is an off-canvas panel over the page, opened by the burger (aria-controls="rail"). */
+    .rail { position: fixed; top: 0; left: 0; bottom: 0; width: min(300px, 86vw); height: auto; z-index: 30; display: none; overflow-y: auto; border-right: 1px solid var(--line); padding-top: calc(18px + env(safe-area-inset-top, 0px)); box-shadow: 8px 0 32px rgba(0, 0, 0, 0.35); }
+    .rail.open { display: flex; }
+    .rail-scrim:not([hidden]) { display: block; z-index: 29; }
+    .page { padding-inline: 16px; padding-top: calc(12px + env(safe-area-inset-top, 0px)); }
   }
-  .head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+  .head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 12px; }
   h1 { font-size: 26px; font-weight: 600; margin: 0; line-height: 1.1; text-wrap: balance; }
-  .sub { color: var(--muted); font-size: 13px; margin-top: 4px; max-width: 80ch; }
   .status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   .pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-family: var(--mono); font-size: 11.5px; color: var(--muted); background: var(--panel); white-space: nowrap; }
   .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
@@ -67,13 +70,22 @@
   .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
   .btn.danger { border-color: var(--alert); color: var(--alert); }
   .btn:disabled { opacity: .45; cursor: default; }
+  .btn.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .view { display: flex; flex-direction: column; gap: 16px; }
+  .view[hidden] { display: none; }
+  .tasks { display: flex; flex-direction: column; gap: 6px; }
+  .tk { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; background: var(--panel-2); border-radius: 10px; padding: 8px 10px; }
+  .tk .tx { min-width: 0; overflow-wrap: anywhere; }
+  .tk .meta { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .late { color: var(--alert); font-weight: 600; }
+  .tkform { display: flex; flex-direction: column; gap: 8px; }
+  .tkform input[type=text] { flex: 1 1 220px; min-width: 0; }
   .btn:focus-visible, .tile:focus-visible, tr[tabindex]:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
   .tile { text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
   .tile.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
   .tile .v { font-family: var(--mono); font-size: 28px; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
-  .tile .l { font-size: 12.5px; font-weight: 600; margin-top: 6px; }
-  .tile .s { font-size: 11.5px; color: var(--muted); }
+  .tile .l { font-size: 12.5px; font-weight: 600; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .tile.alert .v { color: var(--alert); } .tile.warn .v { color: var(--warn); } .tile.calm .v { color: var(--calm); } .tile.accent .v { color: var(--accent); }
   .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   input, select, textarea { background: var(--panel); border: 1px solid var(--line); border-radius: 9px; color: var(--fg); padding: 6px 10px; font: inherit; font-size: 12.5px; }
@@ -131,15 +143,137 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
   @media (max-width: 640px) { h1 { font-size: 22px; } .drawer { padding-inline: 14px; } }
+  /* F017 · burger, tab bar, and the Inbox / Autopilot tabs on the cockpit's own store. Base rules; the phone rules close the stylesheet. */
+  .titlebar { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .burger { display: none; flex: none; width: 44px; height: 44px; padding: 0; align-items: center; justify-content: center; border: 1px solid var(--line); background: var(--panel); border-radius: 10px; }
+  .burger:hover { border-color: var(--accent); }
+  .burger svg { width: 22px; height: 22px; }
+  .burger:focus-visible, .tabs button:focus-visible, .itemcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .rail-scrim { display: none; }
+  .tabs { display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 3px; align-self: flex-start; }
+  .tabs button { flex: 1 1 0; min-width: 0; padding: 6px 14px; border-radius: 8px; border: 0; background: none; color: var(--muted); font-size: 12.5px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+  .tabs button.on { background: var(--panel-2); color: var(--fg); font-weight: 600; box-shadow: inset 0 0 0 1px var(--accent); }
+  .badge { background: var(--alert); color: #fff; border-radius: 999px; padding: 0 6px; font-size: 10.5px; font-weight: 600; }
+  .badge[hidden] { display: none; }
+  .sechead { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0; }
+  .s { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .m { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+  .meta { color: var(--muted); font-size: 13px; }
+  .list { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .itemcard { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); font-size: 12.5px; color: var(--fg); text-align: left; }
+  .itemcard.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .itemcard.done { opacity: .6; }
+  .itemcard:hover { border-color: var(--accent); }
+  .kind { display: inline-flex; align-items: center; gap: 6px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .k-email { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .k-deal-stage { color: var(--warn); background: color-mix(in srgb, var(--warn) 16%, transparent); }
+  .k-newsletter { color: var(--good); background: color-mix(in srgb, var(--good) 16%, transparent); }
+  .k-unknown { color: var(--muted); background: color-mix(in srgb, var(--muted) 14%, transparent); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .note.acc { border-left-color: var(--accent); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .flbl { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; display: block; margin-bottom: 4px; }
+  .sw { display: flex; gap: 4px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+  .sw button { flex: 1; padding: 6px 8px; border-radius: 8px; border: 0; background: none; color: var(--muted); font-size: 12.5px; }
+  .sw button[aria-checked="true"] { background: var(--panel); color: var(--fg); font-weight: 600; box-shadow: inset 0 0 0 1px var(--accent); }
+  .sw button.m-on[aria-checked="true"] { color: var(--accent); }
+  .sw button:disabled { opacity: .55; cursor: default; }
+  .actrow { border-top: 1px solid var(--line); padding: 10px 0 2px; display: flex; flex-direction: column; gap: 4px; }
+  .who { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .ibsplit { display: grid; grid-template-columns: minmax(280px, 400px) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .ibdetail { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; position: sticky; top: 12px; max-height: calc(100dvh - 24px); overflow-y: auto; }
+  .ibdetail h2 { margin: 0; font-size: 20px; line-height: 1.2; text-wrap: balance; }
+  .ibdetail .ibhead { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+  .ibdetail [data-ib-close] { display: none; }
+  .ibdetail .ibactions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .ibdetail input, .ibdetail textarea { width: 100%; }
+  .ibdetail textarea { min-height: 120px; font-family: var(--mono); font-size: 12.5px; resize: vertical; }
+  .ibdetail .flbl + .row { margin-top: 0; }
+  .ibdetail[hidden] { display: none; }
+  /* F006 · the weekly list on a phone (docs/specs/F006). These blocks close the stylesheet on purpose: the base rules above
+     (drawer, tables, buttons) come later in the source than the first 820px block and would win the cascade at equal specificity.
+     CSS only; no markup, no script. The check is scripts/check-mobile.mjs (390 x 844). */
+  @media (max-width: 820px) {
+    .rail a.item { min-height: 44px; }
+    .btn, select, input:not([type="checkbox"]):not([type="radio"]) { min-height: 44px; }
+    input, select, textarea { font-size: 16px; }
+    .drawer { width: 100vw; max-width: 100vw; border-left: 0; padding: 0 14px calc(24px + env(safe-area-inset-bottom, 0px)); gap: 12px; overscroll-behavior: contain; }
+    .drawer > .row:first-child { position: sticky; top: 0; z-index: 2; background: var(--panel); margin-inline: -14px; padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 10px; border-bottom: 1px solid var(--line); justify-content: space-between; }
+    .drawer > .actions { position: sticky; bottom: 0; z-index: 2; background: var(--panel); margin-inline: -14px; padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .drawer .btn { justify-content: center; white-space: normal; text-align: center; }
+    .drawer .row .btn { flex: 1 1 140px; }
+    .drawer textarea { min-height: 120px; }
+    .drawer .confirm select, .drawer .confirm input { flex: 1 1 100%; }
+    .tablewrap { overflow: visible; border: 0; border-radius: 0; background: none; }
+    table, tbody { display: block; width: 100%; min-width: 0; }
+    thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    tbody tr { display: block; }
+    tbody td.empty { display: block; border: 1px dashed var(--line); border-radius: 14px; }
+    tbody tr[data-id] { display: grid; gap: 6px 10px; align-items: start; padding: 12px; margin-bottom: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+    tbody tr[data-id]:hover { border-color: var(--accent); }
+    tbody tr[data-id] td { display: block; padding: 0; border: 0; min-width: 0; text-align: left; overflow-wrap: anywhere; font-family: var(--sans); }
+    tbody tr[data-id]:hover td { background: none; }
+    tbody tr[data-id] .meter { justify-content: flex-start; }
+    tbody tr[data-id] td::before { display: block; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; font-family: var(--sans); }
+    #rows tr[data-id] { grid-template-columns: 2.25rem repeat(3, minmax(0, 1fr)); grid-template-areas: "rank name name name" ". stage score urg" ". prod out out" ". next next next"; }
+    #rows td:nth-child(1) { grid-area: rank; font-family: var(--mono); color: var(--muted); }
+    #rows td:nth-child(1)::before { display: inline; content: "#"; font-size: inherit; letter-spacing: 0; }
+    #rows td:nth-child(2) { grid-area: name; }
+    #rows td:nth-child(3) { grid-area: stage; } #rows td:nth-child(3)::before { content: "Stage"; }
+    #rows td:nth-child(4) { grid-area: score; } #rows td:nth-child(4)::before { content: "Score"; }
+    #rows td:nth-child(5) { grid-area: urg; } #rows td:nth-child(5)::before { content: "Urgency"; }
+    #rows td:nth-child(6) { grid-area: prod; } #rows td:nth-child(6)::before { content: "Score \00D7 U"; }
+    #rows td:nth-child(7) { grid-area: out; }
+    #rows td:nth-child(8) { grid-area: next; } #rows td:nth-child(8)::before { content: "Next action"; }
+    #taskRows tr[data-id] { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "task task" "deal deal" "due who"; }
+    #taskRows td:nth-child(1) { grid-area: due; } #taskRows td:nth-child(1)::before { content: "F\00E4llig"; }
+    #taskRows td:nth-child(2) { grid-area: task; font-weight: 600; }
+    #taskRows td:nth-child(3) { grid-area: deal; } #taskRows td:nth-child(3)::before { content: "Deal"; }
+    #taskRows td:nth-child(4) { grid-area: who; } #taskRows td:nth-child(4)::before { content: "Zust\00E4ndig"; }
+    .toolbar label { min-height: 44px; }
+    .tkform .row > * { flex: 1 1 100%; }
+  }
+  @media (max-width: 480px) {
+    .page { padding-inline: 12px; }
+    h1 { font-size: 22px; }
+    .drawer h2 { font-size: 20px; }
+    .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tile { min-height: 44px; padding: 8px 12px; gap: 0; }
+    .tile .l { margin-top: 4px; }
+    .tile .v { font-size: 22px; }
+    .toolbar input[type=search] { flex: 1 1 100%; max-width: none; }
+    .toolbar select { flex: 1 1 calc(50% - 8px); }
+    #rows tr[data-id] { grid-template-columns: 2rem repeat(3, minmax(0, 1fr)); }
+  }
+  /* F017 · the phone: the tab bar, the Inbox detail as a full-screen drawer (up to 980 px), the off-canvas side menu (820 px and below). */
+  @media (max-width: 980px) {
+    .ibsplit { grid-template-columns: minmax(0, 1fr); }
+    .ibdetail { position: fixed; inset: 0; z-index: 21; width: 100vw; max-height: none; border: 0; border-radius: 0; padding: 0 14px calc(16px + env(safe-area-inset-bottom, 0px)); gap: 12px; overflow-y: auto; overscroll-behavior: contain; }
+    .ibdetail.nosel { display: none; }
+    .ibdetail .ibhead { position: sticky; top: 0; z-index: 2; background: var(--panel); margin-inline: -14px; padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 10px; border-bottom: 1px solid var(--line); flex-wrap: nowrap; }
+    .ibdetail [data-ib-close] { display: inline-flex; }
+    .ibdetail .ibactions { position: sticky; bottom: 0; z-index: 2; background: var(--panel); margin-inline: -14px; margin-top: auto; padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .ibdetail .btn { justify-content: center; white-space: normal; text-align: center; }
+    .ibdetail .ibactions .meta { grid-column: 1 / -1; }
+  }
+  @media (max-width: 820px) {
+    .burger { display: inline-flex; }
+    .tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; align-self: stretch; }
+    .tabs button { min-height: 44px; padding-inline: 4px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+    .itemcard, .sw button { min-height: 44px; }
+    .grid2 { grid-template-columns: minmax(0, 1fr); }
+    .card { padding: 14px; }
+  }
 </style>
 
 <div class="app">
+  <div class="scrim rail-scrim" id="railScrim" hidden></div>
   <nav class="rail" aria-label="Bereiche" id="rail"></nav>
   <div class="page">
     <div class="head">
-      <div>
-        <h1>Deal Cockpit</h1>
-        <div class="sub">Die Startups-Liste aus dem CRM, nach Score × Urgency. Passes ranken nie. Aufmerksamkeit braucht, wer in den Top 20 steht, ein offenes Rundenfenster hat oder in einem laufenden Prozess ist.</div>
+      <div class="titlebar">
+        <button type="button" class="burger" id="burger" aria-label="Menü" aria-expanded="false" aria-controls="rail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+        <h1 title="Die Startups-Liste aus dem CRM, nach Score × Urgency. Passes ranken nie. Aufmerksamkeit braucht, wer in den Top 20 steht, ein offenes Rundenfenster hat oder in einem laufenden Prozess ist.">Deal Cockpit</h1>
       </div>
       <div class="status">
         <span class="pill" id="conn"><span class="dot"></span><span id="connText">Verbinde mit Attio…</span></span>
@@ -149,11 +283,20 @@
     </div>
 
     <div id="banner" class="note" hidden></div>
+    <div class="tabs" role="tablist" id="tabs" aria-label="Ansicht">
+      <button type="button" role="tab" class="on" id="tabDeals" data-view="deals" aria-selected="true" aria-controls="dealsView">Deals</button>
+      <button type="button" role="tab" id="tabTasks" data-view="tasks" aria-selected="false" aria-controls="tasksView" tabindex="-1">Aufgaben<span id="tabTasksN"></span></button>
+      <button type="button" role="tab" id="tabInbox" data-view="inbox" aria-selected="false" aria-controls="inboxView" tabindex="-1">Inbox <span class="badge" id="tabInboxN" hidden>0</span></button>
+      <button type="button" role="tab" id="tabAutopilot" data-view="autopilot" aria-selected="false" aria-controls="autopilotView" tabindex="-1">Autopilot</button>
+    </div>
+
+    <div class="view" id="dealsView" role="tabpanel">
     <div class="tiles" id="tiles"></div>
 
     <div class="toolbar">
       <input id="q" type="search" placeholder="Firma, Sektor, Stage…" aria-label="Suche">
       <select id="stageSel" aria-label="Stage"><option value="">Alle Stages</option></select>
+      <select id="kpiMore" aria-label="Weitere Filter"><option value="">Weitere Filter</option></select>
       <label class="count" style="display:inline-flex;align-items:center;gap:6px"><input id="attOnly" type="checkbox" style="min-width:0;flex:none"> nur mit Aufmerksamkeit</label>
       <span class="spacer"></span>
       <span class="count" id="count"></span>
@@ -166,6 +309,35 @@
         </tr></thead>
         <tbody id="rows"><tr><td colspan="8" class="empty" id="emptyCell">Warte auf den Attio-Connector. Beim ersten Aufruf fragt claude.ai nach der Erlaubnis; die Liste lädt in Seiten von 50.</td></tr></tbody>
       </table>
+    </div>
+    </div>
+
+    <div class="view" id="tasksView" role="tabpanel" hidden>
+      <div class="toolbar">
+        <span class="count" id="tkProgress"></span>
+        <span class="spacer"></span>
+        <span class="count" id="tkCount"></span>
+        <button class="btn" id="tkReload" type="button">Aufgaben neu lesen</button>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Fällig</th><th>Aufgabe</th><th>Deal</th><th>Zuständig</th></tr></thead>
+          <tbody id="taskRows"><tr><td colspan="4" class="empty">Die Aufgaben werden gelesen, wenn diese Ansicht geöffnet wird.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="view" id="inboxView" role="tabpanel" hidden>
+      <div class="ibsplit">
+        <div class="list" id="ibList"><div class="empty">Warte auf den Speicher…</div></div>
+        <div class="ibdetail nosel" id="ibDetail"><div class="empty">Links einen Vorschlag wählen.</div></div>
+      </div>
+    </div>
+
+    <div class="view" id="autopilotView" role="tabpanel" hidden>
+      <div id="apBody"><div class="empty">Warte auf den Speicher…</div></div>
+      <h2 class="sechead">Protokoll</h2>
+      <div class="list" id="feed"></div>
     </div>
 
     <details class="diag" id="diag">
@@ -187,11 +359,17 @@
     scoringLabel: "",        // footer of every written scorecard, e.g. "Example Fund I – Startup Scoring v2"
     attioWorkspace: "",      // the slug in https://app.attio.com/<slug>/company/...
     dealList: "",            // Attio list slug of the deal flow list (crmFields.dealList)
+    investorList: "",        // Attio list slug of the investor / LP list (crmFields.investorList); the in-page Inbox needs it to check investor-status proposals
+    companiesObjectId: "",   // Attio object id of "companies" (uuid): ask the Attio connector once for the object "companies" and copy its id
+    investorStatusField: "", // list-entry attribute slug of the investor status (crmFields.investorStatus); the in-page Inbox needs it for undo
     driveFolderId: "",       // Google Drive folder holding investment-thesis, evaluation-criteria, startup-scoring-matrix (the id at the end of the folder URL)
     stages: ["Awareness", "Screening", "Initial contact", "Due diligence", "Term sheet", "Invested", "Watchlist", "Rejected", "Lost"],  // deal stage titles in pipeline order; must match the Attio status titles exactly
     liveStages: ["Due diligence", "Term sheet"],   // stages that count as a live process
     passedStages: ["Rejected", "Lost"],            // stages that count as passed
     rejectedStage: "Rejected",                     // the passed stage that means "we declined" (the other passed stages mean "we lost it")
+    statuses: ["Target", "Outreach", "Active discussion", "Due diligence", "Soft commitment", "Hard commitment", "Closed", "Passive"],  // investor status titles in pipeline order; must match the Attio status titles exactly (used to check proposals and undo in the in-page Inbox)
+    forbiddenStages: ["Invested", "Term sheet"],                          // stages only a human sets in Attio itself; the in-page Inbox refuses to write or undo them
+    forbiddenStatuses: ["Soft commitment", "Hard commitment", "Closed"],  // the same for investor statuses
     fields: {                // list-entry attribute slugs (crmFields in the Fund OS configuration; Attio: list settings, attribute API slug)
       dealStage: "",         // deal stage (status attribute); the only field the screen writes besides the six score fields
       quality: "",           // Quality score, 0-100
@@ -206,11 +384,12 @@
       source: "",            // where the deal came from; shown on the deal card as "via ..."
       createdAt: "",         // when the deal entered the list; written into the scoring prompt as "Added to pipeline"
     },
-    links: {  // The five side-menu URLs. Publish all screens first, then paste the five URLs here in EVERY screen (README.md).
+    links: {  // The six side-menu URLs. Publish all screens first, then paste the six URLs here in EVERY screen (README.md).
       deals: "",
       investors: "",
       inbox: "",
       knowledge: "",
+      newsletter: "",
       profile: "",
     },
   };
@@ -222,6 +401,7 @@
     investors: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/></svg>',
     inbox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13l3-8h12l3 8v6H3z M3 13h5l2 3h4l2-3h5"/></svg>',
     knowledge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 012-2h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2z M8 7h8M8 11h8M8 15h5"/></svg>',
+    newsletter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
     profile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>',
   };
   function rail() {
@@ -229,12 +409,26 @@
     document.getElementById("rail").innerHTML = `
       <div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 7c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg><span>${String(CONFIG.fundName || "Fund OS").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}<br>Operations</span></div>
       <div class="lbl">Domänen</div>
-      ${item("deals", "Deal Cockpit")}${item("investors", "Investor Relations")}${item("inbox", "Inbox")}${item("knowledge", "Knowledge")}
+      ${item("deals", "Deal Cockpit")}${item("investors", "Investor Relations")}${item("inbox", "Inbox")}${item("knowledge", "Knowledge")}${item("newsletter", "Newsletter")}
       <div class="spacer"></div>
       ${item("profile", "Profil")}
       <div class="foot">Fund OS · Scoring v2.0</div>`;
   }
   rail();
+
+  // ── Menü: auf dem Telefon ein Burger oben links; das Menü liegt als Panel über der Seite (F017). Auf breiten Schirmen bleibt es die Seitenleiste. ──
+  const railEl = document.getElementById("rail"), railScrim = document.getElementById("railScrim"), burgerBtn = document.getElementById("burger");
+  const railIsOpen = () => railEl.classList.contains("open");
+  function setRail(open, restoreFocus) {
+    railEl.classList.toggle("open", open); railScrim.hidden = !open;
+    burgerBtn.setAttribute("aria-expanded", String(open));
+    if (open) railEl.querySelector("a.item")?.focus();
+    else if (restoreFocus) burgerBtn.focus();
+  }
+  burgerBtn.addEventListener("click", () => setRail(!railIsOpen(), true));
+  railScrim.addEventListener("click", () => setRail(false, true));
+  railEl.addEventListener("click", (e) => { const a = e.target.closest("a.item"); if (!a || !railIsOpen()) return; if (a.getAttribute("aria-current")) e.preventDefault(); setRail(false, false); });
+  window.matchMedia("(max-width: 820px)").addEventListener?.("change", (e) => { if (!e.matches && railIsOpen()) setRail(false, false); });
 
   // ── Konstanten wie in functions/src/ops/agents/ranking.ts ───────────────────
   const SERVER = "Attio";
@@ -671,7 +865,7 @@
     return last;
   }
 
-  // The one Attio write of a score: exactly these six list-entry fields (ADR-0002, ADR-0005). Never the archived slugs, never deal_stage.
+  // The one Attio write of a score: exactly these six list-entry fields (ADR-0002, ADR-0005). Never the archived slugs, never the deal stage field.
   const WRITE_TEXT_MAX = 20000;
   const writeText = (s) => String(s ?? "").slice(0, WRITE_TEXT_MAX);
   function scoreWriteValues(card) {
@@ -685,6 +879,259 @@
     };
   }
   // ==== scorecard:end ====
+
+  // region:tasks (F007; pure: no DOM, no mcp, no globals; input is the output of parseAttioText() or JSON.parse; held still by scripts/check-artifact-tasks.mjs)
+  const TASK_MAX = 2000;   // longest task text the form sends
+  const TASK_PAGE = 10;    // list-tasks answers at most 10 per call
+  const TASK_CAP = 100;    // open tasks read per record
+  const tkText = (v) => (v === null || v === undefined || typeof v === "object" ? "" : String(v).trim());
+  const tkList = (v) => (Array.isArray(v) ? v : v === null || v === undefined || v === "" ? [] : [v]);
+  const tkSplit = (s) => String(s).split(",").map((x) => x.trim()).filter(Boolean);
+  // A compact table arrives as rows ({workspace_member_id} / {object_id, record_id}); a row that was not split by its header arrives as one comma-joined string.
+  const tkAssigneeIds = (v) => tkList(v).flatMap((r) => (r && typeof r === "object" ? [tkText(r.workspace_member_id ?? r.referenced_actor_id ?? r.workspace_membership_id ?? r.id)] : tkSplit(r))).filter(Boolean);
+  const tkRecordIds = (v) => tkList(v).flatMap((r) => { if (r && typeof r === "object") return [tkText(r.record_id ?? r.id)]; const p = tkSplit(r); return p.length ? [p.length > 1 ? p[1] : p[0]] : []; }).filter(Boolean);
+
+  // list-tasks answers a set deadline as an unquoted date-only value (2026-10-06); an ISO timestamp is accepted too. Both become YYYY-MM-DD (UTC day); null stays null.
+  function tkDay(v) {
+    const t = tkText(v);
+    if (/^\d{4}-\d{2}-\d{2}(?!\d)/.test(t)) return t.slice(0, 10);
+    const ms = Date.parse(t);
+    return t && Number.isFinite(ms) ? new Date(ms).toISOString().slice(0, 10) : null;
+  }
+
+  function parseTasks(payload) {
+    const list = Array.isArray(payload) ? payload : Array.isArray(payload?.tasks) ? payload.tasks : Array.isArray(payload?.data) ? payload.data : [];
+    return list.filter((t) => t && typeof t === "object").map((t) => ({
+      taskId: tkText(t.task_id ?? t.id?.task_id ?? t.id),
+      content: tkText(t.content ?? t.content_plaintext),
+      deadlineAt: tkDay(t.deadline_at),
+      isCompleted: t.is_completed === true || t.is_completed === "true",
+      assigneeIds: tkAssigneeIds(t.assignees),
+      linkedRecordIds: tkRecordIds(t.linked_records),
+      createdAt: tkText(t.created_at) || null,
+    })).filter((t) => t.taskId);
+  }
+
+  function parseMembers(payload) {
+    const list = Array.isArray(payload) ? payload : Array.isArray(payload?.members) ? payload.members : Array.isArray(payload?.workspace_members) ? payload.workspace_members : Array.isArray(payload?.data) ? payload.data : [];
+    return list.filter((m) => m && typeof m === "object").map((m) => {
+      const email = tkText(m.email ?? m.email_address);
+      return { id: tkText(m.workspace_membership_id ?? m.workspace_member_id ?? m.id), name: tkText(m.name) || [tkText(m.first_name), tkText(m.last_name)].filter(Boolean).join(" ") || email, email, accessLevel: tkText(m.access_level ?? m.accessLevel).toLowerCase() };
+    }).filter((m) => m.id);
+  }
+
+  const tkTime = (s) => { const t = Date.parse(s ?? ""); return Number.isFinite(t) ? t : null; };
+  // Deadline ascending, tasks without a deadline last; ties by creation time, oldest first. Returns a new array.
+  function sortTasks(tasks) {
+    const cmp = (x, y) => (x === y ? 0 : x === null ? 1 : y === null ? -1 : x - y);
+    return tasks.slice().sort((a, b) => cmp(tkTime(a.deadlineAt), tkTime(b.deadlineAt)) || cmp(tkTime(a.createdAt), tkTime(b.createdAt)));
+  }
+
+  // The member id preselected in the form: the viewer's own e-mail, else the first admin, else nobody.
+  function defaultAssignee(members, viewerEmail) {
+    const list = Array.isArray(members) ? members : [];
+    const mail = tkText(viewerEmail).toLowerCase();
+    const own = mail ? list.find((m) => tkText(m.email).toLowerCase() === mail) : null;
+    return (own ?? list.find((m) => m.accessLevel === "admin"))?.id ?? null;
+  }
+
+  const taskOverdue = (t, now) => Boolean(t.deadlineAt) && t.deadlineAt.slice(0, 10) < now.toISOString().slice(0, 10);
+
+  // The one create-task call: text up to 2000 characters, an optional day (sent as UTC midnight), an optional assignee, linked to the company record.
+  function buildCreateTask({ content, date, assigneeId, recordId }) {
+    const text = tkText(content);
+    if (!recordId) return { ok: false, error: "no_record" };
+    if (!text) return { ok: false, error: "content_empty" };
+    if (text.length > TASK_MAX) return { ok: false, error: "content_too_long" };
+    const day = tkText(date);
+    const ms = Date.parse(day + "T00:00:00.000Z");
+    if (day && !(/^\d{4}-\d{2}-\d{2}$/.test(day) && Number.isFinite(ms) && new Date(ms).toISOString().slice(0, 10) === day)) return { ok: false, error: "date_invalid" };
+    const input = { content: text };
+    if (day) input.deadline_at = day + "T00:00:00.000Z";
+    if (assigneeId) input.assignee_workspace_member_id = assigneeId;
+    input.linked_record_object = "companies";
+    input.linked_record_id = recordId;
+    return { ok: true, input };
+  }
+  // endregion:tasks
+
+  // ── F017 · Vorschläge und Autopilot im eigenen Speicher: dieselben Werte und Prüfungen wie artifacts/ops/inbox.html ──
+  const DEALS = LIST, INVESTORS = CONFIG.investorList;
+  const STATUSES = CONFIG.statuses;
+  const KIND_LABEL = { email: "Mail", "deal-stage": "Stage", "investor-status": "Status", digest: "Digest", newsletter: "Newsletter", task: "Aufgabe", note: "Notiz" };
+  const STATUS_LABEL = { pending: "offen", approved: "freigegeben", rejected: "abgelehnt", sent: "gesendet" };
+  const SKILL = "deal-cockpit/1.0";
+  const GMAIL = "Gmail";
+  const COMPANIES_OBJECT = CONFIG.companiesObjectId;
+  // Die Zustandsmaschine, wie in functions/src/ops/store.ts: pending → alles; approved → nur sent.
+  const transitionAllowed = (from, to) => from === "pending" || (to === "sent" && from === "approved");
+
+  // ==== guards:begin ====
+  // Alles, was aus dem Speicher kommt, ist unvertraut: erst prüfen, dann anzeigen oder nach Attio schreiben (Audit 2026-10-04, ADR-0008).
+  const FORBIDDEN_STAGES = CONFIG.forbiddenStages;
+  const FORBIDDEN_STATUSES = CONFIG.forbiddenStatuses;
+  // Streng: genau die Form 8-4-4-4-12 aus Kleinbuchstaben-Hex. Vor dem Test wird kleingeschrieben und mit dem Original verglichen:
+  // eine Kennung mit Großbuchstaben (oder 36 Bindestrichen) wird abgelehnt, nie stillschweigend geändert und dann geschrieben.
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+  const isUuid = (v) => typeof v === "string" && v === v.toLowerCase() && UUID_RE.test(v.toLowerCase());
+  const own = (o, k) => typeof k === "string" && Object.prototype.hasOwnProperty.call(o, k);
+  const kindLabel = (k) => (own(KIND_LABEL, k) ? KIND_LABEL[k] : "unbekannt");
+  const kindClass = (k) => (own(KIND_LABEL, k) ? "k-" + k : "k-unknown");
+  const statusValid = (s) => own(STATUS_LABEL, s);
+  const statusLabel = (s) => (statusValid(s) ? STATUS_LABEL[s] : "ungültiger Status");
+  const safeHref = (u) => (/^https:\/\//i.test(String(u ?? "")) ? String(u) : null);
+  const attioLink = (id) => (isUuid(id) ? attioUrl(id) : null);
+  // Eine Aufgaben-Freigabe (F014, Modul notes) legt über create-task genau diese fünf Felder an (deadline_at nur, wenn gesetzt): alles andere wird nie geschrieben.
+  // Namen (linked_record_name, assignee_name) dürfen im Dokument stehen, werden nur angezeigt und nie gesendet.
+  function taskBlock(t) {
+    if (!t || typeof t !== "object") return "keine Aufgabe im Dokument";
+    if (typeof t.content !== "string" || !t.content.trim() || t.content.length > 2000) return "Aufgabentext fehlt oder ist zu lang";
+    if (!isUuid(t.assignee_workspace_member_id)) return "Zuständige Person (Workspace-Member-ID) ist ungültig";
+    if (!["companies", "people"].includes(t.linked_record_object) || !isUuid(t.linked_record_id)) return "Verknüpfter Datensatz ist ungültig";
+    if (t.deadline_at !== undefined && t.deadline_at !== null && !(typeof t.deadline_at === "string" && /^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(t.deadline_at) && Number.isFinite(Date.parse(t.deadline_at)))) return "Fälligkeit ist kein ISO-Datum (UTC)";
+    return null;
+  }
+  // Eine Notiz-Freigabe (F014) legt über create-note genau diese vier Felder an: title, content, parent_object, parent_record_id.
+  function noteBlock(n) {
+    if (!n || typeof n !== "object") return "keine Notiz im Dokument";
+    if (typeof n.title !== "string" || !n.title.trim() || n.title.length > 500) return "Titel der Notiz fehlt oder ist zu lang (höchstens 500 Zeichen)";
+    if (typeof n.content !== "string" || !n.content.trim() || n.content.length > 50000) return "Text der Notiz fehlt oder ist zu lang (höchstens 50 000 Zeichen)";
+    if (!["companies", "people"].includes(n.parent_object) || !isUuid(n.parent_record_id)) return "Datensatz der Notiz ist ungültig";
+    return null;
+  }
+  // Die Art, mit der die Karte geöffnet wurde, muss die Art des frisch gelesenen Dokuments sein; sonst würde eine andere Handlung
+  // ausgeführt, als die Person gesehen und freigegeben hat (Audit F014, B1).
+  function kindChanged(openedKind, cur) {
+    return cur?.kind === openedKind ? null : `Die Art der Freigabe hat sich seit dem Öffnen geändert (${String(openedKind).slice(0, 40)} → ${String(cur?.kind).slice(0, 40)}); bitte neu öffnen`;
+  }
+  // Ausführungssperre (nur Arten, die Attio anlegen und nicht zweimal angelegt werden dürfen): `locking.executing` ist ein ISO-Zeitpunkt.
+  // Jünger als 10 Minuten oder unlesbar: nicht ausführen. Älter oder null: frei.
+  const EXEC_LOCK_MS = 10 * 60 * 1000;
+  const LOCKED_KINDS = ["task", "note"];
+  function lockBlock(cur, nowMs) {
+    const e = cur?.locking?.executing;
+    if (e === undefined || e === null) return null;
+    const t = typeof e === "string" ? Date.parse(e) : NaN;
+    if (!Number.isFinite(t)) return "Die Ausführungssperre ist unlesbar; nichts geschrieben";
+    return nowMs - t < EXEC_LOCK_MS ? `Diese Freigabe wird seit ${Math.max(0, Math.round((nowMs - t) / 60000))} Min. ausgeführt (oder der Ausgang ist unklar); frühestens nach 10 Min. erneut, vorher in Attio prüfen` : null;
+  }
+  // Darf diese Freigabe nach Attio schreiben? → null (ja) oder der Grund, warum nicht.
+  function approvalBlock(ap) {
+    if (!ap || typeof ap !== "object") return "kein Dokument";
+    if (ap.kind === "task") return taskBlock(ap.task);
+    if (ap.kind === "note") return noteBlock(ap.crmNote);
+    if (ap.kind !== "deal-stage" && ap.kind !== "investor-status") return null;
+    const stage = ap.kind === "deal-stage", to = ap.change?.to;
+    if (ap.target?.list !== (stage ? DEALS : INVESTORS)) return "Liste passt nicht zur Art des Vorschlags";
+    if (!isUuid(ap.target?.entryId)) return "Eintrags-ID ist ungültig";
+    if (typeof to !== "string" || !(stage ? STAGES : STATUSES).includes(to)) return "Zielwert ist keine bekannte Option";
+    if ((stage ? FORBIDDEN_STAGES : FORBIDDEN_STATUSES).includes(to)) return `„${to}“ ist gesperrt: nur ein Mensch setzt das in Attio selbst (ADR-0008)`;
+    return null;
+  }
+  // Rückgängig nur für erlaubte Handlungen mit geprüftem Ziel; sonst nie ein Schreibvorgang aus Speicherdaten.
+  function undoTargetOk(act) {
+    const t = act?.target ?? {};
+    // recordId ist Pflicht: ohne den Datensatz gäbe es keine Vorabprüfung des Ist-Werts (Sicherheitsprüfung F017, Low).
+    if (!isUuid(t.entryId) || !isUuid(t.recordId)) return false;
+    if (typeof act.before !== "string" || typeof act.after !== "string") return false;
+    if (act.kind === "stage") return t.list === DEALS && STAGES.includes(act.before) && !FORBIDDEN_STAGES.includes(act.before);
+    if (act.kind === "status") return t.list === INVESTORS && STATUSES.includes(act.before) && !FORBIDDEN_STATUSES.includes(act.before);
+    return false;
+  }
+  // Empfänger-Feld aus dem Speicher: Liste, Text (getrennt durch Komma, Semikolon oder Leerraum) oder nichts → immer eine Liste.
+  const toList = (v) => (Array.isArray(v) ? v : typeof v === "string" ? v.split(/[,;\s]+/).filter(Boolean) : []);
+  // N6: Eine Freigabe, die schon einen Entscheidungszeitpunkt oder (Mail) eine Entwurfs-ID trägt, wird nicht noch einmal ausgeführt:
+  // ein früherer Versuch hat den Aufruf vermutlich gemacht und nur den Status nicht mehr gespeichert.
+  const STATUS_WRITE_FAILED = "Entwurf/Attio-Änderung ist ausgeführt, der Status konnte nicht gespeichert werden — nicht erneut freigeben; Status von Hand setzen";
+  const filled = (v) => v !== undefined && v !== null && v !== "";
+  function executedBlock(cur) {
+    if (filled(cur?.decidedAt)) return "Diese Freigabe trägt schon einen Entscheidungszeitpunkt (decidedAt); sie wurde vermutlich schon ausgeführt. In Attio bzw. Gmail prüfen und den Status von Hand setzen";
+    if ((cur?.kind === "email" || cur?.kind === "digest") && filled(cur.email?.draftId)) return "Zu dieser Freigabe liegt schon ein Gmail-Entwurf (draftId); ein zweiter wird nicht angelegt. Den Entwurf in Gmail öffnen und hier „Als gesendet markieren“";
+    return null;
+  }
+  // Wer hat den Schalter zuletzt gesetzt? Ein Agent darf es nicht still tun: das zeigt die Seite an.
+  const looksLikeAgent = (by) => /^(agent|orchestrator)/i.test(String(by ?? "").trim());
+  // Das Protokoll ist nur anhängend: ein "mail-sent" wird nie geändert. Die Bestätigung ist ein zweiter Eintrag
+  // (act.kind "mail-confirmed" oder "mail-failed", act.ref = Dokument-ID des Versand-Eintrags).
+  // → null (kein Versand) | "failed" | "confirmed" | "open" (noch nicht bestätigt). "failed" geht vor "confirmed".
+  function sendState(e, docs) {
+    if (e?.act?.kind !== "mail-sent") return null;
+    const list = Array.isArray(docs) ? docs : [];
+    const has = (k) => list.some((x) => x?.act?.kind === k && typeof e.id === "string" && x.act.ref === e.id);
+    return has("mail-failed") ? "failed" : has("mail-confirmed") ? "confirmed" : "open";
+  }
+  // Deep-Link aus Deal Cockpit und Investor Relations: <Inbox-URL>#record=<recordId> (F007). Gilt nur, wenn der Wert eine UUID ist; alles andere wird ignoriert.
+  const RECORD_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+  function recordFromHash(hash) {
+    for (const part of String(hash ?? "").replace(/^#/, "").split("&")) {
+      if (!part.startsWith("record=")) continue;
+      let v;
+      try { v = decodeURIComponent(part.slice(7)); } catch { return null; }
+      v = v.trim().toLowerCase();
+      return RECORD_ID_RE.test(v) ? v : null;
+    }
+    return null;
+  }
+  const sameRecord = (id, rec) => typeof id === "string" && id.toLowerCase() === rec;
+  // Freigabe: target.recordId (alle Arten) oder, bei Aufgaben, task.linked_record_id. Audit-Eintrag: act.target.recordId.
+  const approvalHasRecord = (ap, rec) => sameRecord(ap?.target?.recordId, rec) || sameRecord(ap?.task?.linked_record_id, rec) || sameRecord(ap?.crmNote?.parent_record_id, rec);
+  const actHasRecord = (e, rec) => sameRecord(e?.act?.target?.recordId, rec);
+  // ==== guards:end ====
+  const AUTOPILOT_DOC = "settings/autopilot", RUNS = "runs"; // Speicherpfade des Vertrags (docs/specs/F010)
+  // F017: dieses Artefakt führt nur das Modul Dealflow. Die Zeile MODULES ist die einzige, die sich von der Region in inbox.html unterscheidet
+  // (check-artifacts hält den Rest byte-gleich); die anderen Module bleiben im Dokument unberührt, weil der Schalter nur einen Schlüssel zusammenführt.
+  // ==== autopilot:begin ====
+  const MODULES = ["dealflow"];
+  const MODULE_LABEL = { dealflow: "Dealflow", investors: "Investoren", newsletter: "Newsletter", notes: "Meeting-Notizen" };
+  const MODES = ["off", "review-first", "on"];
+  const MODE_LABEL = { off: "Aus", "review-first": "Erst prüfen", on: "An" };
+  // Fehlt settings/autopilot oder ist es unlesbar, ist jedes Modul aus.
+  const AUTOPILOT_DEFAULTS = {
+    version: 1,
+    modules: {
+      dealflow: { mode: "off", maxOutboundPerDay: 20, purposes: ["acknowledge", "request-deck", "schedule-call", "pass"] },
+      investors: { mode: "off", maxOutboundPerDay: 20, purposes: ["lp-first-touch", "lp-follow-up", "schedule-call"] },
+      newsletter: { mode: "off", maxOutboundPerDay: 20, purposes: ["newsletter"] },
+      notes: { mode: "off", maxOutboundPerDay: 20, purposes: ["note", "task", "status-proposal"] },
+    },
+  };
+  // settings/autopilot (auch teilweise oder kaputt) → wirksame Einstellungen; unbekannter Modus gilt als "off".
+  function readAutopilot(doc) {
+    const src = doc && typeof doc === "object" && doc.modules && typeof doc.modules === "object" ? doc.modules : {};
+    const modules = {};
+    for (const m of MODULES) {
+      const d = AUTOPILOT_DEFAULTS.modules[m];
+      const g = src[m] && typeof src[m] === "object" ? src[m] : {};
+      modules[m] = {
+        mode: MODES.includes(g.mode) ? g.mode : "off",
+        maxOutboundPerDay: Number.isFinite(g.maxOutboundPerDay) && g.maxOutboundPerDay >= 0 ? g.maxOutboundPerDay : d.maxOutboundPerDay,
+        purposes: Array.isArray(g.purposes) && g.purposes.every((p) => typeof p === "string") ? g.purposes.slice() : d.purposes.slice(),
+        updatedAt: g.updatedAt ?? null,
+        updatedBy: g.updatedBy ?? null,
+      };
+    }
+    return { version: 1, modules };
+  }
+  // Audit-Einträge des Agenten → Läufe, neuester zuerst; innerhalb eines Laufs in zeitlicher Reihenfolge.
+  // Einträge ohne runId stehen gesammelt unter "einzeln".
+  function groupActs(entries) {
+    const byRun = new Map();
+    for (const e of Array.isArray(entries) ? entries : []) {
+      if (!e || typeof e !== "object") continue;
+      const id = typeof e.runId === "string" && e.runId ? e.runId : "einzeln";
+      if (!byRun.has(id)) byRun.set(id, { runId: id, module: e.module ?? null, at: "", acts: [] });
+      const r = byRun.get(id);
+      r.acts.push(e);
+      if (!r.module && e.module) r.module = e.module;
+    }
+    const runs = [...byRun.values()];
+    for (const r of runs) {
+      r.acts.sort((a, b) => String(a.timestampUtc ?? "").localeCompare(String(b.timestampUtc ?? "")));
+      r.at = r.acts.reduce((mx, e) => (String(e.timestampUtc ?? "") > mx ? String(e.timestampUtc) : mx), "");
+    }
+    return runs.sort((a, b) => b.at.localeCompare(a.at));
+  }
+  // ==== autopilot:end ====
 
   let sample = null, scoringCtl = null, scoringId = null, sampleBlocked = false, kn = null;
   const cards = new Map();  // entryId -> the scorecard written in this visit
@@ -888,6 +1335,210 @@
     } finally { scoringCtl = null; }
   }
 
+  // ── Aufgaben (F007, ADR-0007): Attio hält die Aufgaben; die Seite liest, legt an und hakt ab ──
+  const HARD = new Set(["needs_reauth", "server_not_connected", "selection_required", "not_in_manifest", "blocked_by_policy", "not_granted", "capability_disabled", "capability_removed"]);
+  const MEMBER_CACHE = { staleTime: 3600000 };
+  let viewerEmail = null, membersP = null, membersList = [], membersFailed = false, view = "deals";
+  const taskState = new Map();  // recordId -> { status: "loading" | "ok" | "err", tasks, truncated, err, promise }
+  let tkPending = null;          // the open confirm box: { kind: "done", taskId } or { kind: "new", input }, busy while the write runs
+  let tkDraft = { content: "", date: "", who: null };  // the form; who null = the default assignee
+  let tkNote = "";               // the last result or error of an action, as HTML
+  const resetTk = () => { tkPending = null; tkDraft = { content: "", date: "", who: null }; tkNote = ""; };
+
+  // Pages list-tasks by offset (10 per call) until has_more is false or 100 open tasks are read.
+  async function loadTasksFor(recordId, cache) {
+    const out = []; const seen = new Set(); let offset = 0, truncated = false;
+    for (;;) {
+      const res = await callAttio("list-tasks", { linked_record_object: "companies", linked_record_id: recordId, is_completed: false, limit: TASK_PAGE, offset }, { cache });
+      const p = parsePayload(res);
+      if (p === null || p === undefined) throw Object.assign(new Error("Die Antwort von list-tasks wurde nicht erkannt (siehe Diagnose)"), { code: "unknown_shape" });
+      const got = parseTasks(p);
+      const before = out.length;
+      for (const t of got) {
+        if (t.isCompleted || seen.has(t.taskId)) continue;
+        if (t.linkedRecordIds.length && !t.linkedRecordIds.includes(recordId)) continue;  // the filter is the connector's; a task of another record is never shown here
+        seen.add(t.taskId); out.push(t);
+      }
+      const more = Boolean(p.has_more ?? false);
+      if (!more || got.length === 0 || out.length === before) break;  // a page without a new id: the connector ignored offset, stop instead of looping
+      offset += got.length;
+      if (out.length >= TASK_CAP) { truncated = true; break; }
+    }
+    return { tasks: out.slice(0, TASK_CAP), truncated: truncated || out.length > TASK_CAP };
+  }
+  // Sync up to the state change, so the caller can paint "loading"; the promise settles when the state is ok or err. An existing state is kept unless retry.
+  function ensureTasks(recordId, { retry = false, fresh = false } = {}) {
+    const cur = taskState.get(recordId);
+    if (!mcp) return Promise.resolve();
+    if (cur && !retry) return cur.promise ?? Promise.resolve();
+    const st = { status: "loading", tasks: cur?.tasks ?? [], truncated: false, err: null, promise: null };
+    taskState.set(recordId, st);
+    st.promise = loadTasksFor(recordId, fresh ? { staleTime: 0, refresh: true } : { staleTime: 60000 })
+      .then((r) => { st.status = "ok"; st.tasks = r.tasks; st.truncated = r.truncated; }, (err) => { st.status = "err"; st.err = err; })
+      .then(() => tasksChanged(recordId));
+    return st.promise;
+  }
+  // Assignee names for the dropdown and the lists; read once per session, and only a success is kept.
+  function loadMembers() {
+    if (!mcp) return Promise.resolve([]);
+    membersP ??= callAttio("list-workspace-members", {}, { cache: MEMBER_CACHE })
+      .then((res) => { membersList = parseMembers(parsePayload(res)); membersFailed = false; return membersList; })
+      .catch((err) => { membersP = null; membersFailed = true; throw err; });
+    return membersP;
+  }
+  const memberName = (id) => { const m = membersList.find((x) => x.id === id); return m ? (m.name || m.email) : String(id).slice(0, 8); };
+  const fmtDay = (iso) => { const t = Date.parse(iso); return Number.isFinite(t) ? new Date(t).toLocaleDateString("de-DE", { timeZone: "UTC", day: "2-digit", month: "2-digit", year: "numeric" }) : String(iso); };
+  const tkWho = () => (tkDraft.who !== null ? tkDraft.who : defaultAssignee(membersList, viewerEmail) ?? "");
+  const TK_ERRORS = { content_empty: "Erst die Aufgabe beschreiben.", content_too_long: `Die Aufgabe darf höchstens ${TASK_MAX} Zeichen haben.`, date_invalid: "Das Datum ist ungültig.", no_record: "Dieser Eintrag hat keinen Firmendatensatz." };
+
+  function taskItem(t) {
+    const late = taskOverdue(t, new Date());
+    const who = t.assigneeIds.length ? t.assigneeIds.map(memberName).join(", ") : "niemand zugewiesen";
+    return `<div class="tk"><div class="tx">${esc(t.content)}<div class="meta"><span class="${late ? "late" : ""}">${t.deadlineAt ? `fällig ${esc(fmtDay(t.deadlineAt))}${late ? " · überfällig" : ""}` : "ohne Frist"}</span> · ${esc(who)}</div></div><button type="button" class="btn" data-tk="done" data-id="${esc(t.taskId)}">Erledigt</button></div>`;
+  }
+  function tkConfirmBox(d) {
+    const p = tkPending; if (!p) return "";
+    const btns = (label, act) => `<div class="row"><button type="button" class="btn primary" data-tk="${act}"${p.busy ? " disabled" : ""}>${label}</button><button type="button" class="btn" data-tk="cancel"${p.busy ? " disabled" : ""}>Abbrechen</button></div>`;
+    const busy = p.busy ? `<div class="note"><span class="spin"></span> Schreibe…</div>` : "";
+    if (p.kind === "done") {
+      const t = (taskState.get(d.recordId)?.tasks ?? []).find((x) => x.taskId === p.taskId);
+      return `<div class="confirm"><b>Aufgabe als erledigt markieren?</b><div>${esc(t?.content ?? p.taskId)}</div>
+        <div class="muted" style="font-size:12px">Schreibt <code>is_completed: true</code> mit <code>update-task</code>. Ein Schreibvorgang, jetzt, unter deinem Konto.</div>${btns("In Attio abhaken", "do-done")}${busy}</div>`;
+    }
+    const i = p.input;
+    return `<div class="confirm"><b>Neue Aufgabe an ${esc(d.name)} anlegen?</b><div>${esc(i.content)}</div>
+      <div class="muted">Frist: ${i.deadline_at ? esc(fmtDay(i.deadline_at)) : "keine"} · Zuständig: ${i.assignee_workspace_member_id ? esc(memberName(i.assignee_workspace_member_id)) : "niemand"}</div>
+      <div class="muted" style="font-size:12px">Schreibt eine Aufgabe mit <code>create-task</code>, verknüpft mit diesem Firmendatensatz. Ein Schreibvorgang, jetzt, unter deinem Konto.</div>${btns("In Attio anlegen", "do-new")}${busy}</div>`;
+  }
+  // The drawer section: open tasks, the add form, the way into the Inbox. Repainted on its own, never with the rest of the drawer.
+  function tasksBlock(d) {
+    if (!d.recordId) return `<h3>Offene Aufgaben</h3><div class="note warn">Dieser Eintrag hat keinen Firmendatensatz; Aufgaben sind hier nicht möglich.</div>`;
+    const st = taskState.get(d.recordId);
+    let list;
+    if (!mcp) list = `<div class="muted">Keine Connectoren in dieser Ansicht.</div>`;
+    else if (!st || st.status === "loading") list = `<div class="muted"><span class="spin"></span> Lese Aufgaben aus Attio…</div>`;
+    else if (st.status === "err") { const [kind, html] = explain(st.err); list = `<div class="note ${kind}">${html} <button type="button" class="btn" data-tk="reload">Erneut lesen</button></div>`; }
+    else list = (st.tasks.length ? `<div class="tasks">${sortTasks(st.tasks).map(taskItem).join("")}</div>` : `<div class="muted">Keine offenen Aufgaben.</div>`)
+      + (st.truncated ? `<div class="muted" style="font-size:12px">Gezeigt werden die ersten ${TASK_CAP} offenen Aufgaben; weitere stehen in Attio.</div>` : "");
+    const who = tkWho();
+    const def = defaultAssignee(membersList, viewerEmail);
+    const opts = `<option value="">Niemand</option>` + membersList.map((m) => `<option value="${esc(m.id)}"${m.id === who ? " selected" : ""}>${esc(m.name || m.email)}${m.id === def ? " (Standard)" : ""}</option>`).join("");
+    const membersNote = membersFailed ? `<div class="muted" style="font-size:12px">Die Mitgliederliste ließ sich nicht lesen (Diagnose); ohne sie ist nur „Niemand“ wählbar. <button type="button" class="btn" data-tk="reload">Erneut lesen</button></div>` : "";
+    return `<h3>Offene Aufgaben</h3>${list}
+      <div id="taskMsg" aria-live="polite">${tkNote}</div>
+      <h3>Neue Aufgabe</h3>
+      <div class="tkform"><div class="row">
+        <input type="text" id="tkContent" maxlength="${TASK_MAX}" placeholder="Was ist zu tun?" aria-label="Aufgabe" value="${esc(tkDraft.content)}">
+        <input type="date" id="tkDate" aria-label="Frist" value="${esc(tkDraft.date)}">
+        <select id="tkWho" aria-label="Zuständig">${opts}</select>
+        <button type="button" class="btn" data-tk="new"${tkPending?.busy ? " disabled" : ""}>Anlegen…</button>
+      </div>${membersNote}</div>
+      <div id="taskConfirm" aria-live="polite">${tkConfirmBox(d)}</div>
+      <div class="actions"><button type="button" class="btn" data-ib-record="${esc(d.recordId)}">Vorschläge in der Inbox</button></div>`;
+  }
+  function paintTasks(d) {
+    const h = $("taskHost"); if (!h || selected !== d.entryId) return;
+    h.innerHTML = tasksBlock(d);
+  }
+  function tasksChanged(recordId) {
+    const r = ranked.find((x) => x.d.entryId === selected);
+    if (r && r.d.recordId === recordId) paintTasks(r.d);
+    tabCount(); if (view === "tasks") paintTasksView();
+  }
+  async function taskAction(d, el) {
+    const k = el.dataset.tk;
+    if (tkPending?.busy) return;
+    if (k === "done") { tkNote = ""; tkPending = { kind: "done", taskId: el.dataset.id }; }
+    else if (k === "new") {
+      const b = buildCreateTask({ content: tkDraft.content, date: tkDraft.date, assigneeId: tkWho(), recordId: d.recordId });
+      if (!b.ok) { tkPending = null; tkNote = `<div class="note warn">${esc(TK_ERRORS[b.error] ?? b.error)}</div>`; }
+      else { tkNote = ""; tkPending = { kind: "new", input: b.input }; }
+    }
+    else if (k === "cancel") tkPending = null;
+    else if (k === "reload") {
+      tkNote = ""; if (membersFailed) { membersP = null; loadMembers().then(() => paintTasks(d), () => paintTasks(d)); }
+      ensureTasks(d.recordId, { retry: true, fresh: true });
+    }
+    else if (k === "do-done" || k === "do-new") { await taskWrite(d); return; }
+    paintTasks(d);
+  }
+  // The only two writes of the section. Both after a confirm; neither retried; a failed write says so and may still have gone through.
+  async function taskWrite(d) {
+    const p = tkPending; if (!p || p.busy) return;
+    p.busy = true; paintTasks(d);
+    try {
+      if (p.kind === "done") await callAttio("update-task", { task_id: p.taskId, is_completed: true }, { cache: false });
+      else await callAttio("create-task", p.input, { cache: false });
+    } catch (err) {
+      const [, html] = explain(err); const ambiguous = ["server_unavailable", "upstream_error", "cancelled"].includes(err?.code);
+      if (tkPending === p) tkPending = null;
+      tkNote = `<div class="note bad">${html}${ambiguous ? " <b>Der Schreibvorgang kann trotzdem durchgegangen sein</b>; vor einem neuen Versuch die Aufgaben neu lesen." : " Nichts wurde geschrieben."}</div>`;
+      paintTasks(d); return;
+    }
+    if (tkPending === p) tkPending = null;
+    if (p.kind === "new") tkDraft = { content: "", date: "", who: null };
+    tkNote = `<div class="note ok"><b>${p.kind === "done" ? "Aufgabe erledigt." : "Aufgabe angelegt."}</b></div>`;
+    try { await mcp.invalidate(SERVER, "list-tasks"); } catch { /* nichts im Cache ist in Ordnung */ }
+    const done = ensureTasks(d.recordId, { retry: true, fresh: true });
+    paintTasks(d); await done;
+  }
+
+  // ── Ansicht „Aufgaben“: die offenen Aufgaben aller geladenen Deals, je Deal beim Öffnen gelesen ──
+  const tkProg = { running: false, done: 0, total: 0 };
+  function openTasksAll() {
+    const out = []; const seen = new Set();
+    for (const d of deals) {
+      const st = d.recordId ? taskState.get(d.recordId) : null;
+      if (st?.status !== "ok") continue;
+      for (const t of st.tasks) if (!seen.has(t.taskId)) { seen.add(t.taskId); out.push({ ...t, deal: d }); }
+    }
+    return sortTasks(out);
+  }
+  function tabCount() { const n = openTasksAll().length; $("tabTasksN").textContent = n ? ` (${n})` : ""; }
+  function paintTasksView() {
+    const all = openTasksAll(); const now = new Date();
+    const failed = [...taskState.values()].filter((s) => s.status === "err").length;
+    $("tkProgress").innerHTML = !mcp ? "" : tkProg.running ? `<span class="spin"></span> Lese Aufgaben… ${tkProg.done}/${tkProg.total} Deals` : `${tkProg.total} Deals gelesen${failed ? ` · ${failed} mit Fehler` : ""}`;
+    $("tkCount").textContent = `${all.length} offen`;
+    $("tkReload").disabled = !mcp || tkProg.running;
+    if (all.length === 0) { $("taskRows").innerHTML = `<tr><td colspan="4" class="empty">${!mcp ? "Keine Connectoren in dieser Ansicht." : tkProg.running ? "Lese…" : deals.length ? "Keine offenen Aufgaben in den geladenen Deals." : "Noch keine Deals geladen."}</td></tr>`; return; }
+    $("taskRows").innerHTML = all.map((t) => { const late = taskOverdue(t, now); return `<tr tabindex="0" data-id="${esc(t.deal.entryId)}">
+        <td><span class="${late ? "late" : ""}">${t.deadlineAt ? esc(fmtDay(t.deadlineAt)) : "—"}</span></td>
+        <td>${esc(t.content)}</td>
+        <td><div class="name">${esc(t.deal.name)}</div><div class="dom">${esc(t.deal.stage ?? "")}</div></td>
+        <td>${t.assigneeIds.length ? esc(t.assigneeIds.map(memberName).join(", ")) : '<span class="muted">—</span>'}</td></tr>`; }).join("");
+  }
+  // Three deals at a time. A hard connector error (not connected, not allowed) stops the run and goes to the banner; other errors count per deal.
+  async function loadAllTasks(force) {
+    if (!mcp || tkProg.running) return;
+    const ids = [...new Set(deals.map((d) => d.recordId).filter(Boolean))];
+    const todo = ids.filter((id) => force || !taskState.has(id) || taskState.get(id).status === "err");
+    Object.assign(tkProg, { running: true, done: ids.length - todo.length, total: ids.length }); paintTasksView();
+    loadMembers().then(() => paintTasksView(), () => paintTasksView());
+    let next = 0, fatal = null;
+    const worker = async () => {
+      while (next < todo.length && !fatal) {
+        const id = todo[next++];
+        await ensureTasks(id, { retry: true, fresh: force });
+        const st = taskState.get(id); if (st?.status === "err" && HARD.has(st.err?.code)) fatal = st.err;
+        tkProg.done++; paintTasksView();
+      }
+    };
+    await Promise.all([worker(), worker(), worker()]);
+    tkProg.running = false;
+    if (fatal) { const [kind, html] = explain(fatal); banner(kind, html); $("diag").open = true; }
+    paintTasksView(); tabCount();
+  }
+  const VIEWS = ["deals", "tasks", "inbox", "autopilot"];
+  function setView(v) {
+    view = v;
+    for (const k of VIEWS) $(k + "View").hidden = k !== v;
+    for (const b of document.querySelectorAll("[data-view]")) { const on = b.dataset.view === v; b.classList.toggle("on", on); b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; }
+    if (v === "tasks") { paintTasksView(); loadAllTasks(false); }
+    if (v === "inbox") renderInbox();
+    if (v === "autopilot") { renderAutopilot(); refreshToday(); }
+  }
+
   async function loadAll(force) {
     if (!mcp || loading) return;
     loading = true; $("refresh").disabled = true; setConn("wait", force ? "Aktualisiere…" : "Lese die Startups-Liste…"); banner("", "");
@@ -929,6 +1580,7 @@
       }
       for (const d of out) if (d.name === "…") d.name = d.domain ?? (d.recordId ? d.recordId.slice(0, 8) : "Unbenannt");
       deals = out; setConn("ok", `Attio · ${deals.length} Deals`); render();
+      if (view === "tasks") loadAllTasks(false);
     } catch (err) {
       const [kind, html] = explain(err); banner(kind, html); setConn("bad", "Attio: " + (err?.code ?? "Fehler")); $("diag").open = true;
       if (err?.retryable && !force) { setTimeout(() => { loading = false; loadAll(false); }, 1500 + Math.random() * 1500); return; }
@@ -938,16 +1590,20 @@
   // ── Darstellung ──────────────────────────────────────────────────────────────
   function freshness() { const p = $("fresh"); if (!storedAt) { p.hidden = true; return; } const mins = Math.round((Date.now() - storedAt) / 60000); $("freshText").textContent = mins < 1 ? "gerade gelesen" : `gelesen vor ${mins} min`; p.className = "pill " + (mins > 30 ? "wait" : "ok"); p.hidden = false; }
   function tiles() {
+    // Vier Kacheln (Zahl und Beschriftung; die frühere Unterzeile steht im title). Die übrigen Filter liegen im Auswahlfeld „Weitere Filter“.
     const K = [
       ["top", ranked.filter((r) => r.rank !== null && r.rank <= TOP_N).length, "Top 20 diese Woche", "Score × Urgency, ohne Passes", "accent"],
       ["o0", ranked.filter((r) => r.outcome === 0).length, "Act now", "Fenster offen oder Prozess läuft", "alert"],
       ["o1", ranked.filter((r) => r.outcome === 1).length, "Answer fast", "Top 20, oder ein Score fehlt", "warn"],
       ["o2", ranked.filter((r) => r.outcome === 2).length, "Track", "gescort, kein Fenster", "calm"],
-      ["o3", ranked.filter((r) => r.outcome === 3).length, "Pass with care", CONFIG.passedStages.join(" oder "), ""],
-      ["unscored", ranked.filter((r) => r.d.quality === null && r.outcome !== 3).length, "Ungescort", "noch kein Quality-Score", ""],
-      ["stale", ranked.filter((r) => r.stale && r.d.urgency !== null && r.outcome !== 3).length, "Urgency veraltet", `älter als ${URGENCY_VALID_DAYS} Tage`, "warn"],
     ];
-    $("tiles").innerHTML = K.map(([id, v, l, s, tone]) => `<button type="button" class="tile ${tone} ${filter.kpi === id ? "on" : ""}" data-kpi="${id}" aria-pressed="${filter.kpi === id}"><span class="v">${v}</span><span class="l">${esc(l)}</span><span class="s">${esc(s)}</span></button>`).join("");
+    const MORE = [
+      ["o3", ranked.filter((r) => r.outcome === 3).length, "Pass with care"],
+      ["unscored", ranked.filter((r) => r.d.quality === null && r.outcome !== 3).length, "Ungescort"],
+      ["stale", ranked.filter((r) => r.stale && r.d.urgency !== null && r.outcome !== 3).length, `Urgency veraltet (älter als ${URGENCY_VALID_DAYS} Tage)`],
+    ];
+    $("tiles").innerHTML = K.map(([id, v, l, s, tone]) => `<button type="button" class="tile ${tone} ${filter.kpi === id ? "on" : ""}" data-kpi="${id}" aria-pressed="${filter.kpi === id}" title="${esc(s)}"><span class="v">${v}</span><span class="l">${esc(l)}</span></button>`).join("");
+    $("kpiMore").innerHTML = `<option value="">Weitere Filter</option>` + MORE.map(([id, v, l]) => `<option value="${id}"${filter.kpi === id ? " selected" : ""}>${esc(l)} · ${v}</option>`).join("");
   }
   function passes(r) {
     const d = r.d;
@@ -996,13 +1652,18 @@
           <button type="button" class="btn" data-act="note">Notiz anlegen…</button>
         </div>
         <div id="confirmHost" aria-live="polite"></div>
+        <div id="taskHost" class="view" style="gap:10px">${tasksBlock(d)}</div>
         ${scoreBlock(d)}
         ${pendingCard.has(d.entryId) ? pendingBlock(pendingCard.get(d.entryId)) : cards.has(d.entryId) ? scoreResult(cards.get(d.entryId)) : ""}
         ${d.summary && !fresh ? `<h3>Investment summary</h3><pre>${esc(d.summary)}</pre>` : ""}
         ${d.thesisEval ? `<h3>Thesis Fit</h3><pre>${esc(d.thesisEval)}</pre>` : ""}
         ${d.urgencyEval ? `<h3>Urgency</h3><pre>${esc(d.urgencyEval)}</pre>` : ""}
-        <div class="muted" style="font-size:12px">Stage-Wechsel, Notizen und Scores werden nach deiner Bestätigung direkt in Attio geschrieben, unter deinem Attio-Konto. Was eine zweite Partnerin vorher sehen soll, gehört in die Inbox.</div>
+        <div class="muted" style="font-size:12px">Stage-Wechsel, Notizen, Aufgaben und Scores werden nach deiner Bestätigung direkt in Attio geschrieben, unter deinem Attio-Konto. Was eine zweite Partnerin vorher sehen soll, gehört in die Inbox.</div>
       </aside>`;
+    if (d.recordId) {
+      ensureTasks(d.recordId);
+      if (!membersFailed) loadMembers().then(() => paintTasks(d), () => paintTasks(d));
+    }
   }
   // Neu scoren: der Button ist immer da; ohne sample ist er aus und sagt warum, dann wird nichts geschrieben.
   function scoreBlock(d) {
@@ -1030,7 +1691,7 @@
   function pendingBlock(c) {
     return `<div class="note warn"><b>Scorecard berechnet, aber nicht in Attio geschrieben.</b> <button type="button" class="btn primary" data-do="rewrite"${rewriting ? " disabled" : ""}>Erneut in Attio schreiben</button></div>${scoreResult(c)}`;
   }
-  function closeDrawer() { selected = null; kn = null; const h = $("drawerHost"); h.hidden = true; h.innerHTML = ""; }
+  function closeDrawer() { selected = null; kn = null; resetTk(); const h = $("drawerHost"); h.hidden = true; h.innerHTML = ""; }
   function confirmBox(r, kind) {
     const d = r.d; const host = $("confirmHost");
     if (kind === "score") { $("confirmHost").innerHTML = ""; scoreConfirm(r); return; }
@@ -1143,32 +1804,420 @@
     }
   }
 
+  // ==== store-tabs:begin ==== (F017: Inbox and Autopilot of the deal domain on the cockpit's own store; the unescaped-value scan of check-artifacts reads this region)
+  let db = null, actor = "unbekannt", canEdit = false;
+  let approvals = [], auditDocs = [], runsDocs = [], autopilotRaw = null;
+  let ibFilter = "pending", ibSelected = null, ibNew = null, ibShown = "", ibRecord = null;
+  let confirmOn = false, apMsg = "", undoOpen = null, feedMsgs = {}, undoFresh = {};
+  let todayDocs = [], todayOk = false, todayBusy = false;
+  const MODULE = "dealflow", FEED_LIMIT = 200;
+  const DEAL_KINDS = ["deal-stage", "email"];
+  const RUN_STATUS = { running: "läuft", done: "fertig", failed: "fehlgeschlagen" };
+  const ACT_LABEL = { "issue-draft": "Newsletter-Entwurf", "campaign-draft": "Kampagnen-Entwurf", "mail-draft": "Mail-Entwurf", "mail-sent": "Mail gesendet", "mail-confirmed": "Versand bestätigt", "mail-failed": "Versand fehlgeschlagen", score: "Scoring", record: "CRM-Datensatz", stage: "Stage", status: "Status", note: "Notiz", task: "Aufgabe", invite: "Termin" };
+  // Die Vorschläge dieses Artefakts: Stage-Wechsel und Mails zu Deals. Alles andere bleibt in der Inbox.
+  const isDealApproval = (a) => Boolean(a) && typeof a === "object" && (a.kind === "deal-stage" || (a.kind === "email" && (a.module === "dealflow" || a.target?.list === DEALS)));
+  const ago = (iso) => { const d = new Date(iso); if (!Number.isFinite(d.getTime())) return ""; const m = Math.round((Date.now() - d.getTime()) / 60000); return m < 1 ? "jetzt" : m < 60 ? `vor ${m} min` : m < 1440 ? `vor ${Math.round(m / 60)} h` : `vor ${Math.round(m / 1440)} T`; };
+  const fmtTime = (iso) => { const d = new Date(iso); return Number.isFinite(d.getTime()) ? d.toLocaleString("de-DE") : "—"; };
+  const fmtVal = (v) => v === undefined || v === null ? "—" : typeof v === "string" ? v : JSON.stringify(v);
+  const AMBIGUOUS = ["server_unavailable", "upstream_error", "cancelled"];
+  // Fehlertexte je Connector (wie in der Inbox).
+  function explainFor(err, server) { const code = err?.code ?? "upstream_error"; switch (code) {
+    case "needs_reauth": return `<b>${server} muss neu verbunden werden.</b> In claude.ai unter Einstellungen → Connectoren.`;
+    case "server_not_connected": case "selection_required": return `<b>Kein ${server}-Connector in dieser Ansicht.</b> In claude.ai unter Einstellungen → Connectoren hinzufügen.`;
+    case "not_in_manifest": return `<b>${server} ist für diese Seite nicht erlaubt.</b> Beim Aufruf erlauben.`;
+    case "server_unavailable": case "rate_limited": return `<b>${server} hat nicht rechtzeitig geantwortet.</b> Gleich noch einmal.`;
+    case "tool_error": return `<b>${server} meldet einen Fehler:</b> ${esc(err.message ?? "")}`;
+    case "cancelled": return `<b>Abgebrochen.</b> Ausgang unbekannt; in ${server} prüfen.`;
+    default: return `<b>${server}: etwas ist fehlgeschlagen</b> (${esc(code)}). ${esc(err?.message ?? "")}`; } }
+  async function callGmail(tool, input, opts) {
+    const t0 = Date.now();
+    try {
+      const res = await mcp.callTool(GMAIL, tool, input, opts);
+      const p = res?.payload;
+      log("ok", `${GMAIL} · ${tool} · ${Date.now() - t0} ms · payload: ${p === undefined ? "undefined" : Array.isArray(p) ? "array" : typeof p}`, typeof p === "string" ? p.slice(0, 600) : (p ?? res));
+      return res;
+    } catch (err) { log("err", `${GMAIL} · ${tool} · ${err?.code ?? "?"} · ${err?.message ?? ""}`, input); throw err; }
+  }
+
+  // ── Audit: nur anhängen (Eintragsform wie in der Inbox) ──
+  async function sha(input) { try { const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(input))); return "sha256:" + [...new Uint8Array(buf)].slice(0, 8).map((b) => b.toString(16).padStart(2, "0")).join(""); } catch { return "sha256:unavailable"; } }
+  async function audit(action, input, outputRef, rationale, actorType = "human", extra = null) {
+    if (!db) return;
+    const entry = { timestampUtc: new Date().toISOString(), actor: actor || "unknown", actorType, skillVersion: SKILL, action: action || "unknown", inputHash: await sha(input ?? null), outputRef: outputRef || "unknown", rationale: rationale || "unknown", ...(extra ?? {}) };
+    try { await db.collection("audit").add(entry); } catch (e) { log("err", `audit.add ${e?.code ?? "?"}`); }
+  }
+
+  // ── Reiter Inbox: die Vorschläge zu Deals ──
+  function updateBadges() {
+    const n = approvals.filter((x) => isDealApproval(x) && x.status === "pending").length, b = $("tabInboxN");
+    b.textContent = String(n); b.hidden = n === 0; b.title = `${n} offene Vorschläge zu Deals`;
+  }
+  function renderInbox() {
+    updateBadges();
+    if (!db) { $("ibList").innerHTML = `<div class="empty">Der Speicher ist in dieser Ansicht nicht verfügbar. Das Artefakt im Browser auf claude.ai öffnen, angemeldet.</div>`; $("ibDetail").hidden = true; return; }
+    $("ibDetail").hidden = false;
+    const base = approvals.filter(isDealApproval).filter((x) => !ibRecord || approvalHasRecord(x, ibRecord));
+    const vis = base.filter((a) => ibFilter === "all" || a.status === ibFilter || (ibFilter === "pending" && !statusValid(a.status))).sort((x, y) => String(y.createdAt).localeCompare(String(x.createdAt)));
+    const counts = Object.fromEntries(["pending", "approved", "rejected", "sent"].map((s) => [s, base.filter((a) => a.status === s).length]));
+    $("ibList").innerHTML = ibChip() + `<div class="row">${["pending", "approved", "sent", "rejected", "all"].map((s) => `<button type="button" class="btn ${ibFilter === s ? "primary" : ""}" data-f="${s}">${s === "all" ? "alle" : STATUS_LABEL[s]} · ${s === "all" ? base.length : counts[s]}</button>`).join("")}</div>` +
+      (vis.length ? vis.map((a) => `<button type="button" class="itemcard ${a.id === ibSelected ? "on" : ""} ${a.status !== "pending" ? "done" : ""}" data-id="${esc(a.id)}"><div class="row" style="justify-content:space-between"><span class="kind ${kindClass(a.kind)}">${esc(kindLabel(a.kind))}${a.email?.purpose ? " · " + esc(a.email.purpose) : ""}</span><span class="s">${esc(ago(a.createdAt))}</span></div><div style="font-weight:600">${esc(a.title)}</div><div class="s">${esc(a.createdBy ?? "")} · ${esc(statusLabel(a.status))}${a.decidedBy ? " von " + esc(a.decidedBy) : ""}</div></button>`).join("") : `<div class="empty">${ibRecord ? "Keine Vorschläge zu diesem Deal." : ibFilter === "pending" ? "Nichts wartet. Gut." : "Keine Einträge."}</div>`);
+    if (ibNew) return;  // the follow-up form owns the detail pane
+    const sel = base.find((x) => x.id === ibSelected);
+    if (!sel) { ibShown = ""; const h = $("ibDetail"); h.className = "ibdetail nosel"; h.innerHTML = `<div class="empty">Links einen Vorschlag wählen.</div>`; return; }
+    if (JSON.stringify(sel) !== ibShown) ibRenderDetail(sel);  // an unchanged document is not repainted: edits in the mail fields survive other snapshots
+  }
+  // Filter auf einen Deal (#inbox&record=<uuid>, aus dem Deal-Drawer): nur eine strenge UUID gilt; die Marke hebt ihn auf.
+  function ibChip() {
+    if (!ibRecord) return "";
+    const nm = (approvals.find((x) => approvalHasRecord(x, ibRecord) && typeof x.target?.name === "string" && x.target.name.trim())?.target.name ?? deals.find((x) => x.recordId === ibRecord)?.name ?? "").trim();
+    return `<div class="row"><button type="button" class="btn" data-rec-clear="1" title="Filter aufheben">Nur Deal${nm && nm !== "…" ? " " + esc(nm) : ""} <code>${esc(ibRecord.slice(0, 8))}…</code> · alle anzeigen</button></div>`;
+  }
+  function ibSetRecord(rec, hash) {
+    ibRecord = rec; ibSelected = null; ibNew = null; ibShown = "";
+    if (hash !== undefined) { try { history.replaceState(null, "", hash); } catch { /* Adresse nicht änderbar: der Filter gilt trotzdem */ } }
+    renderInbox();
+  }
+  function ibApplyHash() {
+    const rec = recordFromHash(location.hash);
+    if (rec) { if (rec !== ibRecord) ibSetRecord(rec); setView("inbox"); }
+    else if (ibRecord && !location.hash) ibSetRecord(null);
+  }
+  function ibRenderDetail(a) {
+    ibShown = JSON.stringify(a);
+    const host = $("ibDetail"); host.className = "ibdetail";
+    const close = `<button type="button" class="btn" data-ib-close="1">Schließen</button>`;
+    if (!statusValid(a.status)) { host.innerHTML = `<div class="ibhead"><span class="kind ${kindClass(a.kind)}">${esc(kindLabel(a.kind))} · ungültiger Status</span>${close}</div><h2>${esc(a.title)}</h2><div class="note bad"><b>Ungültiger Status.</b> Das Dokument im Speicher trägt einen Status, den diese Seite nicht kennt. Es gibt dafür keine Aktionen.</div><div id="ibMsg"></div>`; return; }
+    const isMail = a.kind === "email", can = canEdit, off = a.status !== "pending" ? "disabled" : "";
+    const attio = attioLink(a.target?.recordId), draftHref = safeHref(a.email?.draftUrl);
+    const words = String(a.email?.body ?? "").trim().split(/\s+/).filter(Boolean).length;
+    host.innerHTML = `
+      <div class="ibhead"><span class="kind ${kindClass(a.kind)}">${esc(kindLabel(a.kind))} · ${esc(statusLabel(a.status))}</span>${close}</div>
+      <div><h2>${esc(a.title)}</h2><div class="meta">Vorgeschlagen von ${esc(a.createdBy ?? "?")} · ${esc(new Date(a.createdAt).toLocaleString("de-DE"))}${a.decidedAt ? ` · entschieden von ${esc(a.decidedBy ?? "?")} · ${esc(new Date(a.decidedAt).toLocaleString("de-DE"))}` : ""}</div></div>
+      ${attio ? `<div class="row"><a class="btn" href="${esc(attio)}" target="_blank" rel="noopener">In Attio öffnen</a></div>` : ""}
+      ${a.rationale ? `<div class="note acc"><b>Warum:</b> ${esc(a.rationale)}</div>` : ""}
+      ${!isMail ? `<div class="note"><b>${esc(a.target?.name ?? "")}</b>: ${esc(a.change?.from ?? "?")} → <b>${esc(a.change?.to ?? "?")}</b> auf <code>${esc(a.target?.list ?? "")}</code></div>` : `
+        <div class="grid2"><div><label class="flbl" for="eTo">An</label><input id="eTo" value="${esc(toList(a.email?.to).join(", "))}" ${off}></div><div><label class="flbl" for="eSub">Betreff</label><input id="eSub" value="${esc(a.email?.subject ?? "")}" ${off}></div></div>
+        <div><label class="flbl" for="eBody">Text · ${words} Wörter</label><textarea id="eBody" ${off}>${esc(a.email?.body ?? "")}</textarea></div>
+        ${draftHref ? `<div class="note ok"><b>Entwurf liegt in Gmail.</b> <a href="${esc(draftHref)}" target="_blank" rel="noopener">Entwurf öffnen</a>, senden, dann „als gesendet markieren“.</div>` : ""}`}
+      ${a.note ? `<div class="note warn"><b>Notiz:</b> ${esc(a.note)}</div>` : ""}
+      <div id="ibMsg" aria-live="polite"></div>
+      <div class="ibactions">
+        ${a.status === "pending" && can ? `<button type="button" class="btn primary" data-dec="approved">${isMail ? "Freigeben und Gmail-Entwurf anlegen" : "Freigeben und in Attio schreiben"}</button><button type="button" class="btn danger" data-dec="rejected">Ablehnen…</button>` : ""}
+        ${isMail && (a.status === "approved" || a.status === "pending") && can ? `<button type="button" class="btn" data-dec="sent">Als gesendet markieren</button>` : ""}
+        ${isMail ? `<button type="button" class="btn" data-copy="1">Text kopieren</button>` : ""}
+        ${!can ? `<span class="meta">Nur Bearbeiter dieses Artefakts dürfen entscheiden.</span>` : ""}
+      </div>`;
+  }
+  const ibSay = (html) => { const m = $("ibMsg"); if (m) m.innerHTML = html; };
+  function ibClose() { ibSelected = null; ibNew = null; ibShown = ""; renderInbox(); }
+  async function decide(a, decision) {
+    if (!transitionAllowed(a.status, decision)) { ibSay(`<div class="note bad">Schon ${esc(statusLabel(a.status))}; dieser Übergang ist nicht erlaubt.</div>`); return; }
+    if (!DEAL_KINDS.includes(a.kind) || !own(KIND_LABEL, a.kind)) { ibSay(`<div class="note bad">Unbekannte Art; nichts geschrieben.</div>`); return; }
+    if (decision === "approved") {
+      const why = approvalBlock(a); if (why) { ibSay(`<div class="note bad"><b>Nicht freigegeben, nichts geschrieben:</b> ${esc(why)}.</div>`); return; }
+      if (!mcp) { ibSay(`<div class="note bad"><b>Keine Connectoren in dieser Ansicht.</b> Freigeben braucht Attio bzw. Gmail; nichts geschrieben.</div>`); return; }
+    }
+    if (decision === "rejected") {
+      ibSay(`<div class="note warn"><b>Warum ablehnen?</b><div class="row" style="margin-top:6px"><input id="rejNote" placeholder="kurzer Grund"><button type="button" class="btn danger" id="rejGo">Ablehnen</button></div></div>`);
+      $("rejGo").addEventListener("click", () => { ibFinish(a, "rejected", $("rejNote").value.trim() || "ohne Grund"); });
+      return;
+    }
+    await ibFinish(a, decision, null);
+  }
+  // finish: `a` ist die Karte, wie sie geöffnet wurde (veraltet); entschieden und ausgeführt wird nur, was frisch gelesen (`cur`) und geprüft ist.
+  // Reihenfolge bei „freigeben“: frisch lesen; Übergang erlaubt? Art des frischen Dokuments = Art der geöffneten Karte? approvalBlock(cur) bestanden?
+  // Dann genau ein Connector-Aufruf mit den geprüften Feldern aus `cur`; erst danach der Status `approved` und der Audit-Eintrag.
+  async function ibFinish(a, decision, note) {
+    ibSay(`<div class="note"><span class="spin"></span> ${decision === "approved" ? "Führe aus…" : "Speichere…"}</div>`);
+    const ref = db.collection("approvals").doc(a.id);
+    const refuse = (why) => { ibSay(`<div class="note bad"><b>Nicht freigegeben, nichts geschrieben:</b> ${esc(why)}.</div>`); };
+    let kind = a.kind, toolDone = false;
+    try {
+      // Erst noch einmal lesen: zweimal anwenden ist der Fehler, den die Zustandsmaschine verhindern soll.
+      const snap = await ref.get(); const cur = snap.exists ? snap.data() : null;
+      if (!cur || !transitionAllowed(cur.status, decision)) { ibSay(`<div class="note bad">Inzwischen ${esc(statusValid(cur?.status) ? STATUS_LABEL[cur.status] : "geändert")}; nichts geschrieben.</div>`); return; }
+      if (decision === "approved") {
+        // Ab hier gilt nur noch `cur`, nie `a`: die Art, die Felder, der Datensatz.
+        const why = kindChanged(a.kind, cur) ?? (DEAL_KINDS.includes(cur.kind) && own(KIND_LABEL, cur.kind) ? approvalBlock(cur) : "Diese Art gehört nicht in dieses Artefakt") ?? executedBlock(cur);
+        if (why) { refuse(why); return; }
+      }
+      kind = cur.kind;
+      let outputRef = `approval/${a.id}`; const patch = {};
+      if (decision === "approved") {
+        if (kind === "deal-stage") {
+          await callAttio("update-list-entry-by-id", { list: cur.target.list, entry_id: cur.target.entryId, entry_values: { [CONFIG.fields.dealStage]: cur.change.to } }, { cache: false }); toolDone = true;
+          outputRef = `attio:entry/${cur.target.entryId}`;
+          await audit("write-stage", { entryId: cur.target.entryId, to: cur.change.to }, outputRef, `Effekt der Freigabe ${a.id}: ${cur.target.name} ${cur.change.from} → ${cur.change.to}`);
+        } else {
+          const to = toList($("eTo")?.value ?? toList(cur.email?.to).join(",")); const subject = $("eSub")?.value ?? cur.email?.subject ?? ""; const body = $("eBody")?.value ?? cur.email?.body ?? "";
+          const res = await callGmail("create_draft", { to, subject, body }, { cache: false }); toolDone = true;
+          const p = parsePayload(res); const draftUrl = p?.viewUrl ?? p?.draft?.viewUrl ?? null; const draftId = p?.id ?? p?.draft?.id ?? null;
+          patch.email = { ...(cur.email ?? {}), to, subject, body, draftUrl, draftId };
+          outputRef = draftId ? `gmail:draft/${draftId}` : "gmail:draft";
+          await audit("draft-created", { to, subject }, outputRef, `Entwurf aus Freigabe ${a.id} im Postfach von ${actor}`);
+        }
+      }
+      const next = { ...cur, ...patch, status: decision, decidedAt: new Date().toISOString(), decidedBy: actor, note: note ?? cur.note ?? null };
+      await ref.set(next);
+      await audit(decision === "approved" ? "approve" : decision === "rejected" ? "reject" : "mark-sent", { approvalId: a.id, kind }, outputRef, note ?? `${cur.title ?? a.id}: ${STATUS_LABEL[decision]}`);
+      ibSay(`<div class="note ok"><b>${STATUS_LABEL[decision]}.</b></div>`);
+    } catch (e) {
+      const server = kind === "email" ? GMAIL : SERVER, ambiguous = AMBIGUOUS.includes(e?.code);
+      if (toolDone) await audit("status-write-failed", { approvalId: a.id, kind }, `approval/${a.id}`, `Status der Freigabe ${a.id} nicht gespeichert, obwohl der Aufruf ausgeführt wurde (${e?.code ?? "?"})`, "human", { act: { kind: "status-write-failed", target: { name: a.title ?? null }, reversible: false } });
+      ibSay(`<div class="note bad">${explainFor(e, server)}${ambiguous && !toolDone ? ` <b>Der Schreibvorgang kann trotzdem durchgegangen sein</b>; in ${server} prüfen, bevor du es erneut versuchst.` : ""}${toolDone ? ` <b>${esc(STATUS_WRITE_FAILED)}.</b>` : ""} Die Freigabe bleibt ${esc(statusLabel(a.status))}.</div>`);
+    }
+  }
+
+  // Nachfassen: ein Mail-Vorschlag an denselben Empfänger. Er wartet auf eine Freigabe (ADR-0006); die Seite sendet nichts.
+  function ibCompose(pre) {
+    ibNew = pre; ibSelected = null; ibShown = ""; renderInbox();
+    const host = $("ibDetail"); host.hidden = false; host.className = "ibdetail";
+    host.innerHTML = `
+      <div class="ibhead"><span class="kind k-email">Neuer Vorschlag · Nachfassen</span><button type="button" class="btn" data-ib-close="1">Schließen</button></div>
+      <div class="grid2"><div><label class="flbl" for="nTo">An</label><input id="nTo" value="${esc(pre.to)}"></div><div><label class="flbl" for="nSub">Betreff</label><input id="nSub" value="${esc(pre.subject)}"></div></div>
+      <div><label class="flbl" for="nBody">Text</label><textarea id="nBody"></textarea></div>
+      <div><label class="flbl" for="nWhy">Warum</label><input id="nWhy" value="${esc(pre.why)}"></div>
+      <div id="ibMsg" aria-live="polite"></div>
+      <div class="ibactions"><button type="button" class="btn primary" id="nSave">Vorschlag anlegen</button><button type="button" class="btn" data-ib-close="1">Abbrechen</button></div>`;
+    $("nSave").disabled = !canEdit; $("nSave").addEventListener("click", ibSaveNew);
+    if (!canEdit) ibSay(`<div class="note warn">Nur Bearbeiter dieses Artefakts dürfen Vorschläge anlegen.</div>`);
+    $("nBody").focus?.();
+  }
+  async function ibSaveNew() {
+    const pre = ibNew; if (!pre) return;
+    const to = $("nTo").value.split(/[,;\s]+/).filter(Boolean), subject = $("nSub").value.trim(), body = $("nBody").value;
+    if (!to.length || !body.trim()) { ibSay(`<div class="note warn">Empfänger und Text fehlen noch.</div>`); return; }
+    ibSay(`<div class="note"><span class="spin"></span> Speichere…</div>`);
+    const why = $("nWhy").value.trim() || "ohne Begründung";
+    const a = { kind: "email", module: MODULE, title: `${pre.name || to[0] || "Mail"} · ${subject || "ohne Betreff"}`, target: pre.recordId ? { recordId: pre.recordId, name: pre.name } : {}, email: { purpose: "follow-up", to, subject, body }, status: "pending", rationale: why, createdAt: new Date().toISOString(), createdBy: actor, decidedAt: null, decidedBy: null, note: null };
+    try { const ref = await db.collection("approvals").add(a); await audit("propose", a, `approval/${ref.id}`, why); ibNew = null; ibSelected = ref.id; ibShown = ""; renderInbox(); }
+    catch (e) { ibSay(`<div class="note bad">Speichern fehlgeschlagen (${esc(e?.code ?? "?")}). ${esc(e?.message ?? "")}</div>`); }
+  }
+
+  // ── Reiter Autopilot: der Schalter für Dealflow, die Zählung, der letzte Lauf, das Protokoll ──
+  // Ausgehende Handlungen des Agenten heute (UTC-Tag, wie die Zeitstempel). Der Feed lädt nur die neuesten 200 Einträge;
+  // für die Tageszählung fragt die Seite den ganzen Tag ab (refreshToday) und fällt bei einem Fehler auf die geladene Liste zurück.
+  // Ein fehlgeschlagener Versand (zweiter Eintrag "mail-failed") zählt nicht.
+  const dayStart = () => new Date().toISOString().slice(0, 10) + "T00:00:00.000Z";
+  function allAudit() { const m = new Map(); for (const d of [...auditDocs, ...todayDocs]) if (d && d.id) m.set(d.id, d); return [...m.values()]; }
+  function sentToday(module) { const day = dayStart().slice(0, 10), pool = allAudit(); return pool.filter((e) => e.actorType === "agent" && e.module === module && ["mail-sent", "invite"].includes(e.act?.kind) && String(e.timestampUtc ?? "").startsWith(day) && sendState(e, pool) !== "failed").length; }
+  const todayNote = () => (todayOk ? "Zählung aus allen Einträgen des heutigen UTC-Tags." : auditDocs.length >= FEED_LIMIT ? "Die Tagesabfrage ist fehlgeschlagen; gezählt wurden nur die neuesten 200 Einträge. Die Zahl kann unvollständig sein." : "Die Tagesabfrage ist fehlgeschlagen; gezählt wurde aus der geladenen Liste (weniger als 200 Einträge, daher vollständig).");
+  async function refreshToday() {
+    if (!db || todayBusy) return; todayBusy = true;
+    try { const snap = await db.collection("audit").where("timestampUtc", ">=", dayStart()).get(); todayDocs = snap.docs.filter((x) => x.exists).map((x) => ({ id: x.id, ...x.data() })); todayOk = true; }
+    catch (err) { todayOk = false; log("err", `audit.heute ${err?.code ?? err?.message ?? "?"}`); }
+    finally { todayBusy = false; }
+    renderAutopilot();
+  }
+  function renderAutopilot() {
+    if (!db) { $("apBody").innerHTML = `<div class="empty">Der Speicher ist in dieser Ansicht nicht verfügbar. Ohne Speicher gilt: aus.</div>`; $("feed").innerHTML = ""; return; }
+    const c = readAutopilot(autopilotRaw).modules[MODULE], run = runsDocs.find((r) => r.module === MODULE) ?? null, n = sentToday(MODULE), over = n >= c.maxOutboundPerDay;
+    const sw = MODES.map((mode) => `<button type="button" role="radio" aria-checked="${c.mode === mode}" class="m-${mode}" data-mode="${esc(mode)}" ${canEdit ? "" : "disabled"}>${MODE_LABEL[mode]}</button>`).join("");
+    const confirm = confirmOn ? `<div class="note warn"><b>Autopilot für ${esc(MODULE_LABEL[MODULE])} einschalten?</b> Der Agent sendet dann selbst, bis zu <b>${esc(c.maxOutboundPerDay)} Mails pro Tag</b>, nur zu diesen Zwecken: <code>${esc(c.purposes.join(", "))}</code>. Jede Mail steht vor dem Senden im Protokoll. Die Leitplanken (ADR-0008) gelten weiter: <ul style="margin:6px 0 0;padding-left:18px"><li>höchstens eine Antwort je Thread und 24 Stunden</li><li>keine Mail an einen Empfänger, dem das Modul in den letzten 7 Tagen geschrieben hat, es sei denn, er hat geantwortet</li><li>nur die genannten Zwecke</li><li>höchstens ${esc(c.maxOutboundPerDay)} ausgehende Handlungen pro Tag</li><li>keine Stage oder kein Status in Invested, Term sheet, Soft Commitment, Hard Commitment oder Closed / Wired</li><li>den Schalter ändert nur ein Mensch, hier</li></ul><div class="row" style="margin-top:8px"><button type="button" class="btn primary" data-go="1">Autopilot einschalten</button><button type="button" class="btn" data-cancel="1">Abbrechen</button></div></div>` : "";
+    const runHtml = run ? `<div class="note ${run.status === "failed" ? "bad" : run.status === "running" ? "warn" : "ok"}"><b>Letzter Lauf</b> · ${esc(fmtTime(run.startedAt))} · ${esc(RUN_STATUS[run.status] ?? run.status ?? "?")}<div class="s" style="margin-top:4px">${esc(run.acts ?? 0)} Handlungen · ${esc(run.outbound ?? 0)} ausgehend${run.mode ? " · Modus " + esc(MODE_LABEL[run.mode] ?? run.mode) : ""}</div>${run.summary ? `<div style="margin-top:4px">${esc(run.summary)}</div>` : ""}${run.error ? `<div style="margin-top:4px;color:var(--alert)">${esc(run.error)}</div>` : ""}</div>` : `<div class="note">Noch kein Lauf.</div>`;
+    $("apBody").innerHTML = (canEdit ? "" : `<div class="note warn">Nur Bearbeiter dieses Artefakts dürfen den Schalter ändern.</div>`) +
+      `<div class="card"><div class="row" style="justify-content:space-between"><h2 class="sechead" style="font-size:16px;letter-spacing:0;text-transform:none;color:var(--fg)">${esc(MODULE_LABEL[MODULE])}</h2><span class="pill ${c.mode === "on" ? "ok" : c.mode === "review-first" ? "wait" : ""}"><span class="dot"></span>${esc(MODE_LABEL[c.mode])}</span></div>
+        <div class="sw" role="radiogroup" aria-label="Autopilot ${esc(MODULE_LABEL[MODULE])}">${sw}</div>
+        <div class="s">Aus: nur Vorschläge · Erst prüfen: Datensätze, Scores und Entwürfe selbst, jede Mail als Freigabe · An: sendet selbst, in den Leitplanken. Nicht lesbar heißt aus.</div>
+        ${confirm}${apMsg}
+        <div class="s" title="${esc(todayNote())}">heute: <b style="color:${over ? "var(--alert)" : "var(--fg)"}">${n}</b> von ${esc(c.maxOutboundPerDay)} ausgehenden Handlungen</div>
+        <div class="s">Zwecke: ${esc(c.purposes.join(" · "))}</div>
+        <div class="s">${c.updatedAt ? `zuletzt geändert von ${esc(c.updatedBy ?? "?")} am ${esc(fmtTime(c.updatedAt))}` : "noch nie geändert (Standard: aus)"}</div>
+        ${runHtml}</div>`;
+    renderFeed();
+  }
+  async function setMode(mode) {
+    confirmOn = false; apMsg = `<div class="note"><span class="spin"></span> Speichere…</div>`; renderAutopilot();
+    try {
+      const ref = db.doc(AUTOPILOT_DOC);
+      const snap = await ref.get(); const cur = snap.exists ? (snap.data() ?? {}) : {};
+      const eff = readAutopilot(cur).modules[MODULE], before = eff.mode;
+      if (before === mode) { apMsg = ""; renderAutopilot(); return; }
+      const at = new Date().toISOString();
+      // Ein Modul je Schreibvorgang, zusammengeführt: nie das ganze `modules`-Objekt aus dem Lesen, nie fremde Schlüssel (Sicherheitsprüfung F017, Low).
+      const next = { modules: { [MODULE]: { mode, maxOutboundPerDay: eff.maxOutboundPerDay, purposes: eff.purposes, updatedAt: at, updatedBy: actor } } };
+      await ref.set(next, { merge: true });
+      await audit("autopilot-set", { module: MODULE, before, after: mode }, AUTOPILOT_DOC, `${MODULE}: ${before} → ${mode}`);
+      apMsg = `<div class="note ok"><b>${esc(MODULE_LABEL[MODULE])}: ${esc(MODE_LABEL[before])} → ${esc(MODE_LABEL[mode])}.</b></div>`;
+    } catch (e) { apMsg = `<div class="note bad">Speichern fehlgeschlagen (${esc(e?.code ?? "?")}). ${esc(e?.message ?? "")}</div>`; }
+    renderAutopilot();
+  }
+
+  // ── Protokoll: die Handlungen des Agenten im Modul Dealflow ──
+  const actChip = (kind) => kind === "mail-sent" || kind === "mail-confirmed" || kind === "mail-failed" ? "k-email" : kind === "issue-draft" || kind === "campaign-draft" ? "k-newsletter" : "k-deal-stage";
+  const canUndo = (e) => Boolean(e.act?.reversible && !e.corrected && undoTargetOk(e.act));
+  function renderFeed() {
+    if (!db) return;
+    const runs = groupActs(auditDocs.filter((e) => e.actorType === "agent" && e.module === MODULE));
+    if (!runs.length) { $("feed").innerHTML = `<div class="empty">Noch keine Handlungen des Agenten im Modul Dealflow. Sobald es läuft, steht hier jede Handlung, mit Weg zurück.</div>`; return; }
+    const pool = allAudit();
+    $("feed").innerHTML = runs.slice(0, 20).map((r) => {
+      const run = runsDocs.find((x) => x.id === r.runId);
+      const head = `<div class="row" style="justify-content:space-between"><div><b>${r.runId === "einzeln" ? "Einzelne Handlungen" : esc(MODULE_LABEL[r.module] ?? r.module ?? "Lauf")}</b> <span class="s">${esc(fmtTime(r.at))} · ${Number(r.acts.length)} Handlung(en)${run?.status ? " · " + esc(RUN_STATUS[run.status] ?? run.status) : ""}</span></div>${r.runId !== "einzeln" ? `<span class="s">${esc(r.runId)}</span>` : ""}</div>${run?.summary ? `<div class="meta">${esc(run.summary)}</div>` : ""}`;
+      const rows = [...r.acts].reverse().map((e) => {
+        const a = e.act ?? null, t = a?.target ?? {}, id = esc(e.id);
+        const label = a ? (own(ACT_LABEL, a.kind) ? ACT_LABEL[a.kind] : a.kind) : e.action;
+        const fm = feedMsgs[e.id] ?? "", open = undoOpen === e.id, fresh = open ? undoFresh[e.id] : null, link = attioLink(t.recordId), ss = sendState(e, pool);
+        const sendNote = ss === "confirmed" ? `<div class="s" style="color:var(--good)"><b>bestätigt</b></div>` : ss === "failed" ? `<div class="s" style="color:var(--alert)"><b>fehlgeschlagen</b> · zählt nicht zu „heute“</div>` : ss === "open" ? `<div class="s" style="color:var(--warn)"><b>Versand nicht bestätigt</b></div>` : "";
+        return `<div class="actrow"><div class="row" style="justify-content:space-between"><div class="row"><span class="kind ${actChip(a?.kind)}">${esc(label)}</span><b>${esc(t.name ?? "")}</b>${link ? `<a class="s" href="${esc(link)}" target="_blank" rel="noopener">In Attio öffnen</a>` : ""}</div><span class="s">${esc(fmtTime(e.timestampUtc))}</span></div>
+          ${a && (a.before !== undefined || a.after !== undefined) ? `<div class="m">${esc(fmtVal(a.before))} → <b>${esc(fmtVal(a.after))}</b></div>` : ""}
+          ${a?.kind === "mail-sent" && t.to ? `<div class="m">an ${esc(Array.isArray(t.to) ? t.to.join(", ") : t.to)}</div>` : ""}
+          ${(a?.kind === "mail-sent" || a?.kind === "mail-draft") && t.subject ? `<div class="m">Betreff: ${esc(t.subject)}</div>` : ""}
+          ${sendNote}
+          <div>${esc(e.rationale)}</div>
+          ${e.corrected ? `<div class="s">korrigiert (${esc(e.corrected.how ?? "?")}) von ${esc(e.corrected.by ?? "?")} am ${esc(fmtTime(e.corrected.at))}</div>` : ""}
+          <div class="row">${canUndo(e) && canEdit && mcp ? `<button type="button" class="btn danger" data-undo="${id}">Rückgängig</button>` : ""}${a?.kind === "mail-sent" ? `<button type="button" class="btn" data-follow="${id}" ${canEdit && mcp ? "" : "disabled"}>Nachfassen</button>` : ""}</div>
+          ${open && fresh ? `<div class="note warn"><b>${esc(fresh.act.target.name ?? "Eintrag")}</b> zurück auf <b>${esc(fmtVal(fresh.act.before))}</b> setzen? Der Eintrag wurde eben frisch aus dem Speicher gelesen; vorher wird der aktuelle Wert in Attio gelesen, und nur wenn er noch <b>${esc(fmtVal(fresh.act.after))}</b> ist, wird geschrieben und im Protokoll vermerkt.<div class="row" style="margin-top:8px"><button type="button" class="btn danger" data-undo-go="${id}">Rückgängig machen</button><button type="button" class="btn" data-undo-cancel="1">Abbrechen</button></div></div>` : ""}
+          ${fm}</div>`;
+      }).join("");
+      return `<div class="card">${head}<div>${rows}</div></div>`;
+    }).join("") + (runs.length > 20 ? `<div class="meta">Die 20 neuesten Läufe.</div>` : "");
+  }
+  // Den Eintrag frisch aus dem Speicher lesen (nach ID); die Liste auf dem Bildschirm kann veraltet oder verändert sein.
+  async function undoFetch(id) {
+    try { const snap = await db.collection("audit").doc(id).get(); return snap.exists ? { id, ...snap.data() } : null; }
+    catch (err) { log("err", `audit.get ${err?.code ?? "?"}`); return null; }
+  }
+  // Vor dem Bestätigungsfeld: frisch lesen, prüfen (recordId Pflicht, Ziel, Werte); angezeigt wird der Name des frisch gelesenen Ziels.
+  async function undoPrepare(e) {
+    feedMsgs[e.id] = `<div class="note"><span class="spin"></span> Lese den Eintrag…</div>`; undoOpen = null; delete undoFresh[e.id]; renderFeed();
+    const fresh = await undoFetch(e.id);
+    delete feedMsgs[e.id];
+    if (!fresh || !canUndo(fresh)) { feedMsgs[e.id] = `<div class="note bad">Kein Undo: der Eintrag ist im Speicher nicht mehr zu finden oder nicht (mehr) rückgängig zu machen; nichts geschrieben.</div>`; renderFeed(); return; }
+    undoFresh[e.id] = fresh; undoOpen = e.id; renderFeed();
+  }
+  async function undoAct(listed) {
+    const shown = undoFresh[listed.id] ?? null;
+    feedMsgs[listed.id] = `<div class="note"><span class="spin"></span> Schreibe zurück…</div>`; undoOpen = null; renderFeed();
+    // Geschrieben wird nur, was jetzt im Speicher steht und genau das ist, was die Person im Bestätigungsfeld gesehen hat.
+    const e = await undoFetch(listed.id);
+    if (!shown || !e || !canUndo(e) || JSON.stringify(e.act) !== JSON.stringify(shown.act)) { feedMsgs[listed.id] = `<div class="note bad">Kein Undo: der Eintrag hat sich seit dem Öffnen geändert oder ist nicht zulässig; nichts geschrieben.</div>`; delete undoFresh[listed.id]; renderFeed(); return; }
+    delete undoFresh[listed.id];
+    const a = e.act, slug = a.kind === "stage" ? CONFIG.fields.dealStage : CONFIG.investorStatusField;
+    let wrote = false;
+    try {
+      if (a.target.recordId) {
+        // Erst den Ist-Zustand lesen: zurückgeschrieben wird nur, wenn der Wert noch der ist, den der Agent gesetzt hat.
+        const res = await callAttio("list-records-in-list", { list: a.target.list, limit: 1, filter: { attribute: "parent_record", op: "eq", value: { object_id: COMPANIES_OBJECT, record_id: a.target.recordId } } }, { cache: false });
+        const ent = (entriesOf(res).entries ?? [])[0];
+        const entId = ent ? (ent.entry_id ?? ent.id?.entry_id ?? null) : null;
+        const now = ent ? str((ent.attributes ?? ent.entry_values ?? {})[slug]) : null;
+        if (entId !== a.target.entryId || now !== a.after) { feedMsgs[e.id] = `<div class="note warn"><b>Wert hat sich inzwischen geändert; kein Undo.</b> Nichts geschrieben.</div>`; renderFeed(); return; }
+      }
+      await callAttio("update-list-entry-by-id", { list: a.target.list, entry_id: a.target.entryId, entry_values: { [slug]: a.before } }, { cache: false });
+      wrote = true;
+      await audit("undo", { auditId: e.id, act: a }, `attio/entry/${a.target.entryId}`, `Rückgängig: ${a.target.name ?? a.target.entryId} ${fmtVal(a.after)} → ${fmtVal(a.before)} (Eintrag ${e.id}${e.runId ? ", Lauf " + e.runId : ""})`);
+      await db.doc(`audit/${e.id}`).update({ corrected: { at: new Date().toISOString(), by: actor, how: "undo" } });
+      feedMsgs[e.id] = `<div class="note ok"><b>Rückgängig gemacht.</b> ${esc(a.target.name ?? "")}: ${esc(fmtVal(a.before))}</div>`;
+    } catch (err) {
+      const ambiguous = AMBIGUOUS.includes(err?.code);
+      feedMsgs[e.id] = wrote
+        ? `<div class="note bad"><b>In Attio zurückgeschrieben, aber der Vermerk „korrigiert“ konnte nicht gespeichert werden</b> (${esc(err?.code ?? "?")} ${esc(err?.message ?? "")}). Nicht erneut rückgängig machen.</div>`
+        : `<div class="note bad">${explainFor(err, SERVER)}${ambiguous ? ` <b>Der Schreibvorgang kann trotzdem durchgegangen sein</b>; in Attio prüfen.` : ""}</div>`;
+    }
+    renderFeed();
+  }
+  function followUp(e) {
+    const a = e.act, t = a.target ?? {};
+    const subj = String(t.subject ?? a.after?.subject ?? t.name ?? "").trim();
+    const to = Array.isArray(t.to) ? t.to.join(", ") : String(t.to ?? "");
+    setView("inbox");
+    ibCompose({ to, subject: subj ? (/^(re|aw):/i.test(subj) ? subj : "Re: " + subj) : "", why: `Nachfassen zur Mail an ${to}${e.runId ? " (Lauf " + e.runId + ")" : ""}`, recordId: isUuid(t.recordId) ? t.recordId : null, name: typeof t.name === "string" ? t.name.slice(0, 120) : "" });
+  }
+
+  // ── Speicher: Listener (Vorschläge, Protokoll, Schalter, Läufe) ──
+  function startStore() {
+    if (!db) { renderInbox(); renderAutopilot(); return; }
+    db.collection("approvals").onSnapshot((snap) => { approvals = snap.docs.filter((x) => x.exists).map((x) => ({ id: x.id, ...x.data() })); renderInbox(); }, (e) => log("err", `approvals.onSnapshot ${e?.code}`));
+    db.collection("audit").orderBy("timestampUtc", "desc").limit(FEED_LIMIT).onSnapshot((snap) => { auditDocs = snap.docs.filter((x) => x.exists).map((x) => ({ id: x.id, ...x.data() })); renderAutopilot(); refreshToday(); }, (e) => log("err", `audit.onSnapshot ${e?.code}`));
+    db.collection("settings").onSnapshot((snap) => { const d = snap.docs.find((x) => x.exists && x.id === "autopilot"); autopilotRaw = d ? d.data() : null; renderAutopilot(); }, (e) => { log("err", `settings.onSnapshot ${e?.code}`); autopilotRaw = null; renderAutopilot(); });
+    db.collection(RUNS).orderBy("startedAt", "desc").limit(30).onSnapshot((snap) => { runsDocs = snap.docs.filter((x) => x.exists).map((x) => ({ id: x.id, ...x.data() })); renderAutopilot(); }, (e) => log("err", `runs.onSnapshot ${e?.code}`));
+  }
+
+  // ── Ereignisse der beiden Reiter ──
+  $("ibList").addEventListener("click", (e) => { if (e.target.closest("[data-rec-clear]")) { ibSetRecord(null, location.pathname + location.search); return; } const f = e.target.closest("[data-f]"); if (f) { ibFilter = f.dataset.f; renderInbox(); return; } const c = e.target.closest("[data-id]"); if (c) { ibSelected = c.dataset.id; ibNew = null; ibShown = ""; renderInbox(); } });
+  $("ibDetail").addEventListener("click", (e) => {
+    if (e.target.closest("[data-ib-close]")) { ibClose(); return; }
+    const a = approvals.find((x) => x.id === ibSelected);
+    const d = e.target.closest("[data-dec]"); if (d && a) { decide(a, d.dataset.dec); return; }
+    const c = e.target.closest("[data-copy]"); if (c && a) { const text = `${$("eSub")?.value ?? a.email?.subject ?? ""}\n\n${$("eBody")?.value ?? a.email?.body ?? ""}`; navigator.clipboard?.writeText(text).then(() => { c.textContent = "Kopiert"; }).catch(() => { $("eBody")?.select(); }); }
+  });
+  $("apBody").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-mode]"); if (b) { const mode = b.dataset.mode; apMsg = ""; if (mode === "on" && readAutopilot(autopilotRaw).modules[MODULE].mode !== "on") { confirmOn = true; renderAutopilot(); } else { confirmOn = false; if (readAutopilot(autopilotRaw).modules[MODULE].mode !== mode) setMode(mode); else renderAutopilot(); } return; }
+    if (e.target.closest("[data-go]")) { setMode("on"); return; }
+    if (e.target.closest("[data-cancel]")) { confirmOn = false; renderAutopilot(); }
+  });
+  $("feed").addEventListener("click", (ev) => {
+    const find = (sel, attr) => { const b = ev.target.closest(sel); return b ? auditDocs.find((x) => x.id === b.dataset[attr]) : null; };
+    let e;
+    if ((e = find("[data-undo]", "undo"))) { if (canUndo(e)) undoPrepare(e); return; }
+    if ((e = find("[data-undo-go]", "undoGo"))) { if (canUndo(e)) undoAct(e); return; }
+    if (ev.target.closest("[data-undo-cancel]")) { undoOpen = null; undoFresh = {}; renderFeed(); return; }
+    if ((e = find("[data-follow]", "follow"))) { if (e.act?.kind === "mail-sent") followUp(e); }
+  });
+  // ==== store-tabs:end ====
+
   // ── Ereignisse ───────────────────────────────────────────────────────────────
   $("tiles").addEventListener("click", (e) => { const t = e.target.closest("[data-kpi]"); if (!t) return; filter.kpi = filter.kpi === t.dataset.kpi ? "" : t.dataset.kpi; tiles(); table(); });
+  $("kpiMore").addEventListener("change", (e) => { filter.kpi = e.target.value; tiles(); table(); });
   $("q").addEventListener("input", (e) => { filter.q = e.target.value.trim(); table(); });
   $("stageSel").addEventListener("change", (e) => { filter.stage = e.target.value; table(); });
   $("attOnly").addEventListener("change", (e) => { filter.attOnly = e.target.checked; table(); });
   $("refresh").addEventListener("click", () => loadAll(true));
-  const openRow = (tr) => { const r = ranked.find((x) => x.d.entryId === tr.dataset.id); if (r) { if (selected !== r.d.entryId) kn = null; drawer(r); } };
+  const openRow = (tr) => { const r = ranked.find((x) => x.d.entryId === tr.dataset.id); if (r) { if (selected !== r.d.entryId) { kn = null; resetTk(); } drawer(r); } };
   $("rows").addEventListener("click", (e) => { const tr = e.target.closest("tr[data-id]"); if (tr) openRow(tr); });
   $("rows").addEventListener("keydown", (e) => { if (e.key !== "Enter") return; const tr = e.target.closest("tr[data-id]"); if (tr) openRow(tr); });
   $("drawerHost").addEventListener("click", (e) => {
     if (e.target.closest("[data-close]")) { closeDrawer(); return; }
     const r = ranked.find((x) => x.d.entryId === selected); if (!r) return;
+    const ib = e.target.closest("[data-ib-record]"); if (ib) { const rec = recordFromHash("#record=" + ib.dataset.ibRecord); if (rec) { closeDrawer(); ibSetRecord(rec, "#inbox&record=" + rec); setView("inbox"); } return; }
+    const tk = e.target.closest("[data-tk]"); if (tk) { taskAction(r.d, tk); return; }
     const act = e.target.closest("[data-act]"); if (act) { confirmBox(r, act.dataset.act); return; }
     if (e.target.closest("[data-stop]")) { cancelScoring(); return; }
     if (e.target.closest("[data-cancel]")) { $("confirmHost").innerHTML = ""; if (scoringId === null && $("scoreHost")?.querySelector(".confirm")) { $("scoreHost").dataset.token = ""; $("scoreHost").innerHTML = ""; } return; }
     const go = e.target.closest("[data-do]"); if (go) { if (go.dataset.do === "score") runScore(r); else if (go.dataset.do === "rewrite") runRewrite(r); else doAction(r, go.dataset.do); }
   });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && selected) closeDrawer(); });
+  const draftField = (e) => { const id = e.target.id; if (id === "tkContent") tkDraft.content = e.target.value; else if (id === "tkDate") tkDraft.date = e.target.value; else if (id === "tkWho") tkDraft.who = e.target.value; };
+  $("drawerHost").addEventListener("input", draftField);
+  $("drawerHost").addEventListener("change", draftField);
+  for (const b of document.querySelectorAll("[data-view]")) b.addEventListener("click", () => setView(b.dataset.view));
+  $("tabs").addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    const next = VIEWS[(VIEWS.indexOf(view) + (e.key === "ArrowRight" ? 1 : VIEWS.length - 1)) % VIEWS.length];
+    setView(next); document.querySelector(`[data-view="${next}"]`).focus();
+  });
+  $("tkReload").addEventListener("click", () => loadAllTasks(true));
+  $("taskRows").addEventListener("click", (e) => { const tr = e.target.closest("tr[data-id]"); if (tr) openRow(tr); });
+  $("taskRows").addEventListener("keydown", (e) => { if (e.key !== "Enter") return; const tr = e.target.closest("tr[data-id]"); if (tr) openRow(tr); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (railIsOpen()) setRail(false, true);
+    else if (selected) closeDrawer();
+    else if (view === "inbox" && (ibSelected || ibNew) && window.matchMedia("(max-width: 980px)").matches) ibClose();
+  });
+  window.addEventListener("hashchange", ibApplyHash);
   setInterval(freshness, 60000);
 
   // ── Start: leer zeichnen, aufleuchten, wenn die Capability da ist ───────────
   tiles();
+  ibApplyHash();
   (async () => {
     log("info", `window.claude ${window.claude ? "vorhanden" : "fehlt"} · use ${typeof window.claude?.use}`);
     try { sample = window.claude?.use ? await window.claude.use("sample") : null; } catch (e) { sample = null; log("err", `use('sample'): ${e?.code ?? "?"} ${e?.message ?? ""}`); }
     log(sample ? "ok" : "info", sample ? "use('sample') aufgelöst" : "use('sample') → null: Neu scoren ist in dieser Ansicht nicht möglich");
+    // The viewer's e-mail picks the default assignee of a new task; without the capability the first admin is the default.
+    try {
+      const u = window.claude?.use ? await window.claude.use("user") : null;
+      const me = u ? await u.me() : null;
+      viewerEmail = String(me?.email ?? "").trim() || null;
+      actor = String(me?.name ?? "").trim() || (me?.id ? `user:${String(me.id).slice(0, 8)}` : "unbekannt");
+      canEdit = u ? await u.canEdit().catch(() => false) : false;
+      log(viewerEmail ? "ok" : "info", `use('user') ${u ? "aufgelöst" : "→ null"} · E-Mail ${viewerEmail ? "bekannt" : "unbekannt: Standard-Zuständige ist der erste Admin"}`);
+    } catch (e) { viewerEmail = null; log("err", `use('user'): ${e?.code ?? "?"} ${e?.message ?? ""}`); }
+    // The cockpit's own store (F017): proposals, audit, runs and the dealflow switch. Without it the Inbox and Autopilot tabs say so.
+    try { db = window.claude?.use ? await window.claude.use("db") : null; } catch (e) { db = null; log("err", `use('db'): ${e?.code ?? "?"} ${e?.message ?? ""}`); }
+    log(db ? "ok" : "info", db ? "use('db') aufgelöst" : "use('db') → null: Inbox und Autopilot sind in dieser Ansicht nicht verfügbar");
+    startStore();
     const cap = await (window.claude?.use ? window.claude.use("mcp") : Promise.resolve(null));
     if (!cap) {
       log("err", "use('mcp') → null: diese Ansicht liefert keine Connectoren");

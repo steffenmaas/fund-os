@@ -208,7 +208,7 @@ The skills compose into 18 cross-skill workflows you can wire up (cron / Agent S
 
 Six explanatory graphics for the optional autopilot layer — switch per module, audit feed, human on the loop: [`docs/modules/README.md`](./docs/modules/README.md). The runbooks that implement it are the six Phase 09 skills above; start with `ops-autopilot-runbook`.
 
-The partners' screens for it (deal cockpit, investor relations, inbox with approvals and the audit feed, knowledge, profile) ship as fund-neutral templates in [`plugins/fund-os/templates/screens/`](./plugins/fund-os/templates/screens/README.md); the executable guardrails the skills call are in [`tools/ops/`](./tools/ops/README.md).
+The partners' six screens for it (deal cockpit with its tasks, in-page inbox and autopilot tabs; investor relations; inbox with approvals and the audit feed; knowledge; profile with the tools per module; newsletter) ship as fund-neutral templates in [`plugins/fund-os/templates/screens/`](./plugins/fund-os/templates/screens/README.md); the executable guardrails the skills call are in [`tools/ops/`](./tools/ops/README.md).
 
 ---
 
@@ -255,6 +255,7 @@ python3 tools/validate.py          # the plugin: paths, front matter, dashboard,
 python3 tools/check-knowledge.py   # your knowledge folder: manifest, placeholders, contradictions
 python3 tools/knowledge-map.py     # regenerate the index of which document each skill uses
 bash tools/check-ops-tools.sh      # the autopilot CLIs in tools/ops/: syntax, every subcommand against the fixtures
+bash tools/check-screen-templates.sh  # the six Operations screens: parse, fund-neutral, mirrors against the CLIs and between pages
 ```
 
 `knowledge-map.py` writes `_KNOWLEDGE-MAP.md` into the knowledge folder: document → skills,
@@ -285,7 +286,7 @@ running version once drifted nine weeks ahead of git.
 |---|---|
 | `.claude-plugin/marketplace.json` | marketplace definition — name must match the repository |
 | `plugins/fund-os/` | the plugin: skills, knowledge templates, dashboard |
-| `tools/` | `validate.py`, `check-knowledge.py`, `check-ops-tools.sh`, `build-plugin.sh`, `ops/` (autopilot CLIs), `hooks/pre-commit` |
+| `tools/` | `validate.py`, `check-knowledge.py`, `check-ops-tools.sh`, `check-screen-templates.sh` (with the scoring and digest mirror guards), `build-plugin.sh`, `ops/` (autopilot CLIs), `hooks/pre-commit` |
 | `USER_GUIDE.md` | end-user guide — day-to-day usage, skill reference, troubleshooting |
 
 ### Before your first commit

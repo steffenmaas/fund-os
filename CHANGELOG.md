@@ -1,5 +1,83 @@
 # Changelog
 
+## 0.11.0 - 2026-10-05
+
+**The autopilot layer now covers meetings and the week, and every screen a partner works in ships
+as a template.** Two new skills, the CLIs they call, the pitch deck as evidence in the dealflow
+module, one store per module, and the six Operations screens brought up to date with the pages
+they were lifted from. Nothing changes for a fund that does not run the autopilot, and nothing in
+it is on by default: every module still starts `off`.
+
+**Phase 09 - Autopilot, two more skills** (the plugin now has 49):
+
+- **`ops-meeting-notes`** - take the last day's meetings from the meeting-notes tool (Granola),
+  match each to its company or person in the CRM, write the note, queue the next steps as tasks and
+  any stage or status move as an approval, as far as the module's switch allows. It never sends a
+  mail or an invite. Only a `domain` match with someone of the fund in the room is written
+  directly; every other match is an approval of kind `note`.
+- **`ops-weekly-digest`** - rank the deal list the way the Deal Cockpit ranks it, draft the week's
+  top deals in three variants (internal, co-investor, LinkedIn) and queue **one approval**. It has
+  no switch and behaves as `off` in every mode: it never sends, never posts, never writes to the CRM.
+- **`ops-dealflow-inbound` gains the deck step**: the pitch deck in a founder mail is extracted,
+  read as untrusted text and handed to the scoring and reply prompts as a fenced block of its own.
+- **`ops-autopilot-runbook`** covers the five modules, the store per module
+  (`autopilot.stores.<module>`, else `autopilot.inboxStore`), the six approval kinds (email,
+  deal-stage, investor-status, newsletter, task, note) and the **runner-session pattern**: a Routine
+  created from a session has no repository, so a runner session is created with the repository and
+  the Routine fires into it; a manual run is a message to the runner, never a fire of the Routine.
+
+**`tools/ops/` - the CLIs of the new modules** (Node 18 or later, no dependencies, no network):
+
+- `notes-cli.mjs`: `parse-granola` (a summary that forges markup is refused), `match`, `note-prompt`,
+  `check-note` (no URL, phone number or e-mail address in a note, a status only from the fund's own
+  lists, never a committed one), `note-body`, `note-title`, `tasks`, `recheck`.
+- `digest-cli.mjs`: `rank` (the cockpit's arithmetic, byte for byte), `digest-prompt`, `check-digest`
+  (at most seven picks, no score number or stage name in the co-investor text, no company in a
+  confidential stage in the LinkedIn text, folded for zero-width and fullwidth spellings, hosts from
+  the allowlist only). `check-note` and `check-digest` fail closed: an empty committed or confidential
+  stage list is an error that names the configuration key, not a check that refuses nothing.
+- `deal-score-cli.mjs`: the **deck route** (`extract-deck` reads the PDFs and PPTX files out of a Gmail
+  RAW answer, `deck-text` cuts a PDF to text and says when it is image-only, `--deck` on `prompt`,
+  `assemble` and `reply-prompt`) and **store resolution** (`store-url --module <m>`).
+- `bash tools/check-ops-tools.sh` covers every new subcommand: the happy paths and the runs that
+  must be refused (a forged tag, a URL or phone number in a note, a non-uuid record, eight picks, a
+  company in a confidential stage on LinkedIn, a score number, malformed base64url, a deck without
+  `pdftotext`), against invented fixtures.
+
+**`plugins/fund-os/templates/screens/` - six screens, re-lifted from the current pages.** Each
+keeps one `const CONFIG = {...}` at the top of its script with a comment on every key; nothing below
+it names a fund.
+
+- **Deal Cockpit** with four tabs (Deals, Aufgaben, Inbox, Autopilot): Attio tasks per deal, the deal
+  domain's approvals and autopilot switch in the page itself on its own store, a burger menu on a phone.
+- **Inbox** with a full-screen drawer on the phone, task and note approvals next to mail, stage and
+  status, newsletter approvals with a sandboxed preview, and a record filter (`#record=<id>`).
+- **Investor Relations** with tasks per investor; **Knowledge**; **Profil** with the tool chosen per
+  role and module, its live connection status and the alternatives (the catalogue is a block in the
+  page that reads the Routine ids from `CONFIG`).
+- **Newsletter** is new: the archive of issues, an editor with a live preview, the fund's templates
+  read from the Drive knowledge folder, and the hand-over as a Gmail draft to the partners. Nothing
+  is sent by the page.
+- The side menu has six links, all empty strings in `CONFIG.links`. The pure regions
+  (`parseAttioText`, the scoring mirror, `region:rank`, `region:tasks`, the `guards` and `autopilot`
+  regions, the newsletter render grammar) are the source text; the few lines in them that carried a
+  fund value now read `CONFIG`.
+
+**The guards.** `bash tools/check-screen-templates.sh` now checks six pages and holds the copies of
+shared code together: the Inbox `guards` region is byte-identical in `inbox.html` and
+`deal-cockpit.html`, and `region:tasks` in `deal-cockpit.html` and `investors.html`. The existing
+guards still run: the scoring mirror against `tools/ops/lib/scoring.mjs` and the rank region
+against `tools/ops/digest-cli.mjs`, which also ranks the digest fixtures through the page's own
+region. A fund-neutral grep (fund and person names, artifact links, object ids, Drive ids) covers
+every page.
+
+**`docs/modules/` - two more graphics**: the meeting-notes module and the Monday digest, in the
+style of the first four.
+
+**Counts and versions.** The plugin has 49 skills; the README inventory, the dashboard, the manifest
+and the marketplace listing say so. Versions: plugin manifest and marketplace 0.10.0 -> 0.11.0.
+`USER_GUIDE.md` no longer says the CLIs ship in a later release: they are in `tools/ops/`.
+
 ## 0.10.0 - 2026-10-05
 
 **Fund OS can now run the routine part of the work on a schedule, with a person on the loop
