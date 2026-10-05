@@ -67,8 +67,8 @@
  *                 activity, as a JSON array on one line: `[]` when the module's store is the Workbench store, else
  *                 `["<Workbench store url>"]`. Exit 1 when no Workbench store (autopilot.inboxStore) is set.
  *                 The question asked is "is the module's store the Workbench store?", nothing more. A module with a store of its own
- *                 (autopilot.stores.newsletter, which holds only the issues) therefore says `["<Workbench store url>"]`; that is not an
- *                 instruction: the newsletter skill writes its runs/ and audit/ straight to the Workbench store and never calls mirror-plan.
+ *                 (for example autopilot.stores.newsletter) therefore says `["<Workbench store url>"]`. Only the dealflow and investors
+ *                 skills run the mirror step; notes, digest and newsletter use the shared store by default and never call mirror-plan.
  *
  *   drive-text    --json <saved connector answer> --out <file> [--expect-title <name>]
  *                 decodes the `content` of a Google Drive `download_file_content` answer (base64 of UTF-8 bytes) and writes the text

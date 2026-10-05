@@ -498,8 +498,8 @@ $D mirror-plan --module dealflow --config "$WORK/cfg-moved.json" > "$WORK/mp-bac
 jsq "mirror-plan: a module whose store is the Workbench store is not mirrored" "$WORK/mp-back.json" 'd.length === 0'
 node -e 'const c=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); c.autopilot.stores.newsletter="https://store.example.org/issues"; require("fs").writeFileSync(process.argv[2], JSON.stringify(c))' "$FUND_OS_CONFIG" "$WORK/cfg-nl.json"
 $D mirror-plan --module newsletter --config "$WORK/cfg-nl.json" > "$WORK/mp-nl.json" 2>/dev/null
-jsq "mirror-plan: a newsletter with a store of its own says [workbench] (a semantics, not an instruction)" "$WORK/mp-nl.json" 'd.length === 1 && d[0] === "'"$WBU"'"'
-runs=$((runs + 1)); if grep -q "never calls mirror-plan" $OPS/deal-score-cli.mjs && ! grep -q "mirror-plan" plugins/fund-os/skills/ops-newsletter/SKILL.md; then echo "  ok    the CLI header says the newsletter skill never calls mirror-plan, and its skill does not"; else fails=$((fails + 1)); echo "  FAIL  newsletter mirror-plan documentation"; fi
+jsq "mirror-plan: a newsletter with a store of its own says [workbench] (the question is the module's store, not an instruction)" "$WORK/mp-nl.json" 'd.length === 1 && d[0] === "'"$WBU"'"'
+runs=$((runs + 1)); if grep -q "never call mirror-plan" $OPS/deal-score-cli.mjs && ! grep -q "mirror-plan" plugins/fund-os/skills/ops-newsletter/SKILL.md; then echo "  ok    the CLI header says notes, digest and newsletter never call mirror-plan, and the newsletter skill does not"; else fails=$((fails + 1)); echo "  FAIL  newsletter mirror-plan documentation"; fi
 says "mirror-plan: the answer is one JSON array on one line" "[]" $D mirror-plan --module notes
 refusedSays "mirror-plan: no Workbench store" "no Workbench store" $D mirror-plan --module dealflow --config "$WORK/cfg-nowb.json"
 refusedSays "mirror-plan: a module name that is no name" "is not a module name" $D mirror-plan --module "Bad Module"
