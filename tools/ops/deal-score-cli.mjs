@@ -86,7 +86,8 @@
  *                 free-text keys _about, updatedAt and updatedBy, which are ignored. Allowed keys only, written to
  *                 autopilot.<group>.<key> of the configuration:
  *                   notes.taskAssignee   a plain address (the workspace member who gets a next step nobody owns)
- *                   investors.deckLink   an https link
+ *                   investors.deckLink   an https link, same shape rules as the booking link, on a host the repository configuration
+ *                                        lists in autopilot.investors.deckHosts or autopilot.allowedUrlHosts (both empty: refused)
  *                   fund.bookingLink     an https link without credentials, port, query or fragment, on a host the repository
  *                                        configuration lists in autopilot.fund.bookingHosts (empty list: the key is refused)
  *                 Anything else (an unknown key, a wrong type, a placeholder starting with "<", a value over 500 characters or with
@@ -918,8 +919,12 @@ const CONTROL = /[\u0000-\u001f\u007f-\u009f]/;
 const ownKey = (o, k) => Object.hasOwn(o, k); // prototype names (constructor, __proto__, toString) are never allowed keys
 const isSettingPlaceholder = (v) => typeof v !== "string" || v.trim() === "" || v.trim().startsWith("<");
 
+// The links are taken only on a host the repository configuration names: the booking link on autopilot.fund.bookingHosts,
+// the deck link on autopilot.allowedUrlHosts or autopilot.investors.deckHosts. Empty lists refuse.
+const LINK_HOST_LISTS = { "fund.bookingLink": "autopilot.fund.bookingHosts", "investors.deckLink": "autopilot.investors.deckHosts or autopilot.allowedUrlHosts" };
+
 /** Validates one allowed value; returns null when fine, else the reason. Callers store the trimmed value, or `u.href` for links. */
-function settingProblem(key, v, bookingHosts) {
+function settingProblem(key, v, hostLists) {
   if (typeof v !== "string") return "must be a string";
   if (isSettingPlaceholder(v)) return "is empty or still a placeholder";
   const raw = v.trim();
@@ -928,14 +933,15 @@ function settingProblem(key, v, bookingHosts) {
   if (key === "notes.taskAssignee") return /^[^\s@<>,;:"'()\\]+@[^\s@<>,;:"'()\\]+\.[^\s@<>,;:"'()\\]+$/.test(raw) ? null : "is not a plain address";
   let u;
   try { u = new URL(raw); } catch { return "is not a URL"; }
-  if (key === "fund.bookingLink") {
-    if (!bookingHosts.length) return "is refused: autopilot.fund.bookingHosts in the configuration lists no host";
+  if (key === "fund.bookingLink" || key === "investors.deckLink") {
+    const hosts = hostLists[key], listName = LINK_HOST_LISTS[key];
+    if (!hosts.length) return `is refused: ${listName} in the configuration lists no host`;
     // the raw text too: the URL parser would fold /../ and a trailing dot away
     const segments = raw.replace(/^https:\/\/[^/]+/i, "").split("/").slice(1);
-    const clean = !/[\\@\s]/.test(raw) && u.protocol === "https:" && bookingHosts.includes(u.hostname) && !u.port && !u.username && !u.password
+    const clean = !/[\\@\s]/.test(raw) && u.protocol === "https:" && hosts.includes(u.hostname) && !u.port && !u.username && !u.password
       && !u.search && !u.hash && !raw.includes("?") && !raw.includes("#") && /^(\/[A-Za-z0-9_.-]+)+\/?$/.test(u.pathname)
       && segments.every((x) => x !== "." && x !== "..") && new RegExp(`^https://${u.hostname.replace(/[.]/g, "\\.")}(/[A-Za-z0-9_.-]+)+/?$`, "i").test(raw);
-    return clean ? null : "is not an https link on a host of autopilot.fund.bookingHosts (plain path, no port, query or fragment)";
+    return clean ? null : `is not an https link on a host of ${listName} (plain path, no port, query or fragment)`;
   }
   return u.protocol === "https:" && !/[\s"<>\\]/.test(raw) && !u.username && !u.password && u.hostname.includes(".") ? null : "is not an https link";
 }
@@ -947,7 +953,11 @@ const settingValue = (key, v) => (key === "notes.taskAssignee" ? v.trim() : new 
 export function mergeFundSettings(config, settings) {
   const merged = JSON.parse(JSON.stringify(config));
   const taken = [], refused = [];
-  const bookingHosts = strings(config?.autopilot?.fund?.bookingHosts).map((h) => h.toLowerCase());
+  const lower = (list) => strings(list).map((h) => h.toLowerCase());
+  const hostLists = {
+    "fund.bookingLink": lower(config?.autopilot?.fund?.bookingHosts),
+    "investors.deckLink": [...lower(config?.autopilot?.allowedUrlHosts), ...lower(config?.autopilot?.investors?.deckHosts)],
+  };
   for (const [k, v] of Object.entries(settings)) {
     if (SETTINGS_META.has(k)) continue;
     const allowed = ownKey(SETTINGS_ALLOWED, k) ? SETTINGS_ALLOWED[k] : null;
@@ -956,7 +966,7 @@ export function mergeFundSettings(config, settings) {
     for (const [sub, value] of Object.entries(v)) {
       const key = `${k}.${sub}`;
       if (!allowed.includes(sub)) { refused.push({ key, reason: "unknown key" }); continue; }
-      const problem = settingProblem(key, value, bookingHosts);
+      const problem = settingProblem(key, value, hostLists);
       if (problem) { refused.push({ key, reason: problem }); continue; }
       merged.autopilot = merged.autopilot !== null && typeof merged.autopilot === "object" ? merged.autopilot : {};
       merged.autopilot[k] = merged.autopilot[k] !== null && typeof merged.autopilot[k] === "object" ? merged.autopilot[k] : {};

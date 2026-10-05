@@ -129,6 +129,9 @@
       "quietDays": 10,
       "maxFollowUps": 3,
       "deckLink": "https://example.org/decks/lp-deck",
+      "deckHosts": [
+        "decks.example.org"
+      ],
       "thesisParagraph": "Example Fund is a pre-seed and seed fund for the example sector. We back founders early and work hands-on with them.",
       "geographies": {
         "core": [

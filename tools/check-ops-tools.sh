@@ -508,7 +508,7 @@ refused "mirror-plan: without --module" $D mirror-plan
 echo "deal-score-cli.mjs fund-settings"
 FS="$WORK/fs"; mkdir -p "$FS"
 cat > "$FS/placeholder-config.json" <<'JSON'
-{"masterData":{"fundName":"Example Fund"},"autopilot":{"fund":{"senderName":"Sam Partner","bookingLink":"<booking link>","bookingHosts":["calendar.example.org"]},"investors":{"deckLink":"<deck link>","fitThreshold":60},"notes":{"taskAssignee":"<member address>","lookbackDays":2}}}
+{"masterData":{"fundName":"Example Fund"},"autopilot":{"fund":{"senderName":"Sam Partner","bookingLink":"<booking link>","bookingHosts":["calendar.example.org"]},"investors":{"deckLink":"<deck link>","deckHosts":["decks.example.org"],"fitThreshold":60},"notes":{"taskAssignee":"<member address>","lookbackDays":2}}}
 JSON
 cat > "$FS/settings-ok.json" <<'JSON'
 {"_about":"invented","updatedAt":"2026-10-05","updatedBy":"Example Partner","notes":{"taskAssignee":"member@example.org"},"investors":{"deckLink":"https://decks.example.org/lp-deck"},"fund":{"bookingLink":"https://calendar.example.org/book/example"}}
@@ -541,6 +541,17 @@ fs_refuse "a placeholder value" '{"notes":{"taskAssignee":"<member address>"}}' 
 fs_refuse "a deck link over plain http" '{"investors":{"deckLink":"http://decks.example.org/x"}}' investors.deckLink "is not an https link"
 fs_refuse "a deck link with credentials" '{"investors":{"deckLink":"https://user:pw@decks.example.org/x"}}' investors.deckLink "is not an https link"
 fs_refuse "a deck link with a quote in it" '{"investors":{"deckLink":"https://decks.example.org/x\"y"}}' investors.deckLink "is not an https link"
+fs_refuse "a deck link on a host that is not listed" '{"investors":{"deckLink":"https://evil.example.net/lp-deck"}}' investors.deckLink "is not an https link on a host of autopilot.investors.deckHosts or autopilot.allowedUrlHosts"
+fs_refuse "a deck link with a query" '{"investors":{"deckLink":"https://decks.example.org/lp-deck?x=1"}}' investors.deckLink "is not an https link on a host of autopilot.investors.deckHosts or autopilot.allowedUrlHosts"
+fs_refuse "a deck link with a fragment" '{"investors":{"deckLink":"https://decks.example.org/lp-deck#x"}}' investors.deckLink "is not an https link on a host of autopilot.investors.deckHosts or autopilot.allowedUrlHosts"
+fs_refuse "a deck link with a port" '{"investors":{"deckLink":"https://decks.example.org:8443/lp-deck"}}' investors.deckLink "is not an https link on a host of autopilot.investors.deckHosts or autopilot.allowedUrlHosts"
+fs_refuse "a deck link with a dot segment" '{"investors":{"deckLink":"https://decks.example.org/lp-deck/../admin"}}' investors.deckLink "is not an https link on a host of autopilot.investors.deckHosts or autopilot.allowedUrlHosts"
+fs_refuse "a deck link with a userinfo trick" '{"investors":{"deckLink":"https://decks.example.org@evil.example.net/lp-deck"}}' investors.deckLink "is not an https link on a host of autopilot.investors.deckHosts or autopilot.allowedUrlHosts"
+fs_refuse "a deck link with a backslash trick" '{"investors":{"deckLink":"https://evil.example.net\\@decks.example.org/lp-deck"}}' investors.deckLink "is not an https link on a host of autopilot.investors.deckHosts or autopilot.allowedUrlHosts"
+fs_refuse "a deck link with a backslash in the path" '{"investors":{"deckLink":"https://decks.example.org\\lp-deck"}}' investors.deckLink "is not an https link on a host of autopilot.investors.deckHosts or autopilot.allowedUrlHosts"
+fs_refuse "a deck link with a double slash" '{"investors":{"deckLink":"https://decks.example.org//evil.example.net/lp-deck"}}' investors.deckLink "is not an https link on a host of autopilot.investors.deckHosts or autopilot.allowedUrlHosts"
+fs_refuse "a deck link with a trailing dot on the host" '{"investors":{"deckLink":"https://decks.example.org./lp-deck"}}' investors.deckLink "is not an https link on a host of autopilot.investors.deckHosts or autopilot.allowedUrlHosts"
+fs_refuse "a deck link with a space in the path" '{"investors":{"deckLink":"https://decks.example.org/lp deck"}}' investors.deckLink "is not an https link on a host of autopilot.investors.deckHosts or autopilot.allowedUrlHosts"
 fs_refuse "a booking link on a host that is not listed" '{"fund":{"bookingLink":"https://evil.example.net/book/example"}}' fund.bookingLink "is not an https link on a host of autopilot.fund.bookingHosts"
 fs_refuse "a booking link with a query" '{"fund":{"bookingLink":"https://calendar.example.org/book/example?x=1"}}' fund.bookingLink "is not an https link on a host of autopilot.fund.bookingHosts"
 fs_refuse "a booking link with a fragment" '{"fund":{"bookingLink":"https://calendar.example.org/book/example#x"}}' fund.bookingLink "is not an https link on a host of autopilot.fund.bookingHosts"
@@ -555,6 +566,13 @@ fs_refuse "a control character in a link" '{"investors":{"deckLink":"https://dec
 node -e 'const c=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); delete c.autopilot.fund.bookingHosts; require("fs").writeFileSync(process.argv[2], JSON.stringify(c))' "$FS/placeholder-config.json" "$FS/nohosts-config.json"
 runs=$((runs + 1))
 if $D fund-settings --config "$FS/nohosts-config.json" --settings "$FS/settings-ok.json" --out "$FS/nohosts.json" >"$WORK/out" 2>"$WORK/err" && grep -qF "OK 2 keys" "$WORK/out" && grep -qF "REFUSED fund.bookingLink: is refused: autopilot.fund.bookingHosts" "$WORK/err"; then echo "  ok    fund-settings: without autopilot.fund.bookingHosts the booking link is refused, the other keys are taken"; else fails=$((fails + 1)); echo "  FAIL  fund-settings: no bookingHosts"; cat "$WORK/out" "$WORK/err" | head -3; fi
+# the deck link: a host of autopilot.allowedUrlHosts alone is enough; with neither list the key is refused and the placeholder stays
+node -e 'const c=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); delete c.autopilot.investors.deckHosts; c.autopilot.allowedUrlHosts=["decks.example.org"]; require("fs").writeFileSync(process.argv[2], JSON.stringify(c))' "$FS/placeholder-config.json" "$FS/allowed-only-config.json"
+runs=$((runs + 1))
+if $D fund-settings --config "$FS/allowed-only-config.json" --settings "$FS/settings-ok.json" --out "$FS/allowed-only.json" >"$WORK/out" 2>"$WORK/err" && grep -qF "OK 3 keys" "$WORK/out" && node -e 'process.exit(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).autopilot.investors.deckLink === "https://decks.example.org/lp-deck" ? 0 : 1)' "$FS/allowed-only.json"; then echo "  ok    fund-settings: a deck link on a host of autopilot.allowedUrlHosts is taken without deckHosts"; else fails=$((fails + 1)); echo "  FAIL  fund-settings: deck link on allowedUrlHosts only"; cat "$WORK/out" "$WORK/err" | head -3; fi
+node -e 'const c=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); delete c.autopilot.investors.deckHosts; require("fs").writeFileSync(process.argv[2], JSON.stringify(c))' "$FS/placeholder-config.json" "$FS/nodeckhosts-config.json"
+runs=$((runs + 1))
+if $D fund-settings --config "$FS/nodeckhosts-config.json" --settings "$FS/settings-ok.json" --out "$FS/nodeckhosts.json" >"$WORK/out" 2>"$WORK/err" && grep -qF "OK 2 keys" "$WORK/out" && grep -qF "REFUSED investors.deckLink: is refused: autopilot.investors.deckHosts or autopilot.allowedUrlHosts in the configuration lists no host" "$WORK/err" && node -e 'process.exit(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).autopilot.investors.deckLink === "<deck link>" ? 0 : 1)' "$FS/nodeckhosts.json"; then echo "  ok    fund-settings: with neither deckHosts nor allowedUrlHosts the deck link is refused, the other keys are taken"; else fails=$((fails + 1)); echo "  FAIL  fund-settings: no deck hosts"; cat "$WORK/out" "$WORK/err" | head -3; fi
 # a refused key does not stop the valid ones; a forged key name stays on one stderr line
 printf '%s\n' '{"notes":{"taskAssignee":"member@example.org","extra":"x"},"investors":{"deckLink":"https://decks.example.org/lp-deck"}}' > "$FS/mixed.json"
 runs=$((runs + 1))

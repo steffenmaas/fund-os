@@ -198,7 +198,7 @@ Copy this block into `~/.fund-os/user-config.json` and fill it in. Empty strings
     },
     "allowedUrlHosts": [],
     "onRequiresPinnedSha": false,
-    "fund": { "senderName": "", "signature": ["", ""], "bookingLink": "" },
+    "fund": { "senderName": "", "signature": ["", ""], "bookingLink": "", "bookingHosts": [] },
     "crm": {
       "companiesObjectId": "",
       "stages": { "new": "", "screening": "", "committed": [] },
@@ -209,7 +209,7 @@ Copy this block into `~/.fund-os/user-config.json` and fill it in. Empty strings
     "inbound": { "gmailQueries": [], "ownDomains": [], "formSender": "", "formSubjectPrefix": "", "slaHours": 24 },
     "investors": {
       "fitThreshold": 0, "quietDays": 0, "maxFollowUps": 0,
-      "deckLink": "", "thesisParagraph": "",
+      "deckLink": "", "deckHosts": [], "thesisParagraph": "",
       "geographies": { "core": [], "adjacent": [] },
       "searchQueries": [], "crmTextFields": []
     },
@@ -228,6 +228,8 @@ Copy this block into `~/.fund-os/user-config.json` and fill it in. Empty strings
   }
 }
 ```
+
+`fund.bookingHosts` and `investors.deckHosts` are the only hosts the booking link and the LP deck link may have when they come from `fund-settings.json` (the deck link also on a host of `allowedUrlHosts`); empty lists refuse those keys, and the repository configuration's own value stays.
 
 ## 7. Decision record template
 

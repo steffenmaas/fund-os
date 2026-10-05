@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.13.1 - 2026-10-05
+
+**Follow-up to 0.13.0: one name for the configuration after the fund-settings step, and the deck link
+restricted like the booking link.** Two behaviour changes, otherwise documentation and checks. No skill is
+added (49), nothing in it names a fund.
+
+- **Skills (behaviour).** `ops-dealflow-inbound`, `ops-investor-outreach` and `ops-meeting-notes` said that
+  every later CLI gets the merged `$WORK/config.json` but spelled the raw `~/.fund-os/user-config.json` in
+  their later commands, so a session could drop the fund's settings. `$CONFIG` is now defined once in the
+  "Fund settings" step (the merged file, or the original path when the overlay fell back) and every later
+  command passes `--config "$CONFIG"`. The CLI lists name `mirror-plan` and `fund-settings`.
+- **`fund-settings` (behaviour).** `investors.deckLink` is no longer taken from any https host: like the
+  booking link it needs a host in `autopilot.investors.deckHosts` (new) or `autopilot.allowedUrlHosts`, and
+  the same plain shape (no credentials, port, query, fragment, backslash, double slash or dot segment).
+  Empty lists refuse the key and the configuration's own value stays. **If you keep the deck link in
+  `fund-settings.json`, add its host to `autopilot.investors.deckHosts` and drop any query string.**
+- **Checks.** `tools/validate.py` fails a skill that has the fund-settings step and passes the raw
+  user-config path to a CLI after it (with a negative control). `tools/check-screen-templates.sh` fails when
+  `FUND_OS_DENYLIST` names a file that does not exist and warns when there is no local denylist at all
+  (self-tested). `tools/check-ops-tools.sh` covers the deck-link host rules with the bypass shapes of the
+  booking link (userinfo, backslash, port, double slash, trailing dot, unlisted host, query, fragment).
+- **Documentation.** The stale "Inbox" naming is "Agent Workbench" in the user guide, the ops README and the
+  module docs; the screens README lists `statusRoles`, `activeStatuses`, `quietStatuses`, `fitThreshold`,
+  `fund.nextFundName` and `rejectedStage`; the runbook's configuration block lists `deckHosts` and
+  `bookingHosts`; the `store-tabs` region comment is neutral (identical in both pages); the Content CLI
+  header names the fixed file `pr-index.json`.
+
 ## 0.13.0 - 2026-10-05
 
 **A Start page, an investor board, one place for what every agent did, content published to channels,
