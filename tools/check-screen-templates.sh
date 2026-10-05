@@ -9,10 +9,12 @@
 #      tools/ops/lib/scoring.mjs on the inline cases of tools/check-ops-tools.sh (tools/check-scoring-mirror.mjs)
 #   5. the rank region of deal-cockpit.html (// region:rank) is byte-identical to the one in tools/ops/digest-cli.mjs,
 #      and both rank the digest fixtures the same way (tools/check-digest-mirror.mjs)
-#   6. the shared pure regions do not drift between pages: the Inbox guards (// ==== guards:begin ... guards:end ====) are
-#      byte-identical in inbox.html and deal-cockpit.html, and the task region (// region:tasks ... endregion:tasks) is
-#      byte-identical in deal-cockpit.html and investors.html (the pages are lifted from the same sources, so a fix is
-#      made in every copy)
+#   6. the shared pure regions do not drift between pages: the Inbox guards (// ==== guards:begin ... guards:end ====) and
+#      the context region (// region:context ... endregion:context) are byte-identical in inbox.html and
+#      deal-cockpit.html; the task region (// region:tasks ... endregion:tasks) and the local-cache region
+#      (// region:localcache ... endregion:localcache) are byte-identical in deal-cockpit.html and investors.html (the
+#      pages are lifted from the same sources, so a fix is made in every copy). Each comparison has a negative control:
+#      a mutated copy of the second page, read through the same extraction, must come out different
 #   7. exactly the six screens are present
 #
 #   bash tools/check-screen-templates.sh
@@ -166,11 +168,11 @@ else
 fi
 
 # 6. the shared pure regions must be byte-identical across pages
-if out=$(python3 - "$DIR" <<'PY'
-import re, sys
-d = sys.argv[1]
-def region(page, start, end):
-    t = open(f"{d}/{page}.html", encoding="utf-8").read()
+if out=$(python3 - "$DIR" "$WORK" <<'PY'
+import os, re, sys
+d, work = sys.argv[1], sys.argv[2]
+def region(page, start, end, base=None):
+    t = open(f"{base or d}/{page}.html", encoding="utf-8").read()
     m = re.search(rf"^[ \t]*// {start}\b.*$[\s\S]*?^[ \t]*// {end}\b.*$", t, re.M)
     return m.group(0) if m else None
 def first_diff(x, y):
@@ -180,7 +182,12 @@ def first_diff(x, y):
     lx, ly = x.split("\n"), y.split("\n")
     return next((i for i, (p, q) in enumerate(zip(lx, ly)) if p != q), min(len(lx), len(ly)))
 bad = 0
-for what, start, end, a, b in [("Inbox guards", "==== guards:begin", "==== guards:end", "inbox", "deal-cockpit"), ("task region", "region:tasks", "endregion:tasks", "deal-cockpit", "investors")]:
+for what, start, end, a, b in [
+    ("Inbox guards", "==== guards:begin", "==== guards:end", "inbox", "deal-cockpit"),
+    ("task region", "region:tasks", "endregion:tasks", "deal-cockpit", "investors"),
+    ("context region", "region:context", "endregion:context", "inbox", "deal-cockpit"),
+    ("local-cache region", "region:localcache", "endregion:localcache", "deal-cockpit", "investors"),
+]:
     ra, rb = region(a, start, end), region(b, start, end)
     if ra is None or rb is None:
         print(f"{what}: the markers are missing in {a if ra is None else b}.html"); bad += 1; continue
@@ -190,9 +197,18 @@ for what, start, end, a, b in [("Inbox guards", "==== guards:begin", "==== guard
     if at is not None:
         la, lb = ra.split("\n"), rb.split("\n")
         print(f"{what} differ between {a}.html and {b}.html (first difference at region line {at + 1}):\n  {a}: {la[at][:140] if at < len(la) else '(ends)'}\n  {b}: {lb[at][:140] if at < len(lb) else '(ends)'}"); bad += 1; continue
-    # negative control: one trailing space on one line in the middle of the region must be reported by the same comparison
-    ls = ra.split("\n"); ls[len(ls) // 2] += " "
-    if first_diff("\n".join(ls), rb) is None:
+    # negative control: a copy of the second page with one trailing space on a line in the middle of the region, read
+    # through the same extraction, must differ from the first page's region
+    tb = open(f"{d}/{b}.html", encoding="utf-8").read()
+    lines = tb.split("\n")
+    first = next(i for i, l in enumerate(lines) if re.match(rf"[ \t]*// {start}\b", l))
+    last = next(i for i in range(first, len(lines)) if re.match(rf"[ \t]*// {end}\b", lines[i]))
+    lines[(first + last) // 2] += " "
+    mut = os.path.join(work, "mut-" + re.sub(r"[^a-z]", "", start))
+    os.makedirs(mut, exist_ok=True)
+    open(f"{mut}/{b}.html", "w", encoding="utf-8").write("\n".join(lines))
+    rm = region(b, start, end, mut)
+    if rm is None or first_diff(ra, rm) is None:
         print(f"{what}: negative control failed (a drifted region would pass)"); bad += 1; continue
     print(f"ok  {what} identical in {a}.html and {b}.html ({len(ra.splitlines())} lines)")
 sys.exit(1 if bad else 0)

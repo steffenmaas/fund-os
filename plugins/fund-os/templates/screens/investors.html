@@ -268,7 +268,7 @@
       </div>
     </div>
 
-    <details class="diag" id="diag"><summary>Diagnose · Verbindung, Antworten, Fehler</summary><div class="body" id="diagBody"><div>Noch nichts protokolliert.</div></div></details>
+    <details class="diag" id="diag"><summary>Diagnose · Verbindung, Antworten, Fehler</summary><div class="body" id="cacheBody" style="padding-bottom:0;flex-direction:row;flex-wrap:wrap;align-items:center"><span id="cacheLine"></span><button type="button" class="btn" id="cacheClear">Zwischenspeicher leeren</button></div><div class="body" id="diagBody"><div>Noch nichts protokolliert.</div></div></details>
   </div>
 </div>
 <div id="drawerHost" hidden></div>
@@ -357,10 +357,52 @@
   const QUIET_DAYS = 30;
   const attioUrl = (id) => `https://app.attio.com/${CONFIG.attioWorkspace}/company/${id}/overview`;
 
+  // region:localcache (a copy of a list in this browser's local storage; every access guarded; nothing is thrown, a missing, damaged or foreign entry reads as null; mirrored byte for byte in deal-cockpit.html and investors.html, held still by tools/check-screen-templates.sh)
+  function localCache(key, version) {
+    const MAX_CHARS = 4 * 1024 * 1024;
+    const store = () => { try { return typeof window !== "undefined" && window.localStorage ? window.localStorage : null; } catch { return null; } };
+    return {
+      // { savedAt, data } or null (no storage, nothing stored, damaged JSON, other version, wrong shape)
+      read() {
+        try {
+          const s = store(); if (!s) return null;
+          const raw = s.getItem(key); if (typeof raw !== "string") return null;
+          const o = JSON.parse(raw);
+          if (!o || typeof o !== "object" || Array.isArray(o) || o.v !== version || typeof o.savedAt !== "number" || !Number.isFinite(o.savedAt) || o.savedAt > Date.now() + 86400000 || o.data === undefined || o.data === null) return null;
+          return { savedAt: o.savedAt, data: o.data };
+        } catch { return null; }
+      },
+      // true when stored; false (never a throw) without storage, on a quota error, or above 4 MB serialised
+      write(data) {
+        try {
+          const s = store(); if (!s) return false;
+          const text = JSON.stringify({ v: version, savedAt: Date.now(), data });
+          if (typeof text !== "string" || text.length > MAX_CHARS) return false;
+          s.setItem(key, text); return true;
+        } catch { return false; }
+      },
+      clear() { try { const s = store(); if (s) s.removeItem(key); } catch { /* nothing to remove */ } },
+    };
+  }
+  // endregion:localcache
+
   let mcp = null, rows = [], storedAt = null, loading = false, selected = null, loadedAll = false;
   let filter = { kpi: "", q: "", status: "", tier: "" };
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  // ── Zwischenspeicher: the list opens from a copy in this browser, the connector refreshes it in the background. Only connector data is written.
+  const investorCache = localCache("fundos.investors.list", 1);
+  const CACHE_STALE_MS = 7 * 86400000, CACHE_MAX_ENTRIES = 5000;
+  let cacheAt = null, cacheSaved = null, cacheGen = 0;  // cacheAt: the list on screen is still the stored copy from that time (null once the connector has answered); cacheSaved: when the stored copy was written (null: none); cacheGen: a clear invalidates a load that is still running
+  const ageText = (ms) => { const m = Math.max(0, Math.round(ms / 60000)); return m < 1 ? "gerade eben" : m < 120 ? `vor ${m} Min` : m < 2880 ? `vor ${Math.round(m / 60)} Std` : `vor ${Math.round(m / 1440)} Tagen`; };
+  const cacheStale = () => cacheAt !== null && Date.now() - cacheAt > CACHE_STALE_MS;
+  function paintCacheLine() { $("cacheLine").textContent = `Zwischenspeicher nur in diesem Browser (Stand ${cacheSaved ? new Date(cacheSaved).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" }) : "leer"})`; }
+  function readInvestorCache() {
+    const c = investorCache.read(), d = c?.data;
+    if (!d || d.list !== LIST || !Array.isArray(d.entries) || d.entries.length === 0 || d.entries.length > CACHE_MAX_ENTRIES || !d.entries.every((e) => e && typeof e === "object" && typeof e.entryId === "string" && e.entryId)) return null;
+    const keys = Object.keys(toInvestor({}));
+    return { savedAt: c.savedAt, entries: d.entries.map((e) => Object.fromEntries(keys.map((k) => [k, e[k] === undefined ? null : e[k]]))) };
+  }
   const diag = [];
   function log(kind, text, raw) { diag.unshift({ at: new Date().toLocaleTimeString("de-DE"), kind, text, raw: raw === undefined ? null : (typeof raw === "string" ? raw : JSON.stringify(raw, null, 1)) }); if (diag.length > 30) diag.pop(); $("diagBody").innerHTML = diag.map((d) => `<div><code>${esc(d.at)}</code> <b style="color:${d.kind === "err" ? "var(--alert)" : d.kind === "ok" ? "var(--good)" : "var(--fg)"}">${esc(d.kind)}</b> ${esc(d.text)}${d.raw ? `<pre>${esc(d.raw.slice(0, 1200))}${d.raw.length > 1200 ? "\n…" : ""}</pre>` : ""}</div>`).join(""); }
 
@@ -520,7 +562,7 @@
       const { entries, hasMore } = entriesOf(res);
       for (const e of entries) { const r = toInvestor(e); if (!out.some((x) => x.entryId === r.entryId)) out.push(r); }
       const at = res.cache?.storedAt ?? Date.now(); storedAt = storedAt === null ? at : Math.min(storedAt, at);
-      rows = out.slice(); render(); setConn("wait", `${label}… ${out.length} Investoren`);
+      if (!cacheAt) { rows = out.slice(); render(); } setConn("wait", `${label}… ${out.length} Investoren`);
       if (!hasMore || entries.length === 0) break; offset += entries.length;
     }
   }
@@ -536,13 +578,14 @@
           for (const r of out) if (r.recordId === rid) { r.name = str(a.name) ?? dom ?? rid; r.domain = dom; r.location = str(a.primary_location?.locality) ?? str(a.primary_location?.country_code) ?? null; r.lastInteraction = str(a.last_interaction) ?? str(a.last_email_interaction) ?? null; r.description = str(a.description); r.categories = Array.isArray(a.categories) ? a.categories.join(", ") : str(a.categories); }
         }
       } catch (e) { /* ohne Namen bleibt die Kennung */ }
-      rows = out.slice(); render(); setConn("wait", `Namen… ${Math.min(i + 25, ids.length)}/${ids.length}`);
+      if (!cacheAt) { rows = out.slice(); render(); } setConn("wait", `Namen… ${Math.min(i + 25, ids.length)}/${ids.length}`);
     }
     for (const r of out) if (r.name === "…") r.name = r.domain ?? (r.recordId ? r.recordId.slice(0, 8) : "Unbenannt");
   }
   async function load(force, everything) {
     if (!mcp || loading) return;
     loading = true; $("refresh").disabled = true; $("loadAll").disabled = true; setConn("wait", "Lese die Investors-Liste…"); banner("", "");
+    const gen = cacheGen; freshness();
     const cache = force ? { staleTime: 0, refresh: true } : { staleTime: 300000 };
     const out = [];
     try {
@@ -553,13 +596,15 @@
       }
       if (out.length === 0) { banner("warn", `<b>Keine Einträge gelesen.</b> Die Rohantwort steht in der Diagnose. Falls Attio geantwortet hat, aber die Form nicht erkannt wurde: Diagnose kopieren und mir schicken.`); $("diag").open = true; }
       await enrich(out, cache);
-      rows = out; setConn("ok", `Attio · ${rows.length} Investoren${loadedAll ? "" : ` (aktiv + Targets ≥ ${CONFIG.fitThreshold})`}`); render();
+      if (out.length > 0 || !cacheAt) { rows = out; cacheAt = null; }  // an empty answer does not wipe the stored list from the screen (the banner above says so)
+      setConn("ok", `Attio · ${rows.length} Investoren${loadedAll ? "" : ` (aktiv + Targets ≥ ${CONFIG.fitThreshold})`}`); render();
+      if (!everything && out.length > 0 && gen === cacheGen) { if (investorCache.write({ list: LIST, entries: out })) cacheSaved = Date.now(); paintCacheLine(); }  // the default set only: the stored list is what the page opens on
     } catch (err) { const [kind, html] = explain(err); banner(kind, html); setConn("bad", "Attio: " + (err?.code ?? "Fehler")); $("diag").open = true; }
-    finally { loading = false; $("refresh").disabled = !mcp; $("loadAll").disabled = !mcp || loadedAll; }
+    finally { loading = false; $("refresh").disabled = !mcp; $("loadAll").disabled = !mcp || loadedAll; freshness(); }
   }
 
   // ── Darstellung ──────────────────────────────────────────────────────────────
-  function freshness() { const p = $("fresh"); if (!storedAt) { p.hidden = true; return; } const mins = Math.round((Date.now() - storedAt) / 60000); $("freshText").textContent = mins < 1 ? "gerade gelesen" : `gelesen vor ${mins} min`; p.className = "pill " + (mins > 30 ? "wait" : "ok"); p.hidden = false; }
+  function freshness() { const p = $("fresh"); if (cacheAt) { const stale = cacheStale(); $("freshText").textContent = `Stand von ${ageText(Date.now() - cacheAt)}${stale ? " (veraltet)" : ""}${loading ? " · aktualisiere …" : ""}`; p.className = "pill " + (stale ? "bad" : "wait"); p.hidden = false; return; } if (!storedAt) { p.hidden = true; return; } const mins = Math.round((Date.now() - storedAt) / 60000); $("freshText").textContent = mins < 1 ? "gerade gelesen" : `gelesen vor ${mins} min`; p.className = "pill " + (mins > 30 ? "wait" : "ok"); p.hidden = false; }
   const isQuiet = (r) => QUIET_STATUSES.includes(r.status) && (daysSince(parseWhen(r.lastInteraction)) ?? 0) > QUIET_DAYS;
   function tiles() {
     const K = [
@@ -885,6 +930,9 @@
   setInterval(freshness, 60000);
 
   tiles(); board();
+  $("cacheClear").addEventListener("click", () => { investorCache.clear(); cacheSaved = null; cacheGen++; paintCacheLine(); load(true, loadedAll); });
+  try { const c = readInvestorCache(); if (c) { rows = c.entries; cacheAt = c.savedAt; cacheSaved = c.savedAt; render(); } paintCacheLine(); }  // the stored list first, before any connector call
+  catch (err) { rows = []; cacheAt = null; cacheSaved = null; investorCache.clear(); try { paintCacheLine(); } catch { /* nothing to paint */ } }  // a stored list that cannot be drawn is dropped; the live load below runs as if there were none
   (async () => {
     log("info", `window.claude ${window.claude ? "vorhanden" : "fehlt"}`);
     // The viewer's e-mail picks the default assignee of a new task; without the capability the first admin is the default.

@@ -5,6 +5,7 @@
   user: scopes [profile]
   mcp.servers:
     {server: "Attio",  tools: ["list-records-in-list", "update-list-entry-by-id", "search-records", "upsert-record", "add-record-to-list", "create-note", "create-task"]}
+    {server: "Google Drive",  tools: ["search_files"]}
     {server: "Gmail",  tools: ["search_threads", "get_thread", "create_draft"]}
 -->
 <title>Inbox</title>
@@ -186,6 +187,31 @@
     .dhost.open .dacts .row .btn { flex: 1 1 140px; justify-content: center; white-space: normal; text-align: center; min-height: 44px; }
     .dhost.open .dacts #apMsg:empty, .dhost.open .dacts #inMsg:empty { display: none; }
   }
+  /* Kontext unter dem Vorschlag (region:context); Zusammenfassungen 44 px hoch, lange Absender brechen um */
+  .ctx { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); min-width: 0; }
+  .ctx summary { min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; cursor: pointer; list-style: none; font-weight: 600; }
+  .ctx summary::-webkit-details-marker { display: none; }
+  .ctx summary::before { content: "▸"; color: var(--faint); flex: none; width: 1ch; }
+  .ctx details[open] > summary::before, .ctx[open] > summary::before { content: "▾"; }
+  .ctxbody { display: flex; flex-direction: column; gap: 8px; padding: 0 8px 8px; min-width: 0; }
+  .ctxsec { border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); min-width: 0; }
+  .ctxin { display: flex; flex-direction: column; gap: 8px; padding: 4px 12px 12px; font-size: 13px; color: var(--muted); min-width: 0; }
+  .ctxlbl { flex: 1 1 auto; } .ctxcount { color: var(--faint); font-weight: 400; }
+  .ctxnote { color: var(--muted); overflow-wrap: anywhere; }
+  .ctxhead { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; justify-content: space-between; }
+  .ctxlink { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent); }
+  .ctxmsg { border-top: 1px solid var(--line); min-width: 0; }
+  .ctxmsg summary { align-items: flex-start; font-weight: 400; padding: 8px 0; color: var(--fg); }
+  .ctxmsg > .row, .ctxmsg > pre { margin: 0 0 8px; }
+  .ctxsum { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+  .ctxfrom { font-weight: 600; color: var(--fg); overflow-wrap: anywhere; }
+  .ctxdate, .ctxprev { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+  .ctxprev { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .ctxmsg[open] .ctxprev { display: none; }
+  .ctxfile { display: flex; flex-direction: column; gap: 2px; min-height: 44px; justify-content: center; padding: 6px 0; border-top: 1px solid var(--line); min-width: 0; }
+  a.ctxfile .ctxfrom { color: var(--accent); }
+  .ctx pre { max-height: 320px; }
+  .ctx .pill { white-space: normal; overflow-wrap: anywhere; max-width: 100%; border-radius: 12px; }
 </style>
 
 <div class="app">
@@ -444,6 +470,10 @@
     if ((cur?.kind === "email" || cur?.kind === "digest") && filled(cur.email?.draftId)) return "Zu dieser Freigabe liegt schon ein Gmail-Entwurf (draftId); ein zweiter wird nicht angelegt. Den Entwurf in Gmail öffnen und hier „Als gesendet markieren“";
     return null;
   }
+  // Eine Mail-Freigabe mit Gmail-Entwurf (draftId) bietet „Entwurf öffnen“ und „Als gesendet markieren“ statt „Freigeben“;
+  // der Link ist die gespeicherte draftUrl, sonst die Gmail-Adresse des Entwurfs. Beides ohne Gmail-Aufruf.
+  const hasDraft = (a) => (a?.kind === "email" || a?.kind === "digest") && filled(a.email?.draftId);
+  const draftOpenHref = (a) => (hasDraft(a) ? safeHref(a.email?.draftUrl) ?? `https://mail.google.com/mail/u/0/#drafts?compose=${encodeURIComponent(String(a.email.draftId))}` : null);
   // Wer hat den Schalter zuletzt gesetzt? Ein Agent darf es nicht still tun: das zeigt die Seite an.
   const looksLikeAgent = (by) => /^(agent|orchestrator)/i.test(String(by ?? "").trim());
   // Das Protokoll ist nur anhängend: ein "mail-sent" wird nie geändert. Die Bestätigung ist ein zweiter Eintrag
@@ -586,6 +616,114 @@
     case "cancelled": return `<b>Abgebrochen.</b> Ausgang unbekannt; in ${server} prüfen.`;
     default: return `<b>${server}: etwas ist fehlgeschlagen</b> (${esc(code)}). ${esc(err?.message ?? "")}`; } }
 
+  // region:context (the context under every proposal; builders, render and load; no globals but esc, safeHref, attioLink and parsePayload of the page, the connector calls and their error text come in through `io`; mirrored byte for byte in inbox.html and deal-cockpit.html, held still by tools/check-screen-templates.sh)
+  const CTX_TEXT_CAP = 4000, CTX_MAX_MSGS = 50, CTX_DRIVE_PAGE = 20;
+  const ctxCache = Object.create(null);  // approval id -> { open, secOpen, msgOpen, thread, drive }; each section is { state: idle | loading | done | error, data?, html? }
+  const ctxState = (id) => (ctxCache[id] ??= { open: false, secOpen: {}, msgOpen: {}, thread: { state: "idle" }, drive: { state: "idle" } });
+  const ctxStr = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+  // Drive's grammar knows title, fullText, mimeType, the time terms, parentId, owner, sharedWithMe: no name, no trashed. A quote and a backslash inside the name are escaped.
+  function driveQuery(name) {
+    const n = ctxStr(name, 200);
+    return n ? `title contains '${n.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'` : null;
+  }
+  // The thread of a proposal: its own field, else the source's, else the message a reply answers (the first message of a thread has the thread's id).
+  function threadIdOf(a) {
+    for (const v of [a?.target?.threadId, a?.source?.threadId, a?.email?.replyToMessageId]) { const s = ctxStr(v, 80); if (/^[A-Za-z0-9_-]{4,80}$/.test(s)) return s; }
+    return null;
+  }
+  // Gmail get_thread (PLAIN_TEXT): { id, messageCount, viewUrl, messages: [{ sender, date, internalDate, snippet, plaintextBody, attachments: [{ filename }] }] }; null when the answer is not that.
+  function flattenThread(p) {
+    if (!p || typeof p !== "object" || !Array.isArray(p.messages)) return null;
+    const all = p.messages.filter((m) => m && typeof m === "object");  // the newest CTX_MAX_MSGS stay (a long thread is read from its end); total says how many there were
+    const messages = all.slice(-CTX_MAX_MSGS).map((m) => {
+      const full = [m.plaintextBody ?? m.plaintext_body, m.snippet].find((v) => typeof v === "string" && v.trim()) ?? "";
+      const ms = Number(m.internalDate), date = ctxStr(m.date, 40) || (Number.isFinite(ms) && ms > 0 ? new Date(ms).toISOString() : "");
+      const preview = full.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith(">")).slice(0, 3).join(" ").slice(0, 240);
+      const attachments = (Array.isArray(m.attachments) ? m.attachments : []).slice(0, 10).map((x) => ctxStr(x?.filename ?? x?.name ?? x?.id, 80) || "Anhang");
+      return { from: ctxStr(m.sender ?? m.from, 200), date, preview, text: full.slice(0, CTX_TEXT_CAP), cut: full.length > CTX_TEXT_CAP, attachments };
+    });
+    return { viewUrl: safeHref(p.viewUrl), messages, total: all.length };
+  }
+  // Drive search_files: { files: [{ title, mimeType, modifiedTime, viewUrl }] }, and the bare object {} when nothing matches; null when the answer is not an object.
+  function flattenFiles(p) {
+    if (!p || typeof p !== "object" || Array.isArray(p) || (p.files !== undefined && !Array.isArray(p.files))) return null;
+    return (p.files ?? []).slice(0, CTX_DRIVE_PAGE).filter((f) => f && typeof f === "object").map((f) => ({ title: ctxStr(f.title ?? f.name, 200) || "(ohne Titel)", mimeType: ctxStr(f.mimeType, 100), modifiedTime: ctxStr(f.modifiedTime, 40), href: safeHref(f.viewUrl) }));
+  }
+  // The record the proposal is about, its list entry and, for a note, the source line the notes run appends ("Source: Granola · <date> · [notes](<url>)").
+  function ctxRecord(a) {
+    const rid = a?.kind === "task" ? (a.task?.linked_record_object === "companies" ? a.task.linked_record_id : null) : a?.kind === "note" ? (a.crmNote?.parent_object === "companies" ? a.crmNote.parent_record_id : null) : a?.target?.recordId;
+    const lines = a?.kind === "note" ? String(a.crmNote?.content ?? "").split("\n").map((l) => l.trim()).filter(Boolean) : [], last = lines[lines.length - 1] ?? "";
+    const m = /\]\((https:\/\/[^\s)]+)\)/.exec(last) ?? /(https:\/\/[^\s)\]>]+)/.exec(last);
+    let href = null; try { href = m && /(^|\.)granola\.ai$/.test(new URL(m[1]).hostname) ? safeHref(m[1]) : null; } catch { href = null; }
+    const source = /granola/i.test(last) ? last.slice(0, 200) : "";
+    const out = { attio: attioLink(rid), list: ctxStr(a?.target?.list, 80), entry: ctxStr(a?.target?.entryId, 80), source, href };
+    return out.attio || out.entry || out.source ? out : null;
+  }
+  const ctxWhen = (iso, time) => { const d = new Date(iso); return Number.isFinite(d.getTime()) ? (time ? d.toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" }) : d.toLocaleDateString("de-DE")) : String(iso ?? "").slice(0, 16); };
+  const ctxType = (mime) => ({ "application/vnd.google-apps.folder": "Ordner", "application/vnd.google-apps.document": "Google Doc", "application/vnd.google-apps.spreadsheet": "Google Sheet", "application/vnd.google-apps.presentation": "Google Slides", "application/pdf": "PDF" })[mime] ?? (String(mime).split("/").pop() || "Datei").slice(0, 24);
+  const ctxCount = (id, key) => { const s = ctxState(id)[key]; return s.state === "done" ? ` · ${key === "thread" ? (s.data.total > s.data.messages.length ? `${s.data.messages.length} von ${s.data.total}` : s.data.messages.length) : s.data.length}` : ""; };
+  function ctxBody(id, key) {
+    const s = ctxState(id)[key];
+    if (s.state === "loading") return `<div class="ctxnote"><span class="spin"></span> ${key === "thread" ? "Lese den Thread…" : "Suche auf dem Drive…"}</div>`;
+    if (s.state === "error") return `<div class="note bad">${s.html}</div><button type="button" class="btn" data-ctx-retry="${key}">Erneut laden</button>`;
+    if (s.state !== "done") return "";
+    if (key === "drive") return s.data.length ? s.data.map((f) => { const inner = `<span class="ctxfrom">${esc(f.title)}</span><span class="ctxdate">${esc(ctxType(f.mimeType))}${f.modifiedTime ? ` · geändert ${esc(ctxWhen(f.modifiedTime, false))}` : ""}</span>`; return f.href ? `<a class="ctxfile" href="${esc(f.href)}" target="_blank" rel="noopener">${inner}</a>` : `<div class="ctxfile">${inner}</div>`; }).join("") : `<div class="ctxnote">Nichts auf dem Drive gefunden</div>`;
+    const t = s.data, n = t.messages.length;
+    const head = `<div class="ctxhead"><span>${t.total > n ? `${n} von ${t.total} Nachrichten` : `${n} Nachricht${n === 1 ? "" : "en"}`}</span>${t.viewUrl ? `<a class="ctxlink" href="${esc(t.viewUrl)}" target="_blank" rel="noopener">In Gmail öffnen</a>` : ""}</div>`;
+    return head + (n ? t.messages.map((g, i) => `<details class="ctxmsg" data-ctx-msg="${i}" ${ctxState(id).msgOpen[i] ? "open" : ""}><summary><span class="ctxsum"><span class="ctxfrom">${esc(g.from || "(unbekannt)")}</span><span class="ctxdate">${esc(ctxWhen(g.date, true))}</span><span class="ctxprev">${esc(g.preview)}</span></span></summary>${g.attachments.length ? `<div class="row">${g.attachments.map((n) => `<span class="pill">${esc(n)}</span>`).join("")}</div>` : ""}<pre>${esc(g.text)}${g.cut ? "\n… (gekürzt)" : ""}</pre></details>`).join("") : `<div class="ctxnote">Keine Nachrichten im Thread.</div>`);
+  }
+  const ctxRecordBody = (r) => `${r.attio ? `<a class="ctxlink" href="${esc(r.attio)}" target="_blank" rel="noopener">In Attio öffnen</a>` : ""}${r.entry ? `<div class="ctxnote">Listeneintrag${r.list ? ` in <code>${esc(r.list)}</code>` : ""}: <code>${esc(r.entry)}</code></div>` : ""}${r.source ? `<div class="ctxnote">${esc(r.source)}</div>` : ""}${r.href ? `<a class="ctxlink" href="${esc(r.href)}" target="_blank" rel="noopener">Granola-Notiz öffnen</a>` : ""}`;
+  // The block under the proposal body: closed by default, a section only when its input is there. Opening a section loads it (ctxBind); nothing here calls a connector.
+  function ctxRender(a) {
+    if (!a || typeof a.id !== "string") return "";
+    const c = ctxState(a.id), rec = ctxRecord(a);
+    const secs = [["thread", "E-Mail-Thread", threadIdOf(a)], ["drive", "Dokumente auf dem Drive", driveQuery(a.target?.name)], ["record", "Datensatz", rec]].filter((x) => x[2]);
+    if (!secs.length) return "";
+    return `<details class="ctx" data-ctx-block="${esc(a.id)}" ${c.open ? "open" : ""}><summary>Kontext</summary><div class="ctxbody">${secs.map(([key, label]) => `<details class="ctxsec" data-ctx-sec="${key}" ${c.secOpen[key] ? "open" : ""}><summary><span class="ctxlbl">${label}</span><span class="ctxcount">${key === "record" ? "" : esc(ctxCount(a.id, key))}</span></summary><div class="ctxin">${key === "record" ? ctxRecordBody(rec) : ctxBody(a.id, key)}</div></details>`).join("")}</div></details>`;
+  }
+  function ctxPaint(host, id, key) {
+    const blk = [...host.querySelectorAll("[data-ctx-block]")].find((el) => el.dataset.ctxBlock === id), sec = blk?.querySelector(`[data-ctx-sec="${key}"]`);
+    if (!sec) return;  // another proposal is on screen now; the result waits in the cache
+    sec.querySelector(".ctxin").innerHTML = ctxBody(id, key); sec.querySelector(".ctxcount").textContent = ctxCount(id, key);
+  }
+  // One load per open per proposal: only an idle section loads; a failure stays in the cache until the partner taps "Erneut laden".
+  async function ctxLoad(host, a, key, io) {
+    const s = ctxState(a.id)[key];
+    if (s.state !== "idle") return;
+    s.state = "loading"; ctxPaint(host, a.id, key);
+    try {
+      if (key === "thread") {
+        const t = flattenThread(parsePayload(await io.gmail("get_thread", { threadId: threadIdOf(a), messageFormat: "PLAIN_TEXT" }, { cache: { staleTime: 300000 } })));
+        if (!t) throw Object.assign(new Error("unerwartete Antwort"), { code: "upstream_error" });
+        s.data = t;
+      } else {
+        const f = flattenFiles(parsePayload(await io.drive("search_files", { query: driveQuery(a.target?.name), pageSize: CTX_DRIVE_PAGE, excludeContentSnippets: true })));
+        if (!f) throw Object.assign(new Error("unerwartete Antwort"), { code: "upstream_error" });
+        s.data = f;
+      }
+      s.state = "done";
+    } catch (e) { s.state = "error"; s.html = io.explain(e, key === "thread" ? "Gmail" : "Google Drive"); }
+    ctxPaint(host, a.id, key);
+  }
+  // Wired once on the element that holds the detail: <details> toggle events do not bubble, so the listener captures them.
+  function ctxBind(host, getApproval, io) {
+    host.addEventListener("toggle", (ev) => {
+      const el = ev.target, blk = el.closest?.("[data-ctx-block]"), a = getApproval();
+      if (!blk || !a || a.id !== blk.dataset.ctxBlock) return;
+      const c = ctxState(a.id);
+      if (el === blk) c.open = el.open;
+      else if (el.dataset.ctxSec) { c.secOpen[el.dataset.ctxSec] = el.open; if (el.open && (el.dataset.ctxSec === "thread" || el.dataset.ctxSec === "drive")) ctxLoad(host, a, el.dataset.ctxSec, io); }
+      else if (el.dataset.ctxMsg !== undefined) c.msgOpen[el.dataset.ctxMsg] = el.open;
+    }, true);
+    host.addEventListener("click", (ev) => {
+      const b = ev.target.closest?.("[data-ctx-retry]"), a = getApproval(), key = b?.dataset.ctxRetry;
+      if (!b || !a || (key !== "thread" && key !== "drive")) return;
+      const s = ctxState(a.id)[key];
+      if (s.state === "error") { s.state = "idle"; ctxLoad(host, a, key, io); }
+    });
+  }
+  // endregion:context
+
   // ── Audit: nur anhängen ──────────────────────────────────────────────────────
   async function sha(input) { try { const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(input))); return "sha256:" + [...new Uint8Array(buf)].slice(0, 8).map((b) => b.toString(16).padStart(2, "0")).join(""); } catch { return "sha256:unavailable"; } }
   async function audit(action, input, outputRef, rationale, actorType = "human", extra = null) {
@@ -704,6 +842,7 @@
     const words = String(a.email?.body ?? "").trim().split(/\s+/).filter(Boolean).length;
     const keep = drawerId === "apDetail" ? $("apDetail").querySelector(".dbody")?.scrollTop ?? 0 : 0;
     const chip = `<span class="kind ${kindClass(a.kind)}">${esc(kindLabel(a.kind))} · ${esc(statusLabel(a.status))}</span>`;
+    const openHref = isMail ? draftOpenHref(a) : null, drafted = Boolean(openHref) && (a.status === "pending" || a.status === "approved");
     const body = `
       <div><h2 style="font-size:20px;letter-spacing:0;text-transform:none;color:var(--fg)">${esc(a.title)}</h2><div class="sub">Vorgeschlagen von ${esc(a.createdBy ?? "?")} · ${esc(new Date(a.createdAt).toLocaleString("de-DE"))}${a.decidedAt ? ` · entschieden von ${esc(a.decidedBy ?? "?")} · ${esc(new Date(a.decidedAt).toLocaleString("de-DE"))}` : ""}</div></div>
         ${attio ? `<div class="row" style="margin-top:8px"><a class="btn" href="${esc(attio)}" target="_blank" rel="noopener">In Attio öffnen</a></div>` : ""}
@@ -711,10 +850,12 @@
       ${isNl ? newsletterBody(a) : a.kind === "task" ? taskBody(a) : a.kind === "note" ? noteBody(a) : !isMail ? `<div class="note"><b>${esc(a.target?.name ?? "")}</b>: ${esc(a.change?.from ?? "?")} → <b>${esc(a.change?.to ?? "?")}</b> auf <code>${esc(a.target?.list ?? "")}</code></div>` : `
         <div class="grid2"><div><label class="lbl" for="eTo">An</label><input id="eTo" value="${esc(toList(a.email?.to).join(", "))}" ${a.status !== "pending" ? "disabled" : ""}></div><div><label class="lbl" for="eSub">Betreff</label><input id="eSub" value="${esc(a.email?.subject ?? "")}" ${a.status !== "pending" ? "disabled" : ""}></div></div>
         <div><label class="lbl" for="eBody">Text · ${words} Wörter</label><textarea id="eBody" ${a.status !== "pending" ? "disabled" : ""}>${esc(a.email?.body ?? "")}</textarea></div>
-        ${draftHref ? `<div class="note ok"><b>Entwurf liegt in Gmail.</b> <a href="${esc(draftHref)}" target="_blank" rel="noopener">Entwurf öffnen</a>, senden, dann unten „als gesendet markieren“.</div>` : ""}`}
-      ${a.note ? `<div class="note warn"><b>Notiz:</b> ${esc(a.note)}</div>` : ""}`;
+        ${draftHref ? `<div class="note ok"><b>Entwurf liegt in Gmail.</b> <a href="${esc(draftHref)}" target="_blank" rel="noopener">Entwurf öffnen</a>, senden, dann unten „als gesendet markieren“.</div>` : drafted ? `<div class="note ok"><b>Entwurf liegt in Gmail.</b> Ein zweiter wird nicht angelegt: den Entwurf öffnen, senden, dann unten „Als gesendet markieren“.</div>` : ""}`}
+      ${a.note ? `<div class="note warn"><b>Notiz:</b> ${esc(a.note)}</div>` : ""}
+      ${ctxRender(a)}`;
     const acts = `<div class="row">
-        ${a.status === "pending" && can ? `<button type="button" class="btn primary" data-dec="approved">${isNl ? "Freigeben" : isMail ? "Freigeben und Gmail-Entwurf anlegen" : "Freigeben und in Attio schreiben"}</button><button type="button" class="btn danger" data-dec="rejected">Ablehnen…</button>` : ""}
+        ${drafted ? `<a class="btn primary" href="${esc(openHref)}" target="_blank" rel="noopener" data-draft-open="1">Entwurf öffnen</a>` : ""}
+        ${a.status === "pending" && can ? `${drafted ? "" : `<button type="button" class="btn primary" data-dec="approved">${isNl ? "Freigeben" : isMail ? "Freigeben und Gmail-Entwurf anlegen" : "Freigeben und in Attio schreiben"}</button>`}<button type="button" class="btn danger" data-dec="rejected">Ablehnen…</button>` : ""}
         ${isMail && (a.status === "approved" || a.status === "pending") && can ? `<button type="button" class="btn" data-dec="sent">Als gesendet markieren</button>` : ""}
         ${isMail ? `<button type="button" class="btn" data-copy="1">Text kopieren</button>` : ""}
         ${isNl && (a.status === "approved" || a.status === "pending") && can ? `<button type="button" class="btn" data-nl-draft="1" ${mcp ? "" : "disabled"}>Als Gmail-Entwurf an Partner</button>` : ""}
@@ -1077,6 +1218,7 @@
   window.addEventListener("hashchange", applyHash);
   $("apList").addEventListener("click", (e) => { const f = e.target.closest("[data-f]"); if (f) { apFilter = f.dataset.f; renderApprovals(); return; } const c = e.target.closest("[data-id]"); if (c) { selectedId = c.dataset.id; creating = false; renderApprovals(); openDrawer("apDetail", `#apList [data-id="${CSS.escape(c.dataset.id)}"]`); } });
   document.addEventListener("click", (e) => { if (e.target.closest("[data-dclose]")) closeDrawer(); });
+  ctxBind($("apDetail"), () => approvals.find((x) => x.id === selectedId), { gmail: (tool, input, opts) => call(GMAIL, tool, input, opts), drive: (tool, input, opts) => call("Google Drive", tool, input, opts), explain });
   $("apDetail").addEventListener("click", (e) => { const a = approvals.find((x) => x.id === selectedId); const d = e.target.closest("[data-dec]"); if (d && a) { decide(a, d.dataset.dec); return; } if (a?.kind === "newsletter") { if (e.target.closest("[data-nl-view]")) { if ($("nlTo")) nlToDraft.set(a.id, $("nlTo").value); if (nlTextView.has(a.id)) nlTextView.delete(a.id); else nlTextView.add(a.id); renderDetail(a); return; } if (e.target.closest("[data-nl-draft]")) { newsletterDraft(a); return; } } const c = e.target.closest("[data-copy]"); if (c && a) { const text = `${a.email?.subject ?? ""}\n\n${$("eBody")?.value ?? a.email?.body ?? ""}`; navigator.clipboard?.writeText(text).then(() => { c.textContent = "Kopiert"; }).catch(() => { const ta = $("eBody"); if (ta) { ta.select(); } }); } });
   $("feed").addEventListener("click", (ev) => {
     const find = (sel, attr) => { const b = ev.target.closest(sel); return b ? auditDocs.find((x) => x.id === b.dataset[attr]) : null; };

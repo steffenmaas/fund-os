@@ -6,7 +6,7 @@
   mcp.servers:
     {server: "Attio",         tools: ["list-records-in-list", "get-records-by-ids", "update-list-entry-by-id", "create-note", "list-tasks", "create-task", "update-task", "list-workspace-members"]}
     {server: "Google Drive",  tools: ["search_files", "download_file_content"]}
-    {server: "Gmail",         tools: ["create_draft"]}
+    {server: "Gmail",         tools: ["create_draft", "get_thread"]}
 -->
 <title>Deal Cockpit</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -264,6 +264,31 @@
     .grid2 { grid-template-columns: minmax(0, 1fr); }
     .card { padding: 14px; }
   }
+  /* Kontext unter dem Vorschlag (region:context); Zusammenfassungen 44 px hoch, lange Absender brechen um */
+  .ctx { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); min-width: 0; }
+  .ctx summary { min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; cursor: pointer; list-style: none; font-weight: 600; }
+  .ctx summary::-webkit-details-marker { display: none; }
+  .ctx summary::before { content: "▸"; color: var(--faint); flex: none; width: 1ch; }
+  .ctx details[open] > summary::before, .ctx[open] > summary::before { content: "▾"; }
+  .ctxbody { display: flex; flex-direction: column; gap: 8px; padding: 0 8px 8px; min-width: 0; }
+  .ctxsec { border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); min-width: 0; }
+  .ctxin { display: flex; flex-direction: column; gap: 8px; padding: 4px 12px 12px; font-size: 13px; color: var(--muted); min-width: 0; }
+  .ctxlbl { flex: 1 1 auto; } .ctxcount { color: var(--faint); font-weight: 400; }
+  .ctxnote { color: var(--muted); overflow-wrap: anywhere; }
+  .ctxhead { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; justify-content: space-between; }
+  .ctxlink { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent); }
+  .ctxmsg { border-top: 1px solid var(--line); min-width: 0; }
+  .ctxmsg summary { align-items: flex-start; font-weight: 400; padding: 8px 0; color: var(--fg); }
+  .ctxmsg > .row, .ctxmsg > pre { margin: 0 0 8px; }
+  .ctxsum { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+  .ctxfrom { font-weight: 600; color: var(--fg); overflow-wrap: anywhere; }
+  .ctxdate, .ctxprev { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+  .ctxprev { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .ctxmsg[open] .ctxprev { display: none; }
+  .ctxfile { display: flex; flex-direction: column; gap: 2px; min-height: 44px; justify-content: center; padding: 6px 0; border-top: 1px solid var(--line); min-width: 0; }
+  a.ctxfile .ctxfrom { color: var(--accent); }
+  .ctx pre { max-height: 320px; }
+  .ctx .pill { white-space: normal; overflow-wrap: anywhere; max-width: 100%; border-radius: 12px; }
 </style>
 
 <div class="app">
@@ -342,6 +367,7 @@
 
     <details class="diag" id="diag">
       <summary>Diagnose · Verbindung, Antworten, Fehler</summary>
+      <div class="body" id="cacheBody" style="padding-bottom:0;flex-direction:row;flex-wrap:wrap;align-items:center"><span id="cacheLine"></span><button type="button" class="btn" id="cacheClear">Zwischenspeicher leeren</button></div>
       <div class="body" id="diagBody"><div>Noch nichts protokolliert.</div></div>
     </details>
   </div>
@@ -1049,6 +1075,10 @@
     if ((cur?.kind === "email" || cur?.kind === "digest") && filled(cur.email?.draftId)) return "Zu dieser Freigabe liegt schon ein Gmail-Entwurf (draftId); ein zweiter wird nicht angelegt. Den Entwurf in Gmail öffnen und hier „Als gesendet markieren“";
     return null;
   }
+  // Eine Mail-Freigabe mit Gmail-Entwurf (draftId) bietet „Entwurf öffnen“ und „Als gesendet markieren“ statt „Freigeben“;
+  // der Link ist die gespeicherte draftUrl, sonst die Gmail-Adresse des Entwurfs. Beides ohne Gmail-Aufruf.
+  const hasDraft = (a) => (a?.kind === "email" || a?.kind === "digest") && filled(a.email?.draftId);
+  const draftOpenHref = (a) => (hasDraft(a) ? safeHref(a.email?.draftUrl) ?? `https://mail.google.com/mail/u/0/#drafts?compose=${encodeURIComponent(String(a.email.draftId))}` : null);
   // Wer hat den Schalter zuletzt gesetzt? Ein Agent darf es nicht still tun: das zeigt die Seite an.
   const looksLikeAgent = (by) => /^(agent|orchestrator)/i.test(String(by ?? "").trim());
   // Das Protokoll ist nur anhängend: ein "mail-sent" wird nie geändert. Die Bestätigung ist ein zweiter Eintrag
@@ -1133,6 +1163,35 @@
   }
   // ==== autopilot:end ====
 
+  // region:localcache (a copy of a list in this browser's local storage; every access guarded; nothing is thrown, a missing, damaged or foreign entry reads as null; mirrored byte for byte in deal-cockpit.html and investors.html, held still by tools/check-screen-templates.sh)
+  function localCache(key, version) {
+    const MAX_CHARS = 4 * 1024 * 1024;
+    const store = () => { try { return typeof window !== "undefined" && window.localStorage ? window.localStorage : null; } catch { return null; } };
+    return {
+      // { savedAt, data } or null (no storage, nothing stored, damaged JSON, other version, wrong shape)
+      read() {
+        try {
+          const s = store(); if (!s) return null;
+          const raw = s.getItem(key); if (typeof raw !== "string") return null;
+          const o = JSON.parse(raw);
+          if (!o || typeof o !== "object" || Array.isArray(o) || o.v !== version || typeof o.savedAt !== "number" || !Number.isFinite(o.savedAt) || o.savedAt > Date.now() + 86400000 || o.data === undefined || o.data === null) return null;
+          return { savedAt: o.savedAt, data: o.data };
+        } catch { return null; }
+      },
+      // true when stored; false (never a throw) without storage, on a quota error, or above 4 MB serialised
+      write(data) {
+        try {
+          const s = store(); if (!s) return false;
+          const text = JSON.stringify({ v: version, savedAt: Date.now(), data });
+          if (typeof text !== "string" || text.length > MAX_CHARS) return false;
+          s.setItem(key, text); return true;
+        } catch { return false; }
+      },
+      clear() { try { const s = store(); if (s) s.removeItem(key); } catch { /* nothing to remove */ } },
+    };
+  }
+  // endregion:localcache
+
   let sample = null, scoringCtl = null, scoringId = null, sampleBlocked = false, kn = null;
   const cards = new Map();  // entryId -> the scorecard written in this visit
   const pendingCard = new Map();  // entryId -> a scorecard that was computed but not written (the Attio write failed); kept so the write can be repeated without a second sample call
@@ -1142,6 +1201,20 @@
   let filter = { kpi: "", q: "", stage: "", attOnly: false };
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  // ── Zwischenspeicher: the list opens from a copy in this browser, the connector refreshes it in the background. Only connector data is written; the copy never enters db.
+  const dealCache = localCache("fundos.cockpit.deals", 1);
+  const CACHE_STALE_MS = 7 * 86400000, CACHE_MAX_ENTRIES = 5000;
+  let cacheAt = null, cacheSaved = null, cacheGen = 0;  // cacheAt: the list on screen is still the stored copy from that time (null once the connector has answered); cacheSaved: when the stored copy was written (null: none); cacheGen: a clear invalidates a load that is still running
+  const ageText = (ms) => { const m = Math.max(0, Math.round(ms / 60000)); return m < 1 ? "gerade eben" : m < 120 ? `vor ${m} Min` : m < 2880 ? `vor ${Math.round(m / 60)} Std` : `vor ${Math.round(m / 1440)} Tagen`; };
+  const cacheStale = () => cacheAt !== null && Date.now() - cacheAt > CACHE_STALE_MS;
+  function paintCacheLine() { $("cacheLine").textContent = `Zwischenspeicher nur in diesem Browser (Stand ${cacheSaved ? new Date(cacheSaved).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" }) : "leer"})`; }
+  function readDealCache() {
+    const c = dealCache.read(), d = c?.data;
+    if (!d || d.list !== LIST || !Array.isArray(d.entries) || d.entries.length === 0 || d.entries.length > CACHE_MAX_ENTRIES || !d.entries.every((e) => e && typeof e === "object" && typeof e.entryId === "string" && e.entryId)) return null;
+    const keys = Object.keys(toDeal({}));
+    return { savedAt: c.savedAt, entries: d.entries.map((e) => Object.fromEntries(keys.map((k) => [k, e[k] === undefined ? null : e[k]]))) };
+  }
 
   // ── Diagnose ─────────────────────────────────────────────────────────────────
   const diag = [];
@@ -1235,6 +1308,114 @@
     return rows;
   }
   // endregion:rank
+
+  // region:context (the context under every proposal; builders, render and load; no globals but esc, safeHref, attioLink and parsePayload of the page, the connector calls and their error text come in through `io`; mirrored byte for byte in inbox.html and deal-cockpit.html, held still by tools/check-screen-templates.sh)
+  const CTX_TEXT_CAP = 4000, CTX_MAX_MSGS = 50, CTX_DRIVE_PAGE = 20;
+  const ctxCache = Object.create(null);  // approval id -> { open, secOpen, msgOpen, thread, drive }; each section is { state: idle | loading | done | error, data?, html? }
+  const ctxState = (id) => (ctxCache[id] ??= { open: false, secOpen: {}, msgOpen: {}, thread: { state: "idle" }, drive: { state: "idle" } });
+  const ctxStr = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+  // Drive's grammar knows title, fullText, mimeType, the time terms, parentId, owner, sharedWithMe: no name, no trashed. A quote and a backslash inside the name are escaped.
+  function driveQuery(name) {
+    const n = ctxStr(name, 200);
+    return n ? `title contains '${n.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'` : null;
+  }
+  // The thread of a proposal: its own field, else the source's, else the message a reply answers (the first message of a thread has the thread's id).
+  function threadIdOf(a) {
+    for (const v of [a?.target?.threadId, a?.source?.threadId, a?.email?.replyToMessageId]) { const s = ctxStr(v, 80); if (/^[A-Za-z0-9_-]{4,80}$/.test(s)) return s; }
+    return null;
+  }
+  // Gmail get_thread (PLAIN_TEXT): { id, messageCount, viewUrl, messages: [{ sender, date, internalDate, snippet, plaintextBody, attachments: [{ filename }] }] }; null when the answer is not that.
+  function flattenThread(p) {
+    if (!p || typeof p !== "object" || !Array.isArray(p.messages)) return null;
+    const all = p.messages.filter((m) => m && typeof m === "object");  // the newest CTX_MAX_MSGS stay (a long thread is read from its end); total says how many there were
+    const messages = all.slice(-CTX_MAX_MSGS).map((m) => {
+      const full = [m.plaintextBody ?? m.plaintext_body, m.snippet].find((v) => typeof v === "string" && v.trim()) ?? "";
+      const ms = Number(m.internalDate), date = ctxStr(m.date, 40) || (Number.isFinite(ms) && ms > 0 ? new Date(ms).toISOString() : "");
+      const preview = full.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith(">")).slice(0, 3).join(" ").slice(0, 240);
+      const attachments = (Array.isArray(m.attachments) ? m.attachments : []).slice(0, 10).map((x) => ctxStr(x?.filename ?? x?.name ?? x?.id, 80) || "Anhang");
+      return { from: ctxStr(m.sender ?? m.from, 200), date, preview, text: full.slice(0, CTX_TEXT_CAP), cut: full.length > CTX_TEXT_CAP, attachments };
+    });
+    return { viewUrl: safeHref(p.viewUrl), messages, total: all.length };
+  }
+  // Drive search_files: { files: [{ title, mimeType, modifiedTime, viewUrl }] }, and the bare object {} when nothing matches; null when the answer is not an object.
+  function flattenFiles(p) {
+    if (!p || typeof p !== "object" || Array.isArray(p) || (p.files !== undefined && !Array.isArray(p.files))) return null;
+    return (p.files ?? []).slice(0, CTX_DRIVE_PAGE).filter((f) => f && typeof f === "object").map((f) => ({ title: ctxStr(f.title ?? f.name, 200) || "(ohne Titel)", mimeType: ctxStr(f.mimeType, 100), modifiedTime: ctxStr(f.modifiedTime, 40), href: safeHref(f.viewUrl) }));
+  }
+  // The record the proposal is about, its list entry and, for a note, the source line the notes run appends ("Source: Granola · <date> · [notes](<url>)").
+  function ctxRecord(a) {
+    const rid = a?.kind === "task" ? (a.task?.linked_record_object === "companies" ? a.task.linked_record_id : null) : a?.kind === "note" ? (a.crmNote?.parent_object === "companies" ? a.crmNote.parent_record_id : null) : a?.target?.recordId;
+    const lines = a?.kind === "note" ? String(a.crmNote?.content ?? "").split("\n").map((l) => l.trim()).filter(Boolean) : [], last = lines[lines.length - 1] ?? "";
+    const m = /\]\((https:\/\/[^\s)]+)\)/.exec(last) ?? /(https:\/\/[^\s)\]>]+)/.exec(last);
+    let href = null; try { href = m && /(^|\.)granola\.ai$/.test(new URL(m[1]).hostname) ? safeHref(m[1]) : null; } catch { href = null; }
+    const source = /granola/i.test(last) ? last.slice(0, 200) : "";
+    const out = { attio: attioLink(rid), list: ctxStr(a?.target?.list, 80), entry: ctxStr(a?.target?.entryId, 80), source, href };
+    return out.attio || out.entry || out.source ? out : null;
+  }
+  const ctxWhen = (iso, time) => { const d = new Date(iso); return Number.isFinite(d.getTime()) ? (time ? d.toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" }) : d.toLocaleDateString("de-DE")) : String(iso ?? "").slice(0, 16); };
+  const ctxType = (mime) => ({ "application/vnd.google-apps.folder": "Ordner", "application/vnd.google-apps.document": "Google Doc", "application/vnd.google-apps.spreadsheet": "Google Sheet", "application/vnd.google-apps.presentation": "Google Slides", "application/pdf": "PDF" })[mime] ?? (String(mime).split("/").pop() || "Datei").slice(0, 24);
+  const ctxCount = (id, key) => { const s = ctxState(id)[key]; return s.state === "done" ? ` · ${key === "thread" ? (s.data.total > s.data.messages.length ? `${s.data.messages.length} von ${s.data.total}` : s.data.messages.length) : s.data.length}` : ""; };
+  function ctxBody(id, key) {
+    const s = ctxState(id)[key];
+    if (s.state === "loading") return `<div class="ctxnote"><span class="spin"></span> ${key === "thread" ? "Lese den Thread…" : "Suche auf dem Drive…"}</div>`;
+    if (s.state === "error") return `<div class="note bad">${s.html}</div><button type="button" class="btn" data-ctx-retry="${key}">Erneut laden</button>`;
+    if (s.state !== "done") return "";
+    if (key === "drive") return s.data.length ? s.data.map((f) => { const inner = `<span class="ctxfrom">${esc(f.title)}</span><span class="ctxdate">${esc(ctxType(f.mimeType))}${f.modifiedTime ? ` · geändert ${esc(ctxWhen(f.modifiedTime, false))}` : ""}</span>`; return f.href ? `<a class="ctxfile" href="${esc(f.href)}" target="_blank" rel="noopener">${inner}</a>` : `<div class="ctxfile">${inner}</div>`; }).join("") : `<div class="ctxnote">Nichts auf dem Drive gefunden</div>`;
+    const t = s.data, n = t.messages.length;
+    const head = `<div class="ctxhead"><span>${t.total > n ? `${n} von ${t.total} Nachrichten` : `${n} Nachricht${n === 1 ? "" : "en"}`}</span>${t.viewUrl ? `<a class="ctxlink" href="${esc(t.viewUrl)}" target="_blank" rel="noopener">In Gmail öffnen</a>` : ""}</div>`;
+    return head + (n ? t.messages.map((g, i) => `<details class="ctxmsg" data-ctx-msg="${i}" ${ctxState(id).msgOpen[i] ? "open" : ""}><summary><span class="ctxsum"><span class="ctxfrom">${esc(g.from || "(unbekannt)")}</span><span class="ctxdate">${esc(ctxWhen(g.date, true))}</span><span class="ctxprev">${esc(g.preview)}</span></span></summary>${g.attachments.length ? `<div class="row">${g.attachments.map((n) => `<span class="pill">${esc(n)}</span>`).join("")}</div>` : ""}<pre>${esc(g.text)}${g.cut ? "\n… (gekürzt)" : ""}</pre></details>`).join("") : `<div class="ctxnote">Keine Nachrichten im Thread.</div>`);
+  }
+  const ctxRecordBody = (r) => `${r.attio ? `<a class="ctxlink" href="${esc(r.attio)}" target="_blank" rel="noopener">In Attio öffnen</a>` : ""}${r.entry ? `<div class="ctxnote">Listeneintrag${r.list ? ` in <code>${esc(r.list)}</code>` : ""}: <code>${esc(r.entry)}</code></div>` : ""}${r.source ? `<div class="ctxnote">${esc(r.source)}</div>` : ""}${r.href ? `<a class="ctxlink" href="${esc(r.href)}" target="_blank" rel="noopener">Granola-Notiz öffnen</a>` : ""}`;
+  // The block under the proposal body: closed by default, a section only when its input is there. Opening a section loads it (ctxBind); nothing here calls a connector.
+  function ctxRender(a) {
+    if (!a || typeof a.id !== "string") return "";
+    const c = ctxState(a.id), rec = ctxRecord(a);
+    const secs = [["thread", "E-Mail-Thread", threadIdOf(a)], ["drive", "Dokumente auf dem Drive", driveQuery(a.target?.name)], ["record", "Datensatz", rec]].filter((x) => x[2]);
+    if (!secs.length) return "";
+    return `<details class="ctx" data-ctx-block="${esc(a.id)}" ${c.open ? "open" : ""}><summary>Kontext</summary><div class="ctxbody">${secs.map(([key, label]) => `<details class="ctxsec" data-ctx-sec="${key}" ${c.secOpen[key] ? "open" : ""}><summary><span class="ctxlbl">${label}</span><span class="ctxcount">${key === "record" ? "" : esc(ctxCount(a.id, key))}</span></summary><div class="ctxin">${key === "record" ? ctxRecordBody(rec) : ctxBody(a.id, key)}</div></details>`).join("")}</div></details>`;
+  }
+  function ctxPaint(host, id, key) {
+    const blk = [...host.querySelectorAll("[data-ctx-block]")].find((el) => el.dataset.ctxBlock === id), sec = blk?.querySelector(`[data-ctx-sec="${key}"]`);
+    if (!sec) return;  // another proposal is on screen now; the result waits in the cache
+    sec.querySelector(".ctxin").innerHTML = ctxBody(id, key); sec.querySelector(".ctxcount").textContent = ctxCount(id, key);
+  }
+  // One load per open per proposal: only an idle section loads; a failure stays in the cache until the partner taps "Erneut laden".
+  async function ctxLoad(host, a, key, io) {
+    const s = ctxState(a.id)[key];
+    if (s.state !== "idle") return;
+    s.state = "loading"; ctxPaint(host, a.id, key);
+    try {
+      if (key === "thread") {
+        const t = flattenThread(parsePayload(await io.gmail("get_thread", { threadId: threadIdOf(a), messageFormat: "PLAIN_TEXT" }, { cache: { staleTime: 300000 } })));
+        if (!t) throw Object.assign(new Error("unerwartete Antwort"), { code: "upstream_error" });
+        s.data = t;
+      } else {
+        const f = flattenFiles(parsePayload(await io.drive("search_files", { query: driveQuery(a.target?.name), pageSize: CTX_DRIVE_PAGE, excludeContentSnippets: true })));
+        if (!f) throw Object.assign(new Error("unerwartete Antwort"), { code: "upstream_error" });
+        s.data = f;
+      }
+      s.state = "done";
+    } catch (e) { s.state = "error"; s.html = io.explain(e, key === "thread" ? "Gmail" : "Google Drive"); }
+    ctxPaint(host, a.id, key);
+  }
+  // Wired once on the element that holds the detail: <details> toggle events do not bubble, so the listener captures them.
+  function ctxBind(host, getApproval, io) {
+    host.addEventListener("toggle", (ev) => {
+      const el = ev.target, blk = el.closest?.("[data-ctx-block]"), a = getApproval();
+      if (!blk || !a || a.id !== blk.dataset.ctxBlock) return;
+      const c = ctxState(a.id);
+      if (el === blk) c.open = el.open;
+      else if (el.dataset.ctxSec) { c.secOpen[el.dataset.ctxSec] = el.open; if (el.open && (el.dataset.ctxSec === "thread" || el.dataset.ctxSec === "drive")) ctxLoad(host, a, el.dataset.ctxSec, io); }
+      else if (el.dataset.ctxMsg !== undefined) c.msgOpen[el.dataset.ctxMsg] = el.open;
+    }, true);
+    host.addEventListener("click", (ev) => {
+      const b = ev.target.closest?.("[data-ctx-retry]"), a = getApproval(), key = b?.dataset.ctxRetry;
+      if (!b || !a || (key !== "thread" && key !== "drive")) return;
+      const s = ctxState(a.id)[key];
+      if (s.state === "error") { s.state = "idle"; ctxLoad(host, a, key, io); }
+    });
+  }
+  // endregion:context
 
   // ── Connector ────────────────────────────────────────────────────────────────
   const syncRefresh = () => { $("refresh").disabled = !mcp || loading || scoringId !== null || rewriting; };
@@ -1542,6 +1723,7 @@
   async function loadAll(force) {
     if (!mcp || loading) return;
     loading = true; $("refresh").disabled = true; setConn("wait", force ? "Aktualisiere…" : "Lese die Startups-Liste…"); banner("", "");
+    const gen = cacheGen; freshness();
     try {
       const cache = force ? { staleTime: 0, refresh: true } : { staleTime: 300000 };
       const out = []; let offset = 0, oldest = null, unknownShape = false;
@@ -1551,7 +1733,7 @@
         unknownShape = unknownShape || unknown;
         for (const e of entries) { const d = toDeal(e); d.name = "…"; out.push(d); }
         const at = res.cache?.storedAt ?? Date.now(); oldest = oldest === null ? at : Math.min(oldest, at);
-        deals = out.slice(); storedAt = oldest; render();  // sofort zeigen, Namen folgen
+        storedAt = oldest; if (!cacheAt) { deals = out.slice(); render(); }  // sofort zeigen, Namen folgen (steht die gespeicherte Liste auf dem Schirm, bleibt sie bis zur fertigen Antwort)
         setConn("wait", `Lese… ${out.length} Deals`);
         if (!hasMore || entries.length === 0) break;
         offset += entries.length;
@@ -1575,20 +1757,22 @@
           }
         } catch (e) { /* ohne Namen zeigt die Zeile die Domain oder die Kennung */ }
         for (const d of out) { const n = names.get(d.recordId); if (n) { d.name = n.name ?? n.domain ?? d.recordId; d.domain = n.domain ?? null; } }
-        deals = out.slice(); render();
+        if (!cacheAt) { deals = out.slice(); render(); }
         setConn("wait", `Namen… ${Math.min(i + 25, ids.length)}/${ids.length}`);
       }
       for (const d of out) if (d.name === "…") d.name = d.domain ?? (d.recordId ? d.recordId.slice(0, 8) : "Unbenannt");
-      deals = out; setConn("ok", `Attio · ${deals.length} Deals`); render();
+      if (out.length > 0 || !cacheAt) { deals = out; cacheAt = null; }  // an empty answer does not wipe the stored list from the screen (the banner above says so)
+      setConn("ok", `Attio · ${deals.length} Deals`); render();
+      if (out.length > 0 && gen === cacheGen) { if (dealCache.write({ list: LIST, entries: out })) cacheSaved = Date.now(); paintCacheLine(); }
       if (view === "tasks") loadAllTasks(false);
     } catch (err) {
       const [kind, html] = explain(err); banner(kind, html); setConn("bad", "Attio: " + (err?.code ?? "Fehler")); $("diag").open = true;
       if (err?.retryable && !force) { setTimeout(() => { loading = false; loadAll(false); }, 1500 + Math.random() * 1500); return; }
-    } finally { loading = false; syncRefresh(); }
+    } finally { loading = false; syncRefresh(); freshness(); }
   }
 
   // ── Darstellung ──────────────────────────────────────────────────────────────
-  function freshness() { const p = $("fresh"); if (!storedAt) { p.hidden = true; return; } const mins = Math.round((Date.now() - storedAt) / 60000); $("freshText").textContent = mins < 1 ? "gerade gelesen" : `gelesen vor ${mins} min`; p.className = "pill " + (mins > 30 ? "wait" : "ok"); p.hidden = false; }
+  function freshness() { const p = $("fresh"); if (cacheAt) { const stale = cacheStale(); $("freshText").textContent = `Stand von ${ageText(Date.now() - cacheAt)}${stale ? " (veraltet)" : ""}${loading ? " · aktualisiere …" : ""}`; p.className = "pill " + (stale ? "bad" : "wait"); p.hidden = false; return; } if (!storedAt) { p.hidden = true; return; } const mins = Math.round((Date.now() - storedAt) / 60000); $("freshText").textContent = mins < 1 ? "gerade gelesen" : `gelesen vor ${mins} min`; p.className = "pill " + (mins > 30 ? "wait" : "ok"); p.hidden = false; }
   function tiles() {
     // Vier Kacheln (Zahl und Beschriftung; die frühere Unterzeile steht im title). Die übrigen Filter liegen im Auswahlfeld „Weitere Filter“.
     const K = [
@@ -1889,6 +2073,7 @@
     if (!statusValid(a.status)) { host.innerHTML = `<div class="ibhead"><span class="kind ${kindClass(a.kind)}">${esc(kindLabel(a.kind))} · ungültiger Status</span>${close}</div><h2>${esc(a.title)}</h2><div class="note bad"><b>Ungültiger Status.</b> Das Dokument im Speicher trägt einen Status, den diese Seite nicht kennt. Es gibt dafür keine Aktionen.</div><div id="ibMsg"></div>`; return; }
     const isMail = a.kind === "email", can = canEdit, off = a.status !== "pending" ? "disabled" : "";
     const attio = attioLink(a.target?.recordId), draftHref = safeHref(a.email?.draftUrl);
+    const openHref = isMail ? draftOpenHref(a) : null, drafted = Boolean(openHref) && (a.status === "pending" || a.status === "approved");
     const words = String(a.email?.body ?? "").trim().split(/\s+/).filter(Boolean).length;
     host.innerHTML = `
       <div class="ibhead"><span class="kind ${kindClass(a.kind)}">${esc(kindLabel(a.kind))} · ${esc(statusLabel(a.status))}</span>${close}</div>
@@ -1898,11 +2083,13 @@
       ${!isMail ? `<div class="note"><b>${esc(a.target?.name ?? "")}</b>: ${esc(a.change?.from ?? "?")} → <b>${esc(a.change?.to ?? "?")}</b> auf <code>${esc(a.target?.list ?? "")}</code></div>` : `
         <div class="grid2"><div><label class="flbl" for="eTo">An</label><input id="eTo" value="${esc(toList(a.email?.to).join(", "))}" ${off}></div><div><label class="flbl" for="eSub">Betreff</label><input id="eSub" value="${esc(a.email?.subject ?? "")}" ${off}></div></div>
         <div><label class="flbl" for="eBody">Text · ${words} Wörter</label><textarea id="eBody" ${off}>${esc(a.email?.body ?? "")}</textarea></div>
-        ${draftHref ? `<div class="note ok"><b>Entwurf liegt in Gmail.</b> <a href="${esc(draftHref)}" target="_blank" rel="noopener">Entwurf öffnen</a>, senden, dann „als gesendet markieren“.</div>` : ""}`}
+        ${draftHref ? `<div class="note ok"><b>Entwurf liegt in Gmail.</b> <a href="${esc(draftHref)}" target="_blank" rel="noopener">Entwurf öffnen</a>, senden, dann „als gesendet markieren“.</div>` : drafted ? `<div class="note ok"><b>Entwurf liegt in Gmail.</b> Ein zweiter wird nicht angelegt: den Entwurf öffnen, senden, dann unten „Als gesendet markieren“.</div>` : ""}`}
       ${a.note ? `<div class="note warn"><b>Notiz:</b> ${esc(a.note)}</div>` : ""}
+      ${ctxRender(a)}
       <div id="ibMsg" aria-live="polite"></div>
       <div class="ibactions">
-        ${a.status === "pending" && can ? `<button type="button" class="btn primary" data-dec="approved">${isMail ? "Freigeben und Gmail-Entwurf anlegen" : "Freigeben und in Attio schreiben"}</button><button type="button" class="btn danger" data-dec="rejected">Ablehnen…</button>` : ""}
+        ${drafted ? `<a class="btn primary" href="${esc(openHref)}" target="_blank" rel="noopener" data-draft-open="1">Entwurf öffnen</a>` : ""}
+        ${a.status === "pending" && can ? `${drafted ? "" : `<button type="button" class="btn primary" data-dec="approved">${isMail ? "Freigeben und Gmail-Entwurf anlegen" : "Freigeben und in Attio schreiben"}</button>`}<button type="button" class="btn danger" data-dec="rejected">Ablehnen…</button>` : ""}
         ${isMail && (a.status === "approved" || a.status === "pending") && can ? `<button type="button" class="btn" data-dec="sent">Als gesendet markieren</button>` : ""}
         ${isMail ? `<button type="button" class="btn" data-copy="1">Text kopieren</button>` : ""}
         ${!can ? `<span class="meta">Nur Bearbeiter dieses Artefakts dürfen entscheiden.</span>` : ""}
@@ -2136,6 +2323,7 @@
 
   // ── Ereignisse der beiden Reiter ──
   $("ibList").addEventListener("click", (e) => { if (e.target.closest("[data-rec-clear]")) { ibSetRecord(null, location.pathname + location.search); return; } const f = e.target.closest("[data-f]"); if (f) { ibFilter = f.dataset.f; renderInbox(); return; } const c = e.target.closest("[data-id]"); if (c) { ibSelected = c.dataset.id; ibNew = null; ibShown = ""; renderInbox(); } });
+  ctxBind($("ibDetail"), () => approvals.find((x) => x.id === ibSelected), { gmail: callGmail, drive: (tool, input, opts) => callDrive(tool, input, opts).then((payload) => ({ payload })), explain: explainFor });
   $("ibDetail").addEventListener("click", (e) => {
     if (e.target.closest("[data-ib-close]")) { ibClose(); return; }
     const a = approvals.find((x) => x.id === ibSelected);
@@ -2164,6 +2352,7 @@
   $("stageSel").addEventListener("change", (e) => { filter.stage = e.target.value; table(); });
   $("attOnly").addEventListener("change", (e) => { filter.attOnly = e.target.checked; table(); });
   $("refresh").addEventListener("click", () => loadAll(true));
+  $("cacheClear").addEventListener("click", () => { dealCache.clear(); cacheSaved = null; cacheGen++; paintCacheLine(); loadAll(true); });
   const openRow = (tr) => { const r = ranked.find((x) => x.d.entryId === tr.dataset.id); if (r) { if (selected !== r.d.entryId) { kn = null; resetTk(); } drawer(r); } };
   $("rows").addEventListener("click", (e) => { const tr = e.target.closest("tr[data-id]"); if (tr) openRow(tr); });
   $("rows").addEventListener("keydown", (e) => { if (e.key !== "Enter") return; const tr = e.target.closest("tr[data-id]"); if (tr) openRow(tr); });
@@ -2201,6 +2390,8 @@
   // ── Start: leer zeichnen, aufleuchten, wenn die Capability da ist ───────────
   tiles();
   ibApplyHash();
+  try { const c = readDealCache(); if (c) { deals = c.entries; cacheAt = c.savedAt; cacheSaved = c.savedAt; render(); } paintCacheLine(); }  // the stored list first, before any connector call
+  catch (err) { deals = []; cacheAt = null; cacheSaved = null; dealCache.clear(); try { paintCacheLine(); } catch { /* nothing to paint */ } }  // a stored list that cannot be drawn is dropped; the live load below runs as if there were none
   (async () => {
     log("info", `window.claude ${window.claude ? "vorhanden" : "fehlt"} · use ${typeof window.claude?.use}`);
     try { sample = window.claude?.use ? await window.claude.use("sample") : null; } catch (e) { sample = null; log("err", `use('sample'): ${e?.code ?? "?"} ${e?.message ?? ""}`); }
