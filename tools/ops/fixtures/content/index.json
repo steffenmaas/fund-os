@@ -1,0 +1,78 @@
+{
+  "_about": "Invented fixture for the website-request cases of content-cli.mjs: nothing here is real.",
+  "version": 1,
+  "updatedAt": "2026-10-05T09:30:00.000Z",
+  "updatedBy": "Example Partner A",
+  "items": [
+    {
+      "id": "art-quay-report-20261005090000",
+      "type": "article",
+      "title": "Quay Report: Größe & \"Straße\" in 2026",
+      "status": "draft",
+      "owner": "Example Partner A",
+      "language": "de",
+      "source": { "kind": "drive", "fileId": "file-article-1", "url": "https://files.example.org/view/file-article-1" },
+      "updatedAt": "2026-10-05T09:00:00.000Z",
+      "updatedBy": "Example Partner A",
+      "publications": [
+        { "channel": "linkedin-company", "at": "2026-10-05T08:50:00.000Z", "by": "Example Partner A", "status": "handed-over", "kind": "linkedin" },
+        { "channel": "website", "at": "2026-10-05T09:00:00.000Z", "by": "Example Partner A", "status": "requested", "kind": "website" }
+      ]
+    },
+    {
+      "id": "art-with-pr-20261004100000",
+      "type": "article",
+      "title": "Example Tides and Trade",
+      "status": "review",
+      "owner": "Example Partner B",
+      "language": "en",
+      "source": { "kind": "drive", "fileId": "file-article-2", "url": "" },
+      "updatedAt": "2026-10-04T10:00:00.000Z",
+      "publications": [
+        { "channel": "website", "at": "2026-10-04T10:00:00.000Z", "by": "Example Partner B", "status": "requested", "kind": "website", "url": "https://git.example.org/example-site/pull/12" }
+      ]
+    },
+    {
+      "id": "art-done-20261001100000",
+      "type": "article",
+      "title": "Example Published Piece",
+      "status": "published",
+      "owner": "Example Partner A",
+      "language": "de",
+      "source": { "kind": "website", "slug": "example-published-piece", "url": "https://www.example.com/insights/example-published-piece" },
+      "publications": [
+        { "channel": "website", "at": "2026-10-01T10:00:00.000Z", "by": "Example Partner A", "status": "published", "kind": "website", "url": "https://www.example.com/insights/example-published-piece" }
+      ]
+    },
+    {
+      "id": "art-linkedin-only-20261003100000",
+      "type": "article",
+      "title": "Example LinkedIn Only",
+      "status": "draft",
+      "owner": "Example Partner A",
+      "source": { "kind": "drive", "fileId": "file-article-3", "url": "" },
+      "publications": [
+        { "channel": "linkedin-personal", "at": "2026-10-03T10:00:00.000Z", "by": "Example Partner A", "status": "handed-over", "kind": "linkedin" }
+      ]
+    },
+    {
+      "id": "art-legacy-20261002100000",
+      "type": "article",
+      "title": "Example Legacy Channel Id",
+      "status": "draft",
+      "owner": "Example Partner A",
+      "source": { "kind": "drive", "fileId": "file-article-4", "url": "" },
+      "publications": [
+        { "channel": "website-main", "at": "2026-10-02T10:00:00.000Z", "by": "Example Partner A", "status": "requested" }
+      ]
+    },
+    {
+      "id": "nl-example-1",
+      "type": "newsletter",
+      "title": "Example Letter 1",
+      "status": "draft",
+      "owner": "Example Partner A",
+      "source": { "kind": "store", "slug": "example-1", "url": "" }
+    }
+  ]
+}

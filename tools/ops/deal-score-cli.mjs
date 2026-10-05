@@ -60,7 +60,15 @@
  *   store-url     --module <m> [--config <path>]
  *                 prints the URL of the Inbox store that holds that module's switch, approvals, audit, runs and intake:
  *                 autopilot.stores.<m>, else autopilot.inboxStore (the older name autopilot.inboxStoreUrl is still read).
- *                 Exit 1 when neither is set.
+ *                 Exit 1 when neither is set. `--module workbench` is the Agent Workbench's own store: always
+ *                 autopilot.inboxStore (the page keeps its file name inbox.html and the key inboxStore).
+ *   mirror-plan   --module <m> [--config <path>]
+ *                 the stores a module's runs/ and audit/ writes are mirrored to so the Agent Workbench shows every agent's
+ *                 activity, as a JSON array on one line: `[]` when the module's store is the Workbench store, else
+ *                 `["<Workbench store url>"]`. Exit 1 when no Workbench store (autopilot.inboxStore) is set.
+ *                 The question asked is "is the module's store the Workbench store?", nothing more. A module with a store of its own
+ *                 (autopilot.stores.newsletter, which holds only the issues) therefore says `["<Workbench store url>"]`; that is not an
+ *                 instruction: the newsletter skill writes its runs/ and audit/ straight to the Workbench store and never calls mirror-plan.
  *
  *   drive-text    --json <saved connector answer> --out <file> [--expect-title <name>]
  *                 decodes the `content` of a Google Drive `download_file_content` answer (base64 of UTF-8 bytes) and writes the text
@@ -68,6 +76,21 @@
  *                 Exit 1 + one `FAIL:` line (nothing written) on invalid JSON, a missing/empty `content`, invalid base64, invalid
  *                 UTF-8, a NUL byte, or, with --expect-title, a `title` whose key differs (lower case, .md/.markdown/.txt cut,
  *                 separators to hyphens, as the screens' keyOf()). The skill then uses the bundled copy and names it.
+ *
+ *   fund-settings --settings <decoded fund-settings.json> --out <config.json> [--config <path>]
+ *                 overlays the fund's own values, kept in the Knowledge folder in the Drive file fund-settings.json, on the
+ *                 configuration for this run and writes the merged configuration to <out> (the other CLIs take it as --config);
+ *                 prints `OK <n> keys` and one `REFUSED <key>: <reason>` line per refused key on stderr. Exit 1 + `FAIL:`
+ *                 (nothing written) when either file is unreadable or not a JSON object. The file's shape is
+ *                 {"notes": {"taskAssignee": ...}, "investors": {"deckLink": ...}, "fund": {"bookingLink": ...}}, plus the
+ *                 free-text keys _about, updatedAt and updatedBy, which are ignored. Allowed keys only, written to
+ *                 autopilot.<group>.<key> of the configuration:
+ *                   notes.taskAssignee   a plain address (the workspace member who gets a next step nobody owns)
+ *                   investors.deckLink   an https link
+ *                   fund.bookingLink     an https link without credentials, port, query or fragment, on a host the repository
+ *                                        configuration lists in autopilot.fund.bookingHosts (empty list: the key is refused)
+ *                 Anything else (an unknown key, a wrong type, a placeholder starting with "<", a value over 500 characters or with
+ *                 a control character, another host) is refused with its reason and the configuration's own value stays.
  *
  * <dir> holds <key>.md (investment-thesis, evaluation-criteria, startup-scoring-matrix) plus an optional
  * <key>.meta.json ({source: "fund"|"bundled"|"missing", title, modifiedTime}).
@@ -86,7 +109,7 @@ import {
 import * as scoring from "./lib/scoring.mjs";
 import { knowledgeBlock, preamble, provenanceLine } from "./lib/knowledge.mjs";
 import { DECK_MAX_CHARS, deckBlock, deckFileName, deckParts, pdfText, readDeck } from "./lib/deck.mjs";
-import { MODULE_NAME_RE, storeUrl } from "./lib/store.mjs";
+import { MODULE_NAME_RE, mirrorPlan, storeUrl } from "./lib/store.mjs";
 
 const SKILL_VERSION = "deal-startup-score@ops-cli-1.0";
 const KEYS = ["investment-thesis", "evaluation-criteria", "startup-scoring-matrix"];
@@ -826,8 +849,16 @@ function cmdStoreUrl(args) {
   const moduleName = need(args, "module");
   if (!MODULE_NAME_RE.test(moduleName)) die(`FAIL: --module "${moduleName.slice(0, 40)}" is not a module name`);
   const url = storeUrl(loadConfig(args), moduleName);
-  if (!url) die(`FAIL: no store for ${moduleName}: neither autopilot.stores.${moduleName} nor autopilot.inboxStore is set in ${configPath(args)}`);
+  if (!url) die(`FAIL: no store for ${moduleName}: ${moduleName === "workbench" ? "autopilot.inboxStore is not set" : `neither autopilot.stores.${moduleName} nor autopilot.inboxStore is set`} in ${configPath(args)}`);
   process.stdout.write(`${url}\n`);
+}
+
+function cmdMirrorPlan(args) {
+  const moduleName = need(args, "module");
+  if (!MODULE_NAME_RE.test(moduleName)) die(`FAIL: --module "${moduleName.slice(0, 40)}" is not a module name`);
+  const plan = mirrorPlan(loadConfig(args), moduleName);
+  if (!plan) die(`FAIL: no Workbench store: neither autopilot.inboxStore nor autopilot.inboxStoreUrl is set in ${configPath(args)}`);
+  process.stdout.write(`${JSON.stringify(plan)}\n`);
 }
 
 // ── drive-text ────────────────────────────────────────────────────────────────
@@ -877,12 +908,86 @@ function cmdDriveText(args) {
   process.stdout.write(`OK ${r.bytes} ${r.title}\n`);
 }
 
+// ── fund-settings ─────────────────────────────────────────────────────────────
+// The fund's own values live in the Knowledge folder (fund-settings.json), not in the repository: this overlays the allowed
+// ones on the configuration of one run. The repository configuration keeps placeholders for all of them.
+const SETTINGS_META = new Set(["_about", "updatedAt", "updatedBy"]);
+const SETTINGS_ALLOWED = { notes: ["taskAssignee"], investors: ["deckLink"], fund: ["bookingLink"] };
+const SETTINGS_MAX = 500;
+const CONTROL = /[\u0000-\u001f\u007f-\u009f]/;
+const ownKey = (o, k) => Object.hasOwn(o, k); // prototype names (constructor, __proto__, toString) are never allowed keys
+const isSettingPlaceholder = (v) => typeof v !== "string" || v.trim() === "" || v.trim().startsWith("<");
+
+/** Validates one allowed value; returns null when fine, else the reason. Callers store the trimmed value, or `u.href` for links. */
+function settingProblem(key, v, bookingHosts) {
+  if (typeof v !== "string") return "must be a string";
+  if (isSettingPlaceholder(v)) return "is empty or still a placeholder";
+  const raw = v.trim();
+  if (raw.length > SETTINGS_MAX) return `is longer than ${SETTINGS_MAX} characters`;
+  if (CONTROL.test(raw)) return key === "notes.taskAssignee" ? "is not a plain address" : "holds a control character";
+  if (key === "notes.taskAssignee") return /^[^\s@<>,;:"'()\\]+@[^\s@<>,;:"'()\\]+\.[^\s@<>,;:"'()\\]+$/.test(raw) ? null : "is not a plain address";
+  let u;
+  try { u = new URL(raw); } catch { return "is not a URL"; }
+  if (key === "fund.bookingLink") {
+    if (!bookingHosts.length) return "is refused: autopilot.fund.bookingHosts in the configuration lists no host";
+    // the raw text too: the URL parser would fold /../ and a trailing dot away
+    const segments = raw.replace(/^https:\/\/[^/]+/i, "").split("/").slice(1);
+    const clean = !/[\\@\s]/.test(raw) && u.protocol === "https:" && bookingHosts.includes(u.hostname) && !u.port && !u.username && !u.password
+      && !u.search && !u.hash && !raw.includes("?") && !raw.includes("#") && /^(\/[A-Za-z0-9_.-]+)+\/?$/.test(u.pathname)
+      && segments.every((x) => x !== "." && x !== "..") && new RegExp(`^https://${u.hostname.replace(/[.]/g, "\\.")}(/[A-Za-z0-9_.-]+)+/?$`, "i").test(raw);
+    return clean ? null : "is not an https link on a host of autopilot.fund.bookingHosts (plain path, no port, query or fragment)";
+  }
+  return u.protocol === "https:" && !/[\s"<>\\]/.test(raw) && !u.username && !u.password && u.hostname.includes(".") ? null : "is not an https link";
+}
+
+/** The value that is stored once settingProblem passed: links in their parsed form, addresses trimmed. */
+const settingValue = (key, v) => (key === "notes.taskAssignee" ? v.trim() : new URL(v.trim()).href);
+
+/** Pure: returns {config, taken: [keys], refused: [{key, reason}]}; never throws on content. Values go to config.autopilot.<group>.<key>. */
+export function mergeFundSettings(config, settings) {
+  const merged = JSON.parse(JSON.stringify(config));
+  const taken = [], refused = [];
+  const bookingHosts = strings(config?.autopilot?.fund?.bookingHosts).map((h) => h.toLowerCase());
+  for (const [k, v] of Object.entries(settings)) {
+    if (SETTINGS_META.has(k)) continue;
+    const allowed = ownKey(SETTINGS_ALLOWED, k) ? SETTINGS_ALLOWED[k] : null;
+    if (!allowed) { refused.push({ key: k, reason: "unknown key" }); continue; }
+    if (v === null || typeof v !== "object" || Array.isArray(v)) { refused.push({ key: k, reason: "must be an object" }); continue; }
+    for (const [sub, value] of Object.entries(v)) {
+      const key = `${k}.${sub}`;
+      if (!allowed.includes(sub)) { refused.push({ key, reason: "unknown key" }); continue; }
+      const problem = settingProblem(key, value, bookingHosts);
+      if (problem) { refused.push({ key, reason: problem }); continue; }
+      merged.autopilot = merged.autopilot !== null && typeof merged.autopilot === "object" ? merged.autopilot : {};
+      merged.autopilot[k] = merged.autopilot[k] !== null && typeof merged.autopilot[k] === "object" ? merged.autopilot[k] : {};
+      merged.autopilot[k][sub] = settingValue(key, value);
+      taken.push(key);
+    }
+  }
+  return { config: merged, taken, refused };
+}
+
+function cmdFundSettings(args) {
+  const cfgPath = configPath(args), setPath = need(args, "settings"), out = need(args, "out");
+  const unreadable = (what, p, why) => die(`FAIL: cannot read ${what} ${p}: ${why}`);
+  let cfg, settings;
+  try { cfg = JSON.parse(readFileSync(cfgPath, "utf8")); } catch (e) { unreadable("config", cfgPath, e.message); }
+  try { settings = JSON.parse(readFileSync(resolve(setPath), "utf8")); } catch (e) { unreadable("settings", setPath, e.message); }
+  if (cfg === null || typeof cfg !== "object" || Array.isArray(cfg)) unreadable("config", cfgPath, "not a JSON object");
+  if (settings === null || typeof settings !== "object" || Array.isArray(settings)) unreadable("settings", setPath, "not a JSON object");
+  const r = mergeFundSettings(cfg, settings);
+  for (const x of r.refused) process.stderr.write(`REFUSED ${String(x.key).replace(CONTROL, " ").slice(0, 80)}: ${x.reason}\n`);
+  mkdirSync(dirname(resolve(out)), { recursive: true });
+  writeFileSync(out, `${JSON.stringify(r.config, null, 2)}\n`);
+  process.stdout.write(`OK ${r.taken.length} keys\n`);
+}
+
 // ── Dispatch ──────────────────────────────────────────────────────────────────
 const COMMANDS = {
   prompt: cmdPrompt, assemble: cmdAssemble, "reply-prompt": cmdReplyPrompt, "check-mail": cmdCheckMail,
   "extract-recipient": cmdExtractRecipient, "extract-deck": cmdExtractDeck, "deck-text": cmdDeckText,
   switch: cmdSwitch, gate: cmdGate, "check-write": cmdCheckWrite, "store-url": cmdStoreUrl,
-  "drive-text": cmdDriveText,
+  "mirror-plan": cmdMirrorPlan, "drive-text": cmdDriveText, "fund-settings": cmdFundSettings,
 };
 
 // Run as a command, not when another CLI imports mailProblems().

@@ -61,7 +61,10 @@
         "Sam Partner, Example Fund",
         "Example Fund · example.org"
       ],
-      "bookingLink": "https://calendar.example.org/book/sam"
+      "bookingLink": "https://calendar.example.org/book/sam",
+      "bookingHosts": [
+        "calendar.example.org"
+      ]
     },
     "inbound": {
       "gmailQueries": [

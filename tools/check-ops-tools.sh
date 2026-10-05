@@ -477,6 +477,167 @@ exit2 "digest-cli: unknown subcommand" $DG bogus
 runs=$((runs + 1))
 if out=$(node tools/check-digest-mirror.mjs 2>&1); then echo "  ok    the rank region of the cockpit template is byte-identical to digest-cli.mjs ($(echo "$out" | tail -1))"; else fails=$((fails + 1)); echo "  FAIL  rank mirror"; echo "$out" | head -5; fi
 
+echo "deal-score-cli.mjs store-url --module workbench, mirror-plan"
+WBU=https://store.example.org/inbox
+says "store-url workbench: the shared Workbench store" "$WBU" $D store-url --module workbench
+node -e 'const c=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); c.autopilot.stores.workbench="https://store.example.org/stray"; require("fs").writeFileSync(process.argv[2], JSON.stringify(c))' "$FUND_OS_CONFIG" "$WORK/cfg-stray.json"
+says "store-url workbench: a stray autopilot.stores.workbench changes nothing" "$WBU" $D store-url --module workbench --config "$WORK/cfg-stray.json"
+node -e 'const c=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); delete c.autopilot.inboxStore; require("fs").writeFileSync(process.argv[2], JSON.stringify(c))' "$FUND_OS_CONFIG" "$WORK/cfg-nowb.json"
+node -e 'const c=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); c.autopilot.stores.workbench="https://store.example.org/stray"; require("fs").writeFileSync(process.argv[2], JSON.stringify(c))' "$WORK/cfg-nowb.json" "$WORK/cfg-nowb-stray.json"
+refusedSays "store-url workbench: no shared store (a stray stores.workbench is no store)" "no store for workbench" $D store-url --module workbench --config "$WORK/cfg-nowb-stray.json"
+$D mirror-plan --module dealflow > "$WORK/mp-dealflow.json" 2>/dev/null
+jsq "mirror-plan: a module with its own store mirrors to the Workbench store" "$WORK/mp-dealflow.json" 'd.length === 1 && d[0] === "'"$WBU"'"'
+for m in notes digest newsletter investors workbench; do
+  $D mirror-plan --module $m > "$WORK/mp-$m.json" 2>/dev/null
+  jsq "mirror-plan: $m runs on the Workbench store, nothing to mirror" "$WORK/mp-$m.json" 'Array.isArray(d) && d.length === 0'
+done
+node -e 'const c=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); c.autopilot.stores.notes="https://store.example.org/notes"; c.autopilot.stores.dealflow=c.autopilot.inboxStore; require("fs").writeFileSync(process.argv[2], JSON.stringify(c))' "$FUND_OS_CONFIG" "$WORK/cfg-moved.json"
+$D mirror-plan --module notes --config "$WORK/cfg-moved.json" > "$WORK/mp-moved.json" 2>/dev/null
+jsq "mirror-plan: a module moved to its own store is mirrored" "$WORK/mp-moved.json" 'd.length === 1 && d[0] === "'"$WBU"'"'
+$D mirror-plan --module dealflow --config "$WORK/cfg-moved.json" > "$WORK/mp-back.json" 2>/dev/null
+jsq "mirror-plan: a module whose store is the Workbench store is not mirrored" "$WORK/mp-back.json" 'd.length === 0'
+node -e 'const c=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); c.autopilot.stores.newsletter="https://store.example.org/issues"; require("fs").writeFileSync(process.argv[2], JSON.stringify(c))' "$FUND_OS_CONFIG" "$WORK/cfg-nl.json"
+$D mirror-plan --module newsletter --config "$WORK/cfg-nl.json" > "$WORK/mp-nl.json" 2>/dev/null
+jsq "mirror-plan: a newsletter with a store of its own says [workbench] (a semantics, not an instruction)" "$WORK/mp-nl.json" 'd.length === 1 && d[0] === "'"$WBU"'"'
+runs=$((runs + 1)); if grep -q "never calls mirror-plan" $OPS/deal-score-cli.mjs && ! grep -q "mirror-plan" plugins/fund-os/skills/ops-newsletter/SKILL.md; then echo "  ok    the CLI header says the newsletter skill never calls mirror-plan, and its skill does not"; else fails=$((fails + 1)); echo "  FAIL  newsletter mirror-plan documentation"; fi
+says "mirror-plan: the answer is one JSON array on one line" "[]" $D mirror-plan --module notes
+refusedSays "mirror-plan: no Workbench store" "no Workbench store" $D mirror-plan --module dealflow --config "$WORK/cfg-nowb.json"
+refusedSays "mirror-plan: a module name that is no name" "is not a module name" $D mirror-plan --module "Bad Module"
+refused "mirror-plan: without --module" $D mirror-plan
+
+echo "deal-score-cli.mjs fund-settings"
+FS="$WORK/fs"; mkdir -p "$FS"
+cat > "$FS/placeholder-config.json" <<'JSON'
+{"masterData":{"fundName":"Example Fund"},"autopilot":{"fund":{"senderName":"Sam Partner","bookingLink":"<booking link>","bookingHosts":["calendar.example.org"]},"investors":{"deckLink":"<deck link>","fitThreshold":60},"notes":{"taskAssignee":"<member address>","lookbackDays":2}}}
+JSON
+cat > "$FS/settings-ok.json" <<'JSON'
+{"_about":"invented","updatedAt":"2026-10-05","updatedBy":"Example Partner","notes":{"taskAssignee":"member@example.org"},"investors":{"deckLink":"https://decks.example.org/lp-deck"},"fund":{"bookingLink":"https://calendar.example.org/book/example"}}
+JSON
+FSRUN="$D fund-settings --config $FS/placeholder-config.json"
+says "fund-settings: the three allowed keys are taken" "OK 3 keys" $FSRUN --settings "$FS/settings-ok.json" --out "$FS/merged.json"
+jsq "fund-settings: the values land in autopilot.<group>.<key>" "$FS/merged.json" 'd.autopilot.notes.taskAssignee === "member@example.org" && d.autopilot.investors.deckLink === "https://decks.example.org/lp-deck" && d.autopilot.fund.bookingLink === "https://calendar.example.org/book/example"'
+jsq "fund-settings: the rest of the configuration is untouched, the free-text keys are not copied" "$FS/merged.json" 'd.autopilot.notes.lookbackDays === 2 && d.autopilot.investors.fitThreshold === 60 && d.autopilot.fund.senderName === "Sam Partner" && d.autopilot.fund.bookingHosts[0] === "calendar.example.org" && d._about === undefined && d.updatedAt === undefined'
+runs=$((runs + 1)); if grep -q '"<' "$FS/merged.json"; then fails=$((fails + 1)); echo "  FAIL  fund-settings: a placeholder survived the merge of three keys"; else echo "  ok    fund-settings: no placeholder is left after three keys"; fi
+runs=$((runs + 1)); if grep -q '"<' "$FS/placeholder-config.json" && ! cmp -s "$FS/placeholder-config.json" "$FS/merged.json"; then echo "  ok    fund-settings: the input configuration file is not modified"; else fails=$((fails + 1)); echo "  FAIL  fund-settings: the input configuration was modified"; fi
+echo '{"notes":{"taskAssignee":"member@example.org"}}' > "$FS/settings-half.json"
+says "fund-settings: a missing key leaves the configuration's value" "OK 1 keys" $FSRUN --settings "$FS/settings-half.json" --out "$FS/half.json"
+jsq "fund-settings: the other two keys keep their placeholder" "$FS/half.json" 'd.autopilot.investors.deckLink === "<deck link>" && d.autopilot.fund.bookingLink === "<booking link>"'
+# refused values: the run succeeds with 0 keys, names the key on stderr and keeps the configuration's value
+fs_refuse() { # <label> <settings json> <key named on stderr> <reason fragment>
+  printf '%s\n' "$2" > "$FS/r.json"
+  runs=$((runs + 1))
+  if $FSRUN --settings "$FS/r.json" --out "$FS/r-out.json" >"$WORK/out" 2>"$WORK/err" && grep -qF "OK 0 keys" "$WORK/out" && grep -qF "REFUSED $3: $4" "$WORK/err" && node -e 'const a=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).autopilot; process.exit(a.notes.taskAssignee === "<member address>" && a.investors.deckLink === "<deck link>" && a.fund.bookingLink === "<booking link>" && a.inboxStore === undefined && a.constructor === Object ? 0 : 1)' "$FS/r-out.json"; then
+    echo "  ok    fund-settings refuses $1"
+  else
+    fails=$((fails + 1)); echo "  FAIL  fund-settings refuses $1 (expected 'REFUSED $3: $4')"; cat "$WORK/out" "$WORK/err" | head -3
+  fi
+}
+fs_refuse "an unknown group" '{"autopilot":{"inboxStore":"https://evil.example.net/x"}}' autopilot "unknown key"
+fs_refuse "an unknown key in a known group" '{"notes":{"lookbackDays":9}}' notes.lookbackDays "unknown key"
+fs_refuse "a group that is not an object" '{"notes":"member@example.org"}' notes "must be an object"
+fs_refuse "an address that is not plain" '{"notes":{"taskAssignee":"Sam <sam@example.org>"}}' notes.taskAssignee "is not a plain address"
+fs_refuse "a task assignee that is a number" '{"notes":{"taskAssignee":5}}' notes.taskAssignee "must be a string"
+fs_refuse "a placeholder value" '{"notes":{"taskAssignee":"<member address>"}}' notes.taskAssignee "is empty or still a placeholder"
+fs_refuse "a deck link over plain http" '{"investors":{"deckLink":"http://decks.example.org/x"}}' investors.deckLink "is not an https link"
+fs_refuse "a deck link with credentials" '{"investors":{"deckLink":"https://user:pw@decks.example.org/x"}}' investors.deckLink "is not an https link"
+fs_refuse "a deck link with a quote in it" '{"investors":{"deckLink":"https://decks.example.org/x\"y"}}' investors.deckLink "is not an https link"
+fs_refuse "a booking link on a host that is not listed" '{"fund":{"bookingLink":"https://evil.example.net/book/example"}}' fund.bookingLink "is not an https link on a host of autopilot.fund.bookingHosts"
+fs_refuse "a booking link with a query" '{"fund":{"bookingLink":"https://calendar.example.org/book/example?x=1"}}' fund.bookingLink "is not an https link on a host of autopilot.fund.bookingHosts"
+fs_refuse "a booking link with a fragment" '{"fund":{"bookingLink":"https://calendar.example.org/book/example#x"}}' fund.bookingLink "is not an https link on a host of autopilot.fund.bookingHosts"
+fs_refuse "a booking link with a port" '{"fund":{"bookingLink":"https://calendar.example.org:8443/book/example"}}' fund.bookingLink "is not an https link on a host of autopilot.fund.bookingHosts"
+fs_refuse "a booking link with a dot segment" '{"fund":{"bookingLink":"https://calendar.example.org/book/../admin"}}' fund.bookingLink "is not an https link on a host of autopilot.fund.bookingHosts"
+fs_refuse "a booking link with a userinfo trick" '{"fund":{"bookingLink":"https://calendar.example.org@evil.example.net/book/example"}}' fund.bookingLink "is not an https link on a host of autopilot.fund.bookingHosts"
+fs_refuse "a booking link that is http" '{"fund":{"bookingLink":"http://calendar.example.org/book/example"}}' fund.bookingLink "is not an https link on a host of autopilot.fund.bookingHosts"
+fs_refuse "a prototype name as a group" '{"constructor":{"x":"https://evil.example.net/x"}}' constructor "unknown key"
+fs_refuse "a value over 500 characters" "{\"investors\":{\"deckLink\":\"https://decks.example.org/$(head -c 520 /dev/zero | tr '\0' a)\"}}" investors.deckLink "is longer than 500 characters"
+fs_refuse "a control character in a link" '{"investors":{"deckLink":"https://decks.example.org/x\u0007y"}}' investors.deckLink "holds a control character"
+# a configuration that lists no booking host: the key is refused and the configuration's placeholder stays
+node -e 'const c=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); delete c.autopilot.fund.bookingHosts; require("fs").writeFileSync(process.argv[2], JSON.stringify(c))' "$FS/placeholder-config.json" "$FS/nohosts-config.json"
+runs=$((runs + 1))
+if $D fund-settings --config "$FS/nohosts-config.json" --settings "$FS/settings-ok.json" --out "$FS/nohosts.json" >"$WORK/out" 2>"$WORK/err" && grep -qF "OK 2 keys" "$WORK/out" && grep -qF "REFUSED fund.bookingLink: is refused: autopilot.fund.bookingHosts" "$WORK/err"; then echo "  ok    fund-settings: without autopilot.fund.bookingHosts the booking link is refused, the other keys are taken"; else fails=$((fails + 1)); echo "  FAIL  fund-settings: no bookingHosts"; cat "$WORK/out" "$WORK/err" | head -3; fi
+# a refused key does not stop the valid ones; a forged key name stays on one stderr line
+printf '%s\n' '{"notes":{"taskAssignee":"member@example.org","extra":"x"},"investors":{"deckLink":"https://decks.example.org/lp-deck"}}' > "$FS/mixed.json"
+runs=$((runs + 1))
+if $FSRUN --settings "$FS/mixed.json" --out "$FS/mixed-out.json" >"$WORK/out" 2>"$WORK/err" && grep -qF "OK 2 keys" "$WORK/out" && [ "$(cat "$WORK/err")" = "REFUSED notes.extra: unknown key" ]; then echo "  ok    fund-settings: a refused key does not stop the valid ones"; else fails=$((fails + 1)); echo "  FAIL  fund-settings: mixed settings"; cat "$WORK/out" "$WORK/err" | head -3; fi
+printf '%s\n' '{"fund":{"a\nFAKE: OK 99 keys":"x"}}' > "$FS/forged.json"
+runs=$((runs + 1))
+if $FSRUN --settings "$FS/forged.json" --out "$FS/forged-out.json" >"$WORK/out" 2>"$WORK/err" && [ "$(wc -l < "$WORK/err" | tr -d ' ')" = "1" ] && grep -qF "OK 0 keys" "$WORK/out"; then echo "  ok    fund-settings: a key name with a newline stays on one REFUSED line"; else fails=$((fails + 1)); echo "  FAIL  fund-settings: forged key name"; cat "$WORK/out" "$WORK/err" | head -3; fi
+# the Drive file goes through drive-text first, by its exact title
+node -e 'const fs=require("fs"); const body=fs.readFileSync(process.argv[1],"utf8"); fs.writeFileSync(process.argv[2], JSON.stringify({id:"file-1",title:"fund-settings.json",mimeType:"application/json",content:Buffer.from(body).toString("base64")}))' "$FS/settings-ok.json" "$FS/download.json"
+says "fund-settings: drive-text decodes the Drive file by its exact title" "OK" $D drive-text --json "$FS/download.json" --out "$FS/decoded.json" --expect-title fund-settings.json
+says "fund-settings: the decoded file merges" "OK 3 keys" $FSRUN --settings "$FS/decoded.json" --out "$FS/from-drive.json"
+refused "fund-settings: a file under another title is not taken" $D drive-text --json "$FS/download.json" --out "$FS/other.json" --expect-title tone-guide.md
+# failures write nothing
+echo '{broken' > "$FS/broken.json"; echo '[1]' > "$FS/array.json"
+refusedSays "fund-settings: settings that are not JSON" "FAIL: cannot read settings" $FSRUN --settings "$FS/broken.json" --out "$FS/no1.json"
+refusedSays "fund-settings: settings that are not an object" "not a JSON object" $FSRUN --settings "$FS/array.json" --out "$FS/no2.json"
+refusedSays "fund-settings: a missing settings file" "FAIL: cannot read settings" $FSRUN --settings "$FS/missing.json" --out "$FS/no3.json"
+refusedSays "fund-settings: an unreadable configuration" "FAIL: cannot read config" $D fund-settings --config "$FS/missing-config.json" --settings "$FS/settings-ok.json" --out "$FS/no4.json"
+refused "fund-settings: without --settings" $FSRUN --out "$FS/no5.json"
+for n in no1 no2 no3 no4 no5; do nofile "$FS/$n.json" "fund-settings: a failed run ($n)"; done
+# the merged configuration is a configuration the other CLIs read
+$D fund-settings --settings "$FS/settings-ok.json" --out "$FS/merged-example.json" >/dev/null 2>&1
+says "fund-settings: the merged configuration is read by the other CLIs (--config)" "$WBU" $D store-url --module workbench --config "$FS/merged-example.json"
+jsq "fund-settings: over the example configuration only the three values change" "$FS/merged-example.json" 'd.autopilot.fund.bookingLink === "https://calendar.example.org/book/example" && d.autopilot.notes.taskAssignee === "member@example.org" && d.autopilot.investors.deckLink === "https://decks.example.org/lp-deck" && d.autopilot.fund.senderName === "Sam Partner, Example Fund"'
+
+
+echo "content-cli.mjs"
+CT="node $OPS/content-cli.mjs"
+CF=$FIX/content
+ID=art-quay-report-20261005090000
+$CT website-requests --index $CF/index.json > "$WORK/ct-req.json" 2>/dev/null
+jsq "website-requests: the open website requests in list order (a legacy channel id website-... counts)" "$WORK/ct-req.json" 'd.map((x) => x.id).join() === "'"$ID"',art-legacy-20261002100000"'
+jsq "website-requests: slug, channel, request time and author, the file id to read the article from" "$WORK/ct-req.json" 'd[0].slug === "quay-report-groesse-strasse-in-2026" && d[0].channel === "website" && d[0].requestedAt === "2026-10-05T09:00:00.000Z" && d[0].requestedBy === "Example Partner A" && d[0].prUrl === "" && d[0].source.fileId === "file-article-1"'
+$CT website-requests --index $CF/index.json --all > "$WORK/ct-all.json" 2>/dev/null
+jsq "website-requests --all: also the request that already carries its pull request, with its address" "$WORK/ct-all.json" 'd.map((x) => x.id).join() === "'"$ID"',art-with-pr-20261004100000,art-legacy-20261002100000" && d[1].prUrl === "https://git.example.org/example-site/pull/12"'
+printf '%s\n' '{"items":[{"id":"x1","type":"article","title":"T","publications":[{"channel":"website","at":"2026-10-05T09:00:00Z","by":"B","status":"requested","kind":"website","url":"https://user:pw@evil.example.net/pr"}]},"junk",null,{"id":"x2"}]}' > "$WORK/ct-hostile.json"
+$CT website-requests --index "$WORK/ct-hostile.json" > "$WORK/ct-hostile-out.json" 2>/dev/null
+jsq "website-requests: an address with credentials is no pull request address; junk rows are skipped" "$WORK/ct-hostile-out.json" 'd.length === 1 && d[0].id === "x1" && d[0].prUrl === ""'
+echo '{broken' > "$WORK/ct-broken.json"; echo '{}' > "$WORK/ct-noitems.json"
+refused "website-requests: without --index" $CT website-requests
+refused "website-requests: a missing file" $CT website-requests --index "$WORK/ct-missing.json"
+refused "website-requests: broken JSON" $CT website-requests --index "$WORK/ct-broken.json"
+refused "website-requests: a file without items" $CT website-requests --index "$WORK/ct-noitems.json"
+$CT website-entry --item $ID --index $CF/index.json --body $CF/article.md > "$WORK/ct-entry.txt" 2>/dev/null
+runs=$((runs + 1))
+if node -e '
+const fs = require("fs"), vm = require("vm");
+const src = fs.readFileSync(process.argv[1], "utf8");
+const [e] = vm.runInNewContext(`[${src}]`, Object.create(null), { timeout: 2000 });
+const body = fs.readFileSync(process.argv[2], "utf8").replace(/^---\n[\s\S]*?\n---\n/, "").replace(/^\n+/, "").replace(/\s+$/, "");
+const want = ["slug", "title", "date", "excerpt", "category", "author", "readingTime", "contentType", "content"];
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+if (!same(Object.keys(e), want)) throw new Error("keys " + Object.keys(e));
+if (!same([e.slug, e.title, e.date, e.author, e.category, e.contentType, e.readingTime], ["quay-report-groesse-strasse-in-2026", "Quay Report: Größe & \"Straße\" in 2026", "2026-10-05", "Example Partner A", "general", "markdown", "1 min read"])) throw new Error("fields");
+if (e.content !== body) throw new Error("content differs after the round trip");
+if (e.excerpt !== "Die Kais der Küste wachsen: Größe zählt, aber auch die Straße davor. Zitat: \"Quote\" und \x27Apostroph\x27.") throw new Error("excerpt " + e.excerpt);
+if (!/^ {2}\{\n {4}slug: /.test(src) || !src.endsWith("  },\n")) throw new Error("shape");
+' "$WORK/ct-entry.txt" $CF/article.md 2>"$WORK/err"; then echo "  ok    website-entry: a valid literal with the keys, slug, date, author, reading time and excerpt; quotes, backticks, \${...}, backslashes and umlauts come back exactly"; else fails=$((fails + 1)); echo "  FAIL  website-entry round trip"; head -3 "$WORK/err"; fi
+printf '%s\n' '{"items":[{"id":"ev","type":"article","title":"A `tick` ${process.exit(9)} \\ \"q\" </script>","owner":"Example Partner A","publications":[{"channel":"website","at":"2026-10-05T09:00:00Z","by":"B","status":"requested","kind":"website"}]}]}' > "$WORK/ct-evil.json"
+printf '%s\n' '---' 'author: Ev`il ${1+1}' '---' '' 'Hello `${globalThis.polluted = 1}` and \` and ${x} and </script> end' > "$WORK/ct-evil.md"
+$CT website-entry --item ev --index "$WORK/ct-evil.json" --body "$WORK/ct-evil.md" > "$WORK/ct-evil-out.txt" 2>/dev/null
+runs=$((runs + 1))
+if node -e '
+const vm = require("vm"), src = require("fs").readFileSync(process.argv[1], "utf8"), box = Object.create(null);
+const [e] = vm.runInNewContext(`[${src}]`, box, { timeout: 2000 });
+if (box.polluted !== undefined) throw new Error("evaluated");
+if (e.author !== "Ev`il ${1+1}" || e.content !== "Hello `${globalThis.polluted = 1}` and \\` and ${x} and </script> end") throw new Error("not data: " + JSON.stringify([e.author, e.content]));
+if (e.title !== "A `tick` ${process.exit(9)} \\ \"q\" </script>" || e.slug !== "a-tick-process-exit-9-q-script") throw new Error("title " + e.title + " " + e.slug);
+' "$WORK/ct-evil-out.txt" 2>"$WORK/err"; then echo "  ok    website-entry: a hostile title, author and body stay data; nothing is evaluated"; else fails=$((fails + 1)); echo "  FAIL  website-entry hostile input"; head -3 "$WORK/err"; fi
+printf '%s\n' '{"items":[{"id":"na","type":"article","title":"No Owner","updatedAt":"2026-10-05T09:00:00Z","publications":[{"channel":"website","at":"2026-10-05T09:00:00Z","by":"B","status":"requested","kind":"website"}]}]}' > "$WORK/ct-noowner.json"
+printf '%s\n' '---' 'title: x' '---' '' 'One short line.' > "$WORK/ct-noauthor.md"
+says "website-entry: the author falls back to the item's owner" 'author: "Example Partner B"' $CT website-entry --item art-with-pr-20261004100000 --index $CF/index.json --body "$WORK/ct-noauthor.md"
+says "website-entry: no author anywhere gives Team" 'author: "Team"' $CT website-entry --item na --index "$WORK/ct-noowner.json" --body "$WORK/ct-noauthor.md"
+says "website-entry: --default-author is used when neither the file nor the owner names one" 'author: "Example Editorial"' $CT website-entry --item na --index "$WORK/ct-noowner.json" --body "$WORK/ct-noauthor.md" --default-author "Example Editorial"
+refused "website-entry: an item without a website request" $CT website-entry --item art-linkedin-only-20261003100000 --index $CF/index.json --body $CF/article.md
+refused "website-entry: an unknown item" $CT website-entry --item nope --index $CF/index.json --body $CF/article.md
+printf '%s\n' '---' 'title: x' '---' '' > "$WORK/ct-empty.md"
+refused "website-entry: an empty body" $CT website-entry --item $ID --index $CF/index.json --body "$WORK/ct-empty.md"
+refused "website-entry: a missing --body" $CT website-entry --item $ID --index $CF/index.json
+refused "website-entry: a missing body file" $CT website-entry --item $ID --index $CF/index.json --body "$WORK/ct-missing.md"
+refused "content-cli: an unknown command" $CT bogus
+ok "website-entry: an item whose request already has its pull request can be rendered again" $CT website-entry --item art-with-pr-20261004100000 --index $CF/index.json --body $CF/article.md
+
 echo "Config handling"
 refused "missing configuration is refused" env FUND_OS_CONFIG="$WORK/does-not-exist.json" $D check-write --kind stage --from New --to Screening
 
