@@ -1,5 +1,64 @@
 # Changelog
 
+## 0.12.0 - 2026-10-05
+
+**The partner's screens show what a proposal was drawn from and open at once; the notes tool
+drops one bad meeting instead of the whole day and routes each next step to the person who owns
+it.** No skill is added (49), no module starts on by default, and nothing in it names a fund.
+
+**`plugins/fund-os/templates/screens/`**
+
+- **Kontext block under every proposal** (Inbox and the Deal Cockpit's Inbox tab, `// region:context`,
+  byte-identical in both pages): closed by default, three collapsible sections loaded on first open
+  from the viewer's own connectors and never stored - the mail thread (Gmail `get_thread`, the newest
+  50 messages with "n von m", each expandable to its text, capped and escaped), the Drive documents
+  whose title contains the deal name (Drive `search_files`, a quote in the name is escaped, an empty
+  answer says so), and the CRM record with the meeting-notes source link. A section whose input is
+  missing is not shown. The capability headers gain Drive `search_files` (Inbox) and Gmail
+  `get_thread` (Deal Cockpit); `README.md` of the folder lists them.
+- **Instant open from a browser copy** (Deal Cockpit and Investor Relations, `// region:localcache`,
+  byte-identical in both pages): the last list read from the connector is kept in the browser's
+  local storage of the artifact and shown at once with "Stand von vor n Min - aktualisiere ...", then
+  replaced by the live answer; a cache older than seven days is marked "veraltet". Only connector data
+  is stored, never in the shared store or a repository; every storage access is guarded (private
+  window, full quota, damaged or foreign entry, far-future timestamp, more than 4 MB: the page loads as
+  without a cache); a failed or empty answer keeps the stored list on screen. The diagnostics area
+  offers "Zwischenspeicher leeren", the Profil screen names the behaviour.
+- **A mail approval that already carries a Gmail draft** offers "Entwurf oeffnen" and "Als gesendet
+  markieren" instead of a second "Freigeben".
+
+**`tools/ops/`**
+
+- `notes-cli.mjs parse-granola`: a meeting tag with a duplicate attribute, or `<`, `>` or `id=` in
+  an attribute value, drops **that meeting only** (`skipped`, `skippedReasons`); text between blocks, an
+  unclosed block, a duplicate id and more blocks than the declared count still empty the answer.
+- `notes-cli.mjs check-note`: exit **2** when a reason is about the meeting title (a redraft cannot
+  help), exit 1 for the draft only, 0 for `OK`; every reason is still printed.
+- `notes-cli.mjs tasks --members <file> [--meeting <file>]` and `members`: each next step goes to the
+  member its `owner` names (an address, or a unique first or full name after folding case, diacritics
+  and whitespace), else to the fund people in the meeting (the first is the assignee, the others are
+  named in the task text, at most 120 characters), else to `autopilot.notes.taskAssignee`, else to
+  `--assignee`; a step nobody reaches stays in the note. An empty or unreadable members file fails closed.
+- `deal-score-cli.mjs drive-text`: decodes a saved Drive `download_file_content` answer to UTF-8 by
+  tool and refuses invalid base64 or UTF-8, a binary file, a missing `content` and a different file
+  title; the sessions never retype base64.
+- `bash tools/check-ops-tools.sh` covers each of them (208 checks) with invented fixtures; the member
+  ids are assembled at run time.
+
+**Skills.** `ops-meeting-notes` reads the workspace members once and routes the tasks, branches on the
+`check-note` exit code and reads `skippedReasons`; `ops-meeting-notes`, `ops-weekly-digest`,
+`ops-dealflow-inbound`, `ops-investor-outreach` and `ops-newsletter` decode a Drive download with
+`drive-text` and name a fallback in the run summary.
+
+**The guards.** `bash tools/check-screen-templates.sh` also holds `region:context` (Inbox and Deal
+Cockpit) and `region:localcache` (Deal Cockpit and Investor Relations) identical between pages. Every
+page comparison now has a negative control that goes through the same extraction: a mutated copy of
+the second page must be reported.
+
+**Versions.** Plugin manifest and marketplace 0.11.0 -> 0.12.0.
+
+---
+
 ## 0.11.0 - 2026-10-05
 
 **The autopilot layer now covers meetings and the week, and every screen a partner works in ships
