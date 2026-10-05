@@ -279,7 +279,7 @@
     catch (e) { const code = e?.code ?? "Fehler"; out.textContent = code === "server_not_connected" ? "nicht verbunden: in claude.ai hinzufügen" : code === "needs_reauth" ? "neu verbinden: Einstellungen → Connectoren" : code === "not_in_manifest" ? "für diese Seite abgelehnt" : `Fehler: ${code}`; log(`${name}.${c[2]} ${code}`, e?.message); }
     finally { lastCheck[name] = out.textContent; btn.disabled = false; await listAll(); }
   }
-  // ── Werkzeuge pro Modul (F016, docs/specs/F016-profile-tools-per-module.md): der Speichervertrag settings/tools. ──
+  // ── Werkzeuge pro Modul (F016): der Speichervertrag settings/tools. ──
   // TOOLS_CATALOGUE ist eine Kopie von preferences/tools-catalogue.json, TOOLS_DEFAULTS von preferences/ops-config.json → tools.modules;
   // tools/check-screen-templates.sh prüft diese Kopie nicht (nur Parse, Neutralität und das Scoring-Spiegelbild von Deal Cockpit). Rein: kein DOM, kein db, kein mcp.
   const TOOLS_DOC = "settings/tools";

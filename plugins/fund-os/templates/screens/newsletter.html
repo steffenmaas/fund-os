@@ -846,7 +846,7 @@
     else { confirmOpen = "draft"; handMsg = null; }
     renderHandover();
   }
-  // Gmail create_draft: HTML in htmlBody, Text in body (docs/ops/fixtures/connector-json-format.md). Ein Mensch sendet in Gmail.
+  // Gmail create_draft: HTML in htmlBody, Text in body. Ein Mensch sendet in Gmail.
   async function handover() {
     const d = cur(); if (!d || !work || busy || !canWrite() || !mcp || d.status !== "draft" || isDirty()) return;
     const rc = parseRecipients(toDrafts.has(d.id) ? toDrafts.get(d.id) : settings.partnersTo), r = rendered(), subject = work.title.trim();

@@ -136,9 +136,9 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
   @media (max-width: 640px) { h1 { font-size: 22px; } .drawer { padding-inline: 14px; } }
-  /* F006 · the weekly list on a phone (docs/specs/F006). These blocks close the stylesheet on purpose: the base rules above
+  /* F006 · the weekly list on a phone (phone layout). These blocks close the stylesheet on purpose: the base rules above
      (drawer, tables, buttons) come later in the source than the first 820px block and would win the cascade at equal specificity.
-     CSS only; no markup, no script. The check is scripts/check-mobile.mjs (390 x 844). */
+     CSS only; no markup, no script. Meant for a 390 x 844 phone viewport. */
   @media (max-width: 820px) {
     .rail a.item { min-height: 44px; }
     .btn, select, input:not([type="checkbox"]):not([type="radio"]) { min-height: 44px; }
@@ -657,7 +657,7 @@
     } catch (err) { const [, html] = explain(err); const ambiguous = ["server_unavailable", "upstream_error", "cancelled"].includes(err?.code); msg.innerHTML = `<div class="note bad">${html}${ambiguous ? " <b>Der Schreibvorgang kann trotzdem durchgegangen sein</b>; in Attio prüfen." : ""}</div>`; btn.disabled = false; }
   }
 
-  // ── Aufgaben (F008, ADR-0007): Attio hält die Aufgaben; die Seite liest, legt an und hakt ab ──
+  // ── Aufgaben (F008): Attio hält die Aufgaben; die Seite liest, legt an und hakt ab ──
   // Aus der Aufgabenansicht wird kein Status geändert und keine Zahl (LP-Fit) in eine Aufgabe geschrieben; der Text kommt allein aus dem Formular.
   const HARD = new Set(["needs_reauth", "server_not_connected", "selection_required", "not_in_manifest", "blocked_by_policy", "not_granted", "capability_disabled", "capability_removed"]);
   const MEMBER_CACHE = { staleTime: 3600000 };

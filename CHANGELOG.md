@@ -59,17 +59,17 @@ it names a fund.
   read from the Drive knowledge folder, and the hand-over as a Gmail draft to the partners. Nothing
   is sent by the page.
 - The side menu has six links, all empty strings in `CONFIG.links`. The pure regions
-  (`parseAttioText`, the scoring mirror, `region:rank`, `region:tasks`, the `guards` and `autopilot`
-  regions, the newsletter render grammar) are the source text; the few lines in them that carried a
-  fund value now read `CONFIG`.
+  that the checks hold still (the scoring mirror, `region:rank`, the Inbox `guards` region and
+  `region:tasks`) are the source text; the few lines in them that carried a fund value now read
+  `CONFIG`.
 
 **The guards.** `bash tools/check-screen-templates.sh` now checks six pages and holds the copies of
 shared code together: the Inbox `guards` region is byte-identical in `inbox.html` and
 `deal-cockpit.html`, and `region:tasks` in `deal-cockpit.html` and `investors.html`. The existing
 guards still run: the scoring mirror against `tools/ops/lib/scoring.mjs` and the rank region
 against `tools/ops/digest-cli.mjs`, which also ranks the digest fixtures through the page's own
-region. A fund-neutral grep (fund and person names, artifact links, object ids, Drive ids) covers
-every page.
+region. A fund-neutral scan (artifact links, uuids, booking links, Drive ids, real e-mail
+addresses, plus an operator's local denylist of fund names) covers every page.
 
 **`docs/modules/` - two more graphics**: the meeting-notes module and the Monday digest, in the
 style of the first four.
@@ -128,8 +128,8 @@ paste the five URLs into every page). The Newsletter screen follows in a later r
   builders, the Inbox guards and autopilot contract, the Profil tools catalogue) are kept as in
   the source pages; the few lines in them that carried a fund value now read `CONFIG`.
 - **`tools/check-screen-templates.sh`** checks each page: the script parses, `CONFIG` is declared
-  exactly once, and the fund-neutral grep (fund and person names, artifact links, object ids) is
-  empty. It also runs `tools/check-scoring-mirror.mjs`, which compares the scoring mirror in the
+  exactly once, and the fund-neutral scan (generic patterns plus the operator's local denylist
+  `tools/.fund-denylist`) is empty and has a planted-value self-test. It also runs `tools/check-scoring-mirror.mjs`, which compares the scoring mirror in the
   Deal Cockpit with `tools/ops/lib/scoring.mjs` (rubric tables, pin, bands, the Quality x Thesis
   Fit table, the urgency clock, the line format) and fails on any difference. It is a step in the
   validate workflow.
