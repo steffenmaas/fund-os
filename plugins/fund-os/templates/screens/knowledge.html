@@ -157,16 +157,17 @@
     fundName: "",            // shown in the side menu, e.g. "Example Fund"
     driveFolderId: "",       // Google Drive folder with the fund's own documents (the id at the end of the folder URL)
     driveFolderName: "Fund OS Knowledge",  // the folder's name, shown in the connection line
-    links: {  // The six side-menu URLs. Publish all screens first, then paste the six URLs here in EVERY screen (README.md).
+    links: {  // The seven side-menu URLs. Publish all screens first, then paste the seven URLs here in EVERY screen (README.md).
       deals: "",
       investors: "",
       inbox: "",
       knowledge: "",
       newsletter: "",
       profile: "",
+      start: "",
     },
   };
-  const LINKS = CONFIG.links;  // the six side-menu URLs, set in CONFIG.links when publishing
+  const LINKS = CONFIG.links;  // the seven side-menu URLs, set in CONFIG.links when publishing
   const HERE = "knowledge";
   const ICONS = {
     deals: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
@@ -175,12 +176,13 @@
     knowledge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 012-2h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2z M8 7h8M8 11h8M8 15h5"/></svg>',
     newsletter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
     profile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>',
+    start: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>',
   };
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   (function rail() {
     const item = (k, label) => `<a class="item ${k === HERE ? "on" : ""}" href="${LINKS[k].startsWith("http") ? LINKS[k] : "#"}" ${k === HERE ? 'aria-current="page"' : 'target="_blank" rel="noopener"'}>${ICONS[k]}${label}</a>`;
-    $("rail").innerHTML = `<div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 7c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg><span>${String(CONFIG.fundName || "Fund OS").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}<br>Operations</span></div><div class="lbl">Domänen</div>${item("deals", "Deal Cockpit")}${item("investors", "Investor Relations")}${item("inbox", "Inbox")}${item("knowledge", "Knowledge")}${item("newsletter", "Newsletter")}<div class="spacer"></div>${item("profile", "Profil")}<div class="foot">Fund OS · Knowledge</div>`;
+    $("rail").innerHTML = `<div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 7c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg><span>${String(CONFIG.fundName || "Fund OS").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}<br>Operations</span></div>${item("start", "Start")}<div class="lbl">Domänen</div>${item("deals", "Deal Cockpit")}${item("investors", "Investor Relations")}${item("inbox", "Agent Workbench")}${item("knowledge", "Knowledge")}${item("newsletter", "Content")}<div class="spacer"></div>${item("profile", "Profil")}<div class="foot">Fund OS · Knowledge</div>`;
   })();
   // Off-canvas rail on a phone (F017): burger opens it, backdrop click, Escape, a rail link or a switch to a wide screen close it.
   (function burger() {
@@ -293,10 +295,86 @@
   $("refresh").addEventListener("click", () => load(true));
   document.addEventListener("click", (e) => { const b = e.target.closest("[data-view]"); if (b) view(b.dataset.view); });
   $("rClose").addEventListener("click", () => { $("reader").hidden = true; });
+  // region:permhelp (F029: when use('mcp') is null, the built-in `permissions` capability tells why and offers the way out; never declared, read-only on load, request / manage only on a click; the namespace, esc, the Diagnose line and the reload come in as arguments; mirrored byte for byte in every page that resolves mcp, held still by tools/check-screen-templates.sh)
+  const PERM_TEXT = {
+    denied: "Connectoren sind für dieses Artefakt abgelehnt. Über ‚Berechtigungen öffnen‘ wieder einschalten.",
+    prompt: "Noch nicht erlaubt: ‚Connectoren anfragen‘.",
+    granted: "Connectoren sind erlaubt, aber diese Ansicht hat sie nicht geladen. Die Seite neu laden.",
+    unavailable: "Als Gast von außerhalb der Organisation bietet claude.ai in geteilten Artefakten keine Connectoren an. Abhilfe: Artefakt duplizieren oder gemeinsamer Team-Account.",
+  };
+  const PERM_MANAGE_FAIL = "Das Panel ließ sich nicht öffnen. Menü des Artefakts oben rechts → Berechtigungen.";
+  const PERM_REQUEST_FAIL = "Die Anfrage ist fehlgeschlagen. Menü des Artefakts oben rechts → Berechtigungen.";
+  const permKnown = (s) => (s === "granted" || s === "prompt" || s === "denied" ? s : "unavailable");
+  const permText = (s) => PERM_TEXT[permKnown(s)];
+  // The box under the "keine Connectoren" banner: the text for the state of "mcp" and the two buttons. Every text goes through the page's esc.
+  function permHtml(esc, state) {
+    const s = permKnown(state);
+    return `<div class="permhelp" data-perm-help="1" style="margin-top:8px"><div data-perm-text>${esc(permText(s))}</div><div class="row" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><button type="button" class="btn" data-perm="request"${s === "denied" ? " disabled" : ""}>Connectoren anfragen</button><button type="button" class="btn" data-perm="manage">Berechtigungen öffnen</button></div><div data-perm-msg aria-live="polite" style="margin-top:6px"></div></div>`;
+  }
+  // Reads without prompting and logs the answers verbatim: the full map, "mcp" and "sample". { mcp, sample, all } holds the raw answers.
+  async function permRead(permissions, say) {
+    const one = async (name) => { try { return await permissions.state(name); } catch (e) { say(`permissions.state("${name}") fehlgeschlagen: ${e?.code ?? "?"}`); return "unavailable"; } };
+    let all = null;
+    try { all = await permissions.state(); } catch (e) { say(`permissions.state() fehlgeschlagen: ${e?.code ?? "?"}`); }
+    const mcp = await one("mcp"), sample = await one("sample");
+    say(`permissions.state() = ${JSON.stringify(all) ?? "undefined"}`);
+    say(`permissions.state("mcp") = ${String(mcp)}`);
+    say(`permissions.state("sample") = ${String(sample)}`);
+    return { mcp, sample, all };
+  }
+  // What one click does. "request": one dialog for ["mcp"], branch on the returned state. "manage": open the panel, then read the state again. { state, reload, msg }: state null = unchanged; reload true only when mcp is granted. Never throws; never asks twice.
+  async function permAct(kind, permissions, say) {
+    if (kind === "request") {
+      try {
+        const res = await permissions.request(["mcp"]);
+        say(`permissions.request(["mcp"]) = ${JSON.stringify(res) ?? "undefined"}`);
+        const s = res && typeof res === "object" && "mcp" in res ? res.mcp : await permissions.state("mcp");
+        return { state: permKnown(s), reload: s === "granted", msg: "" };
+      } catch (e) { say(`permissions.request(["mcp"]) fehlgeschlagen: ${e?.code ?? "?"}`); return { state: null, reload: false, msg: PERM_REQUEST_FAIL }; }
+    }
+    if (kind === "manage") {
+      try { await permissions.manage(); } catch (e) { say(`permissions.manage() abgelehnt: ${e?.code ?? "?"}`); return { state: null, reload: false, msg: PERM_MANAGE_FAIL }; }
+      let s; try { s = await permissions.state("mcp"); } catch { s = "unavailable"; }
+      say(`permissions.state("mcp") nach manage() = ${String(s)}`);
+      return { state: permKnown(s), reload: s === "granted", msg: "" };
+    }
+    return { state: null, reload: false, msg: "" };
+  }
+  // The clicks of the box, delegated on the banner element (the box is repainted with it). One click at a time.
+  function permBind(root, permissions, { say, reload }) {
+    if (root.dataset.permBound === "1") return;
+    root.dataset.permBound = "1";
+    let busy = false;
+    root.addEventListener("click", async (e) => {
+      const b = e.target?.closest?.("[data-perm]"); if (!b || busy || !root.contains(b)) return;
+      busy = true;
+      const set = (sel, fn) => { const el = root.querySelector(sel); if (el) fn(el); };
+      root.querySelectorAll("[data-perm]").forEach((x) => { x.disabled = true; });
+      const r = await permAct(b.dataset.perm, permissions, say);
+      if (r.state) set("[data-perm-text]", (el) => { el.textContent = permText(r.state); });
+      set("[data-perm-msg]", (el) => { el.textContent = r.reload ? "Erlaubt. Die Seite lädt neu …" : r.msg; });
+      root.querySelectorAll("[data-perm]").forEach((x) => { x.disabled = x.dataset.perm === "request" && r.state === "denied"; });
+      busy = false;
+      if (r.reload) reload();
+    });
+  }
+  // The one call of a page whose use('mcp') came back null: reads the state, logs it, mounts the box under the banner (a hidden banner becomes this note), wires the buttons. Returns the read states, or null when the view has no `permissions` (then nothing is shown).
+  async function permInit(root, { claude, esc, say, reload }) {
+    let permissions = null;
+    try { permissions = claude?.use ? await claude.use("permissions") : null; } catch (e) { say(`use('permissions'): ${e?.code ?? "?"}`); }
+    if (!permissions || !root) { say("use('permissions') → null: keine Hilfe beim Erlauben von Connectoren in dieser Ansicht"); return null; }
+    const perm = await permRead(permissions, say), box = permHtml(esc, perm.mcp);
+    if (root.hidden) { root.className = "note warn"; root.innerHTML = `<b>Diese Ansicht erreicht keine Connectoren.</b> ${box}`; root.hidden = false; }
+    else root.insertAdjacentHTML("beforeend", box);
+    permBind(root, permissions, { say, reload });
+    return perm;
+  }
+  // endregion:permhelp
+
   render();
   (async () => {
     mcp = await (window.claude?.use ? window.claude.use("mcp") : Promise.resolve(null));
-    if (!mcp) { log("use('mcp') → null"); setConn("bad", "Keine Connectoren in dieser Ansicht"); banner("bad", `<b>Diese Ansicht erreicht keine Connectoren.</b> Im Browser auf claude.ai öffnen, angemeldet, mit verbundenem Google-Drive-Connector.`); $("diag").open = true; return; }
+    if (!mcp) { log("use('mcp') → null"); setConn("bad", "Keine Connectoren in dieser Ansicht"); banner("bad", `<b>Diese Ansicht erreicht keine Connectoren.</b> Im Browser auf claude.ai öffnen, angemeldet, mit verbundenem Google-Drive-Connector.`); $("diag").open = true; await permInit($("banner"), { claude: window.claude, esc, say: log, reload: () => location.reload() }); return; }
     log("use('mcp') aufgelöst"); $("refresh").disabled = false;
     try { const lt = await mcp.listTools(SERVER); log("listTools", lt?.servers?.map((s) => `${s.server}: ${s.authStatus}`)); } catch (e) { log(`listTools ${e?.code ?? "?"}`); }
     await load(false);

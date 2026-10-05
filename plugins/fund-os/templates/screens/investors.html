@@ -1,8 +1,11 @@
 <!--
   Investor Relations · capabilities declared at publish (see README.md in this folder)
   user: scopes [profile]
+  db: rules [{path: "", read: "interact", write: "admin"}]
   mcp.servers:
     {server: "Attio",         tools: ["list-records-in-list", "get-records-by-ids", "update-list-entry-by-id", "create-note", "list-tasks", "create-task", "update-task", "list-workspace-members"]}
+    {server: "Google Drive",  tools: ["search_files"]}
+    {server: "Gmail",         tools: ["create_draft", "get_thread"]}
 -->
 <title>Investor Relations</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -80,14 +83,13 @@
   .tile .l { font-size: 12.5px; font-weight: 600; margin-top: 6px; }
   .tile .s { font-size: 11.5px; color: var(--muted); }
   .tile.alert .v { color: var(--alert); } .tile.warn .v { color: var(--warn); } .tile.good .v { color: var(--good); } .tile.accent .v { color: var(--accent); }
-  .board { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
   .col { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
   .col .h { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; font-weight: 600; }
   .col .h .n { font-family: var(--mono); color: var(--muted); }
   .card { background: var(--panel-2); border-radius: 10px; padding: 8px 10px; font-size: 12.5px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; text-align: left; border: 0; color: inherit; }
   .card:hover { outline: 1px solid var(--accent); }
-  .card .s { font-size: 11px; color: var(--muted); font-family: var(--mono); }
-  .card.quiet { border-left: 3px solid var(--warn); }
+  .card .s { font-size: 11px; color: var(--muted); font-family: var(--mono); overflow-wrap: anywhere; }
+  .card .cn { overflow-wrap: anywhere; }
   .more { font-size: 11px; color: var(--faint); font-family: var(--mono); padding: 2px 4px; }
   .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   input, select, textarea { background: var(--panel); border: 1px solid var(--line); border-radius: 9px; color: var(--fg); padding: 6px 10px; font: inherit; font-size: 12.5px; }
@@ -110,7 +112,7 @@
   .t2 { color: var(--calm); background: color-mix(in srgb, var(--calm) 14%, transparent); }
   .t3 { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
   .t4 { color: var(--faint); background: color-mix(in srgb, var(--faint) 12%, transparent); }
-  .quiet { color: var(--warn); }
+  .stale, .card .stale { color: var(--alert); }  /* F022: no contact for more than QUIET_DAYS (14) days; the page's theme-aware alert token */
   .empty { padding: 36px 16px; text-align: center; color: var(--muted); font-size: 13px; }
   .note { border: 1px solid var(--line); border-left: 3px solid var(--calm); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--muted); background: var(--panel); }
   .note.bad { border-left-color: var(--alert); } .note.warn { border-left-color: var(--warn); } .note.ok { border-left-color: var(--good); }
@@ -186,7 +188,6 @@
     .tile .v { font-size: 22px; }
     .toolbar input[type=search] { flex: 1 1 100%; max-width: none; }
     .toolbar select { flex: 1 1 calc(50% - 8px); }
-    .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
   /* F017 · burger + off-canvas rail on a phone. Shared verbatim by investors, knowledge, profile, newsletter; same class names as the cockpit
      and the inbox (button.burger, .rail.open, .backdrop). Closes the stylesheet on purpose so it wins the cascade over the base rules above. */
@@ -208,6 +209,128 @@
     .tile .v { font-size: 22px; }
     .tile .l { margin-top: 2px; font-size: 12px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   }
+  /* F022 · tabs (Liste, Board, Aufgaben) as in the Deal Cockpit, ticket sums on the tiles, the pipeline as a kanban board that scrolls inside its own container.
+     Closes the stylesheet on purpose, like the blocks above. */
+  .tabs { display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 3px; align-self: flex-start; }
+  .tabs button { flex: 1 1 0; min-width: 0; padding: 6px 14px; border-radius: 8px; border: 0; background: none; color: var(--muted); font-size: 12.5px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+  .tabs button.on { background: var(--panel-2); color: var(--fg); font-weight: 600; box-shadow: inset 0 0 0 1px var(--accent); }
+  .tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tile .ts { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 4px; line-height: 1.3; overflow-wrap: anywhere; }
+  .tile .ts .tm { display: block; }
+  .boardscroll { overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding-bottom: 8px; max-width: 100%; }
+  .board { display: flex; gap: 10px; align-items: flex-start; }
+  .board .col { flex: 0 0 220px; scroll-snap-align: start; padding: 10px; gap: 6px; }
+  .col .ts { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .col .cards { display: flex; flex-direction: column; gap: 6px; max-height: 68vh; overflow-y: auto; min-height: 36px; }
+  .col.over { border-color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--panel)); }
+  .bcard { display: flex; flex-direction: column; gap: 4px; }
+  .bcard .card { width: 100%; padding: 6px 9px; gap: 3px; cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  .bcard .card .cm { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+  .bcard .card .tier { font-size: 11px; padding: 1px 7px; }
+  .bcard .card.dragging { opacity: .35; }
+  .bcard .bconfirm { padding: 8px 10px; gap: 6px; font-size: 12px; }
+  .bcard .bconfirm .btn { padding: 4px 10px; font-size: 12px; }
+  .ghost { position: fixed; z-index: 60; margin: 0; pointer-events: none; box-shadow: 0 8px 24px rgba(0, 0, 0, .35); opacity: .95; cursor: grabbing; }
+  body.dragging { user-select: none; -webkit-user-select: none; cursor: grabbing; }
+  body.dragging .boardscroll { scroll-snap-type: none; }
+  .smenu { position: fixed; z-index: 65; min-width: 210px; max-width: calc(100vw - 16px); background: var(--panel); border: 1px solid var(--accent); border-radius: 12px; padding: 6px; display: flex; flex-direction: column; gap: 2px; box-shadow: 0 10px 30px rgba(0, 0, 0, .4); }
+  .smenu[hidden] { display: none; }
+  .smenu .mh { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 4px 8px 2px; }
+  .smenu .btn { justify-content: flex-start; border-color: transparent; }
+  .smenu .btn[aria-current="true"] { color: var(--muted); }
+  .toast { position: fixed; z-index: 70; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: max-content; max-width: min(520px, calc(100vw - 24px)); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; background: var(--panel-2); border: 1px solid var(--accent); border-radius: 12px; padding: 8px 12px; font-size: 13px; box-shadow: 0 10px 30px rgba(0, 0, 0, .4); }
+  .toast[hidden] { display: none; }
+  .toast.bad { border-color: var(--alert); }
+  .toast .tx { min-width: 0; overflow-wrap: anywhere; }
+  @media (max-width: 820px) {
+    .tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); width: 100%; align-self: stretch; }
+    .tabs button { min-height: 44px; padding-inline: 2px; gap: 3px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+    .tile { max-height: none; }
+    .board .col { flex-basis: 70%; }
+    .col .cards { max-height: none; overflow-y: visible; }
+    .bcard .card { min-height: 44px; }
+  }
+  /* F027 · Inbox and Autopilot tabs on the page's own store, as in the Deal Cockpit (F017): base rules first, the phone rules after them. Closes the stylesheet on purpose, like the blocks above. */
+  .btn.danger { border-color: var(--alert); color: var(--alert); }
+  .itemcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .badge { background: var(--alert); color: #fff; border-radius: 999px; padding: 0 6px; font-size: 10.5px; font-weight: 600; }
+  .badge[hidden] { display: none; }
+  .sechead { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0; }
+  .s { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .m { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+  .meta { color: var(--muted); font-size: 13px; }
+  .list { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .itemcard { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); font-size: 12.5px; color: var(--fg); text-align: left; }
+  .itemcard.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .itemcard.done { opacity: .6; }
+  .itemcard:hover { border-color: var(--accent); }
+  .kind { display: inline-flex; align-items: center; gap: 6px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .k-email { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .k-deal-stage { color: var(--warn); background: color-mix(in srgb, var(--warn) 16%, transparent); }
+  .k-newsletter { color: var(--good); background: color-mix(in srgb, var(--good) 16%, transparent); }
+  .k-unknown { color: var(--muted); background: color-mix(in srgb, var(--muted) 14%, transparent); }
+  .apcard { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .note.acc { border-left-color: var(--accent); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .flbl { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; display: block; margin-bottom: 4px; }
+  .sw { display: flex; gap: 4px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+  .sw button { flex: 1; padding: 6px 8px; border-radius: 8px; border: 0; background: none; color: var(--muted); font-size: 12.5px; }
+  .sw button[aria-checked="true"] { background: var(--panel); color: var(--fg); font-weight: 600; box-shadow: inset 0 0 0 1px var(--accent); }
+  .sw button.m-on[aria-checked="true"] { color: var(--accent); }
+  .sw button:disabled { opacity: .55; cursor: default; }
+  .actrow { border-top: 1px solid var(--line); padding: 10px 0 2px; display: flex; flex-direction: column; gap: 4px; }
+  .who { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .ibsplit { display: grid; grid-template-columns: minmax(280px, 400px) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .ibdetail { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; position: sticky; top: 12px; max-height: calc(100dvh - 24px); overflow-y: auto; }
+  .ibdetail h2 { margin: 0; font-size: 20px; line-height: 1.2; text-wrap: balance; }
+  .ibdetail .ibhead { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+  .ibdetail [data-ib-close] { display: none; }
+  .ibdetail .ibactions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .ibdetail input, .ibdetail textarea { width: 100%; }
+  .ibdetail textarea { min-height: 120px; font-family: var(--mono); font-size: 12.5px; resize: vertical; }
+  .ibdetail .flbl + .row { margin-top: 0; }
+  .ibdetail[hidden] { display: none; }
+  .k-investor-status { color: var(--calm); background: color-mix(in srgb, var(--calm) 16%, transparent); }
+  @media (max-width: 980px) {
+    .ibsplit { grid-template-columns: minmax(0, 1fr); }
+    .ibdetail { position: fixed; inset: 0; z-index: 21; width: 100vw; max-height: none; border: 0; border-radius: 0; padding: 0 14px calc(16px + env(safe-area-inset-bottom, 0px)); gap: 12px; overflow-y: auto; overscroll-behavior: contain; }
+    .ibdetail.nosel { display: none; }
+    .ibdetail .ibhead { position: sticky; top: 0; z-index: 2; background: var(--panel); margin-inline: -14px; padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 10px; border-bottom: 1px solid var(--line); flex-wrap: nowrap; }
+    .ibdetail [data-ib-close] { display: inline-flex; }
+    .ibdetail .ibactions { position: sticky; bottom: 0; z-index: 2; background: var(--panel); margin-inline: -14px; margin-top: auto; padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .ibdetail .btn { justify-content: center; white-space: normal; text-align: center; }
+    .ibdetail .ibactions .meta { grid-column: 1 / -1; }
+  }
+  @media (max-width: 820px) {
+    .itemcard, .sw button { min-height: 44px; }
+    .grid2 { grid-template-columns: minmax(0, 1fr); }
+    .apcard { padding: 14px; }
+  }
+  /* F018: Kontext unter dem Vorschlag (region:context); Zusammenfassungen 44 px hoch, lange Absender brechen um */
+  .ctx { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); min-width: 0; }
+  .ctx summary { min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; cursor: pointer; list-style: none; font-weight: 600; }
+  .ctx summary::-webkit-details-marker { display: none; }
+  .ctx summary::before { content: "▸"; color: var(--faint); flex: none; width: 1ch; }
+  .ctx details[open] > summary::before, .ctx[open] > summary::before { content: "▾"; }
+  .ctxbody { display: flex; flex-direction: column; gap: 8px; padding: 0 8px 8px; min-width: 0; }
+  .ctxsec { border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); min-width: 0; }
+  .ctxin { display: flex; flex-direction: column; gap: 8px; padding: 4px 12px 12px; font-size: 13px; color: var(--muted); min-width: 0; }
+  .ctxlbl { flex: 1 1 auto; } .ctxcount { color: var(--faint); font-weight: 400; }
+  .ctxnote { color: var(--muted); overflow-wrap: anywhere; }
+  .ctxhead { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; justify-content: space-between; }
+  .ctxlink { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent); }
+  .ctxmsg { border-top: 1px solid var(--line); min-width: 0; }
+  .ctxmsg summary { align-items: flex-start; font-weight: 400; padding: 8px 0; color: var(--fg); }
+  .ctxmsg > .row, .ctxmsg > pre { margin: 0 0 8px; }
+  .ctxsum { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+  .ctxfrom { font-weight: 600; color: var(--fg); overflow-wrap: anywhere; }
+  .ctxdate, .ctxprev { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+  .ctxprev { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .ctxmsg[open] .ctxprev { display: none; }
+  .ctxfile { display: flex; flex-direction: column; gap: 2px; min-height: 44px; justify-content: center; padding: 6px 0; border-top: 1px solid var(--line); min-width: 0; }
+  a.ctxfile .ctxfrom { color: var(--accent); }
+  .ctx pre { max-height: 320px; }
+  .ctx .pill { white-space: normal; overflow-wrap: anywhere; max-width: 100%; border-radius: 12px; }
 </style>
 
 <div class="app">
@@ -228,14 +351,16 @@
     </div>
 
     <div id="banner" class="note" hidden></div>
-    <div class="row" role="group" aria-label="Ansicht">
-      <button type="button" class="btn on" id="tabInv" data-view="investors" aria-pressed="true">Investoren</button>
-      <button type="button" class="btn" id="tabTasks" data-view="tasks" aria-pressed="false">Aufgaben<span id="tabTasksN"></span></button>
+    <div class="tabs" role="tablist" id="tabs" aria-label="Ansicht">
+      <button type="button" role="tab" class="on" id="tabList" data-view="list" aria-selected="true" aria-controls="invView">Liste</button>
+      <button type="button" role="tab" id="tabBoard" data-view="board" aria-selected="false" aria-controls="boardView" tabindex="-1">Board</button>
+      <button type="button" role="tab" id="tabTasks" data-view="tasks" aria-selected="false" aria-controls="tasksView" tabindex="-1">Aufgaben<span id="tabTasksN"></span></button>
+      <button type="button" role="tab" id="tabInbox" data-view="inbox" aria-selected="false" aria-controls="inboxView" tabindex="-1">Inbox <span class="badge" id="tabInboxN" hidden>0</span></button>
+      <button type="button" role="tab" id="tabAutopilot" data-view="autopilot" aria-selected="false" aria-controls="autopilotView" tabindex="-1">Autopilot</button>
     </div>
 
-    <div class="view" id="invView">
+    <div class="view" id="invView" role="tabpanel" aria-labelledby="tabList">
     <div class="tiles" id="tiles"></div>
-    <div class="board" id="board"></div>
 
     <div class="toolbar">
       <input id="q" type="search" placeholder="Investor, Fokus, Status…" aria-label="Suche">
@@ -253,7 +378,11 @@
     </div>
     </div>
 
-    <div class="view" id="tasksView" hidden>
+    <div class="view" id="boardView" role="tabpanel" aria-labelledby="tabBoard" hidden>
+      <div class="boardscroll" id="boardScroll" tabindex="0" aria-label="Pipeline als Board"><div class="board" id="board"></div></div>
+    </div>
+
+    <div class="view" id="tasksView" role="tabpanel" aria-labelledby="tabTasks" hidden>
       <div class="toolbar">
         <span class="count" id="tkProgress"></span>
         <span class="spacer"></span>
@@ -268,10 +397,25 @@
       </div>
     </div>
 
+    <div class="view" id="inboxView" role="tabpanel" aria-labelledby="tabInbox" hidden>
+      <div class="ibsplit">
+        <div class="list" id="ibList"><div class="empty">Warte auf den Speicher…</div></div>
+        <div class="ibdetail nosel" id="ibDetail"><div class="empty">Links einen Vorschlag wählen.</div></div>
+      </div>
+    </div>
+
+    <div class="view" id="autopilotView" role="tabpanel" aria-labelledby="tabAutopilot" hidden>
+      <div id="apBody"><div class="empty">Warte auf den Speicher…</div></div>
+      <h2 class="sechead">Protokoll</h2>
+      <div class="list" id="feed"></div>
+    </div>
+
     <details class="diag" id="diag"><summary>Diagnose · Verbindung, Antworten, Fehler</summary><div class="body" id="cacheBody" style="padding-bottom:0;flex-direction:row;flex-wrap:wrap;align-items:center"><span id="cacheLine"></span><button type="button" class="btn" id="cacheClear">Zwischenspeicher leeren</button></div><div class="body" id="diagBody"><div>Noch nichts protokolliert.</div></div></details>
   </div>
 </div>
 <div id="drawerHost" hidden></div>
+<div class="smenu" id="smenu" role="menu" aria-label="Status ändern" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script>
 (() => {
@@ -281,6 +425,12 @@
     fundName: "",            // shown in the side menu, e.g. "Example Fund"
     attioWorkspace: "",      // the slug in https://app.attio.com/<slug>/company/...
     investorList: "",        // Attio list slug of the investor / LP list (crmFields.investorList)
+    dealList: "",            // Attio list slug of the deal flow list (crmFields.dealList); the Inbox tab checks stage proposals against it
+    companiesObjectId: "",   // Attio object id of "companies" (uuid): ask the Attio connector once for the object "companies" and copy its id
+    dealStageField: "",      // list-entry attribute slug of the deal stage (crmFields.dealStage); the undo of a stage move in the Autopilot feed needs it
+    stages: ["Awareness", "Screening", "Initial contact", "Due diligence", "Term sheet", "Invested", "Watchlist", "Rejected", "Lost"],  // deal stage titles in pipeline order; the Inbox tab's guard knows them, this page does not decide them
+    forbiddenStages: ["Invested", "Term sheet"],                          // stages only a human sets in Attio itself; the Inbox tab refuses to write or undo them
+    forbiddenStatuses: ["Soft commitment", "Hard commitment", "Closed"],  // the same for investor statuses
     statuses: ["Target", "Outreach", "Active discussion", "Due diligence", "Soft commitment", "Hard commitment", "Closed", "Passive"],  // investor status titles in pipeline order; must match the Attio status titles exactly
     statusRoles: {           // which of the titles above plays which role; every value must be one of CONFIG.statuses
       target: "Target",             // not yet approached; targets at or above fitThreshold are loaded with the active ones
@@ -292,7 +442,7 @@
       passive: "Passive",           // parked; excluded from "unscored" and given no next action
     },
     activeStatuses: ["Outreach", "Active discussion", "Due diligence", "Soft commitment", "Hard commitment", "Closed"],  // statuses that are loaded first
-    quietStatuses: [],       // statuses that count as "quiet" after 30 days without contact; empty = the first four activeStatuses, whatever the fund names them
+    quietStatuses: [],       // statuses that count as "quiet" after 14 days without contact; empty = the first four activeStatuses, whatever the fund names them
     fund: {
       nextFundName: "the next fund",  // what a low-fit target is deferred to (the "next action" column)
     },
@@ -313,16 +463,17 @@
       lifecycle: "",         // lifecycle stage of the investor (e.g. LP, co-investor), shown on the card
       createdAt: "",         // when the investor entered the list
     },
-    links: {  // The six side-menu URLs. Publish all screens first, then paste the six URLs here in EVERY screen (README.md).
+    links: {  // The seven side-menu URLs. Publish all screens first, then paste the seven URLs here in EVERY screen (README.md).
       deals: "",
       investors: "",
       inbox: "",
       knowledge: "",
       newsletter: "",
       profile: "",
+      start: "",
     },
   };
-  const LINKS = CONFIG.links;  // the six side-menu URLs, set in CONFIG.links when publishing
+  const LINKS = CONFIG.links;  // the seven side-menu URLs, set in CONFIG.links when publishing
   const HERE = "investors";
   const ICONS = {
     deals: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
@@ -331,10 +482,11 @@
     knowledge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 012-2h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2z M8 7h8M8 11h8M8 15h5"/></svg>',
     newsletter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
     profile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>',
+    start: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>',
   };
   (function rail() {
     const item = (k, label) => `<a class="item ${k === HERE ? "on" : ""}" href="${LINKS[k].startsWith("http") ? LINKS[k] : "#"}" ${k === HERE ? 'aria-current="page"' : 'target="_blank" rel="noopener"'}>${ICONS[k]}${label}</a>`;
-    document.getElementById("rail").innerHTML = `<div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 7c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg><span>${String(CONFIG.fundName || "Fund OS").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}<br>Operations</span></div><div class="lbl">Domänen</div>${item("deals", "Deal Cockpit")}${item("investors", "Investor Relations")}${item("inbox", "Inbox")}${item("knowledge", "Knowledge")}${item("newsletter", "Newsletter")}<div class="spacer"></div>${item("profile", "Profil")}<div class="foot">Fund OS · LP-Matrix v1</div>`;
+    document.getElementById("rail").innerHTML = `<div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 7c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg><span>${String(CONFIG.fundName || "Fund OS").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}<br>Operations</span></div>${item("start", "Start")}<div class="lbl">Domänen</div>${item("deals", "Deal Cockpit")}${item("investors", "Investor Relations")}${item("inbox", "Agent Workbench")}${item("knowledge", "Knowledge")}${item("newsletter", "Content")}<div class="spacer"></div>${item("profile", "Profil")}<div class="foot">Fund OS · LP-Matrix v1</div>`;
   })();
   // Off-canvas rail on a phone (F017): burger opens it, backdrop click, Escape, a rail link or a switch to a wide screen close it.
   (function burger() {
@@ -354,10 +506,86 @@
   const QUIET_STATUSES = CONFIG.quietStatuses.length ? CONFIG.quietStatuses : ACTIVE.slice(0, 4);
   const TIERS = [["Priority", 80, "Immediate warm outreach; anchor LP candidate", "Immediate outreach; priority co-investment relationship"], ["High Fit", 60, "Active pipeline; personalised approach", "Active co-investor pipeline; build the relationship"], ["Qualified", 40, "Outreach when capacity allows; thesis tailoring needed", "Worth a warm intro; monitor for co-investment opportunities"], ["Watchlist", 20, `Monitor; revisit for ${CONFIG.fund.nextFundName}`, "Ecosystem-map only; light-touch relationship"], ["Low Fit", -1, "Do not prioritise for LP outreach", "Not a near-term priority; keep on file"]];
   const tierIdx = (fit) => fit === null ? 4 : TIERS.findIndex((t) => fit >= t[1]);
-  const QUIET_DAYS = 30;
+  const QUIET_DAYS = 14;  // red from more than 14 days without contact
   const attioUrl = (id) => `https://app.attio.com/${CONFIG.attioWorkspace}/company/${id}/overview`;
 
-  // region:localcache (a copy of a list in this browser's local storage; every access guarded; nothing is thrown, a missing, damaged or foreign entry reads as null; mirrored byte for byte in deal-cockpit.html and investors.html, held still by tools/check-screen-templates.sh)
+  // region:permhelp (F029: when use('mcp') is null, the built-in `permissions` capability tells why and offers the way out; never declared, read-only on load, request / manage only on a click; the namespace, esc, the Diagnose line and the reload come in as arguments; mirrored byte for byte in every page that resolves mcp, held still by tools/check-screen-templates.sh)
+  const PERM_TEXT = {
+    denied: "Connectoren sind für dieses Artefakt abgelehnt. Über ‚Berechtigungen öffnen‘ wieder einschalten.",
+    prompt: "Noch nicht erlaubt: ‚Connectoren anfragen‘.",
+    granted: "Connectoren sind erlaubt, aber diese Ansicht hat sie nicht geladen. Die Seite neu laden.",
+    unavailable: "Als Gast von außerhalb der Organisation bietet claude.ai in geteilten Artefakten keine Connectoren an. Abhilfe: Artefakt duplizieren oder gemeinsamer Team-Account.",
+  };
+  const PERM_MANAGE_FAIL = "Das Panel ließ sich nicht öffnen. Menü des Artefakts oben rechts → Berechtigungen.";
+  const PERM_REQUEST_FAIL = "Die Anfrage ist fehlgeschlagen. Menü des Artefakts oben rechts → Berechtigungen.";
+  const permKnown = (s) => (s === "granted" || s === "prompt" || s === "denied" ? s : "unavailable");
+  const permText = (s) => PERM_TEXT[permKnown(s)];
+  // The box under the "keine Connectoren" banner: the text for the state of "mcp" and the two buttons. Every text goes through the page's esc.
+  function permHtml(esc, state) {
+    const s = permKnown(state);
+    return `<div class="permhelp" data-perm-help="1" style="margin-top:8px"><div data-perm-text>${esc(permText(s))}</div><div class="row" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><button type="button" class="btn" data-perm="request"${s === "denied" ? " disabled" : ""}>Connectoren anfragen</button><button type="button" class="btn" data-perm="manage">Berechtigungen öffnen</button></div><div data-perm-msg aria-live="polite" style="margin-top:6px"></div></div>`;
+  }
+  // Reads without prompting and logs the answers verbatim: the full map, "mcp" and "sample". { mcp, sample, all } holds the raw answers.
+  async function permRead(permissions, say) {
+    const one = async (name) => { try { return await permissions.state(name); } catch (e) { say(`permissions.state("${name}") fehlgeschlagen: ${e?.code ?? "?"}`); return "unavailable"; } };
+    let all = null;
+    try { all = await permissions.state(); } catch (e) { say(`permissions.state() fehlgeschlagen: ${e?.code ?? "?"}`); }
+    const mcp = await one("mcp"), sample = await one("sample");
+    say(`permissions.state() = ${JSON.stringify(all) ?? "undefined"}`);
+    say(`permissions.state("mcp") = ${String(mcp)}`);
+    say(`permissions.state("sample") = ${String(sample)}`);
+    return { mcp, sample, all };
+  }
+  // What one click does. "request": one dialog for ["mcp"], branch on the returned state. "manage": open the panel, then read the state again. { state, reload, msg }: state null = unchanged; reload true only when mcp is granted. Never throws; never asks twice.
+  async function permAct(kind, permissions, say) {
+    if (kind === "request") {
+      try {
+        const res = await permissions.request(["mcp"]);
+        say(`permissions.request(["mcp"]) = ${JSON.stringify(res) ?? "undefined"}`);
+        const s = res && typeof res === "object" && "mcp" in res ? res.mcp : await permissions.state("mcp");
+        return { state: permKnown(s), reload: s === "granted", msg: "" };
+      } catch (e) { say(`permissions.request(["mcp"]) fehlgeschlagen: ${e?.code ?? "?"}`); return { state: null, reload: false, msg: PERM_REQUEST_FAIL }; }
+    }
+    if (kind === "manage") {
+      try { await permissions.manage(); } catch (e) { say(`permissions.manage() abgelehnt: ${e?.code ?? "?"}`); return { state: null, reload: false, msg: PERM_MANAGE_FAIL }; }
+      let s; try { s = await permissions.state("mcp"); } catch { s = "unavailable"; }
+      say(`permissions.state("mcp") nach manage() = ${String(s)}`);
+      return { state: permKnown(s), reload: s === "granted", msg: "" };
+    }
+    return { state: null, reload: false, msg: "" };
+  }
+  // The clicks of the box, delegated on the banner element (the box is repainted with it). One click at a time.
+  function permBind(root, permissions, { say, reload }) {
+    if (root.dataset.permBound === "1") return;
+    root.dataset.permBound = "1";
+    let busy = false;
+    root.addEventListener("click", async (e) => {
+      const b = e.target?.closest?.("[data-perm]"); if (!b || busy || !root.contains(b)) return;
+      busy = true;
+      const set = (sel, fn) => { const el = root.querySelector(sel); if (el) fn(el); };
+      root.querySelectorAll("[data-perm]").forEach((x) => { x.disabled = true; });
+      const r = await permAct(b.dataset.perm, permissions, say);
+      if (r.state) set("[data-perm-text]", (el) => { el.textContent = permText(r.state); });
+      set("[data-perm-msg]", (el) => { el.textContent = r.reload ? "Erlaubt. Die Seite lädt neu …" : r.msg; });
+      root.querySelectorAll("[data-perm]").forEach((x) => { x.disabled = x.dataset.perm === "request" && r.state === "denied"; });
+      busy = false;
+      if (r.reload) reload();
+    });
+  }
+  // The one call of a page whose use('mcp') came back null: reads the state, logs it, mounts the box under the banner (a hidden banner becomes this note), wires the buttons. Returns the read states, or null when the view has no `permissions` (then nothing is shown).
+  async function permInit(root, { claude, esc, say, reload }) {
+    let permissions = null;
+    try { permissions = claude?.use ? await claude.use("permissions") : null; } catch (e) { say(`use('permissions'): ${e?.code ?? "?"}`); }
+    if (!permissions || !root) { say("use('permissions') → null: keine Hilfe beim Erlauben von Connectoren in dieser Ansicht"); return null; }
+    const perm = await permRead(permissions, say), box = permHtml(esc, perm.mcp);
+    if (root.hidden) { root.className = "note warn"; root.innerHTML = `<b>Diese Ansicht erreicht keine Connectoren.</b> ${box}`; root.hidden = false; }
+    else root.insertAdjacentHTML("beforeend", box);
+    permBind(root, permissions, { say, reload });
+    return perm;
+  }
+  // endregion:permhelp
+
+  // region:localcache (a copy of a list in this browser's local storage; every access guarded; nothing is thrown, a missing, damaged or foreign entry reads as null; mirrored byte for byte in deal-cockpit.html, investors.html and start.html, held still by tools/check-screen-templates.sh)
   function localCache(key, version) {
     const MAX_CHARS = 4 * 1024 * 1024;
     const store = () => { try { return typeof window !== "undefined" && window.localStorage ? window.localStorage : null; } catch { return null; } };
@@ -465,7 +693,25 @@
     return "Nächsten Schritt vereinbaren";
   }
 
-  // region:tasks (F007; pure: no DOM, no mcp, no globals; input is the output of parseAttioText() or JSON.parse; held still by scripts/check-artifact-tasks.mjs)
+  // F022 · ticket sums (pure). The source is the list attribute CONFIG.fields.ticket (type number, the investor's average ticket size), not the amount committed
+  // (CONFIG.fields.funded) and not a commitment: the line says "Ticket" so nobody reads it as signed money. A value that is not a plain number (a range, a unit) counts as no ticket.
+  const TICKET_TITLE = "Summe der durchschnittlichen Ticketgröße (Attio-Liste der Investoren) über die Investoren in dieser Kachel. Kein zugesagter Betrag.";
+  function ticketNum(r) { const v = r?.ticket; const n = typeof v === "number" ? v : typeof v === "string" && /^\s*\d+(?:\.\d+)?\s*$/.test(v) ? Number(v) : NaN; return Number.isFinite(n) && n > 0 ? n : null; }
+  function fmtCompact(n) {
+    if (!Number.isFinite(n)) return "";
+    const de = (x) => String(Math.round(x * 10) / 10).replace(".", ",");
+    if (n >= 1e9) return `${de(n / 1e9)} Mrd.`;
+    if (n >= 1e6) { const m = Math.round((n / 1e6) * 10) / 10; return m >= 1000 ? "1 Mrd." : `${de(m)} Mio.`; }
+    if (n >= 1e3) { const k = Math.round(n / 1e3); return k >= 1000 ? "1 Mio." : `${k} Tsd.`; }
+    return String(Math.round(n));
+  }
+  function ticketSummary(list) {
+    let sum = 0, counted = 0, missing = 0;
+    for (const r of list) { const n = ticketNum(r); if (n === null) missing++; else { sum += n; counted++; } }
+    return { sum, counted, missing, text: counted ? `Σ ${fmtCompact(sum)}` : "kein Ticket", line: counted ? `Ticket Σ ${fmtCompact(sum)}` : "kein Ticket" };
+  }
+
+  // region:tasks (F007; pure: no DOM, no mcp, no globals; input is the output of parseAttioText() or JSON.parse; held still by tools/check-screen-templates.sh)
   const TASK_MAX = 2000;   // longest task text the form sends
   const TASK_PAGE = 10;    // list-tasks answers at most 10 per call
   const TASK_CAP = 100;    // open tasks read per record
@@ -585,7 +831,7 @@
   async function load(force, everything) {
     if (!mcp || loading) return;
     loading = true; $("refresh").disabled = true; $("loadAll").disabled = true; setConn("wait", "Lese die Investors-Liste…"); banner("", "");
-    const gen = cacheGen; freshness();
+    const gen = cacheGen, t0 = Date.now(); freshness();
     const cache = force ? { staleTime: 0, refresh: true } : { staleTime: 300000 };
     const out = [];
     try {
@@ -596,6 +842,7 @@
       }
       if (out.length === 0) { banner("warn", `<b>Keine Einträge gelesen.</b> Die Rohantwort steht in der Diagnose. Falls Attio geantwortet hat, aber die Form nicht erkannt wurde: Diagnose kopieren und mir schicken.`); $("diag").open = true; }
       await enrich(out, cache);
+      applyMoves(out, movedTo, t0);
       if (out.length > 0 || !cacheAt) { rows = out; cacheAt = null; }  // an empty answer does not wipe the stored list from the screen (the banner above says so)
       setConn("ok", `Attio · ${rows.length} Investoren${loadedAll ? "" : ` (aktiv + Targets ≥ ${CONFIG.fitThreshold})`}`); render();
       if (!everything && out.length > 0 && gen === cacheGen) { if (investorCache.write({ list: LIST, entries: out })) cacheSaved = Date.now(); paintCacheLine(); }  // the default set only: the stored list is what the page opens on
@@ -605,29 +852,48 @@
 
   // ── Darstellung ──────────────────────────────────────────────────────────────
   function freshness() { const p = $("fresh"); if (cacheAt) { const stale = cacheStale(); $("freshText").textContent = `Stand von ${ageText(Date.now() - cacheAt)}${stale ? " (veraltet)" : ""}${loading ? " · aktualisiere …" : ""}`; p.className = "pill " + (stale ? "bad" : "wait"); p.hidden = false; return; } if (!storedAt) { p.hidden = true; return; } const mins = Math.round((Date.now() - storedAt) / 60000); $("freshText").textContent = mins < 1 ? "gerade gelesen" : `gelesen vor ${mins} min`; p.className = "pill " + (mins > 30 ? "wait" : "ok"); p.hidden = false; }
-  const isQuiet = (r) => QUIET_STATUSES.includes(r.status) && (daysSince(parseWhen(r.lastInteraction)) ?? 0) > QUIET_DAYS;
+  const lastDays = (r) => daysSince(parseWhen(r?.lastInteraction));
+  const isQuiet = (r) => QUIET_STATUSES.includes(r.status) && (lastDays(r) ?? 0) > QUIET_DAYS;
+  // F022: red text for anyone whose last contact is known and more than QUIET_DAYS days back (any status; never contacted is not "still")
+  // Red only inside the running pipeline (Target and the active statuses); the passive status is never red.
+  const isStale = (r) => { if (!r || r.status === ST.passive) return false; const d = lastDays(r); return d !== null && d > QUIET_DAYS; };
+  const contactText = (r) => { const d = lastDays(r); return d === null ? "nie" : d <= 0 ? "heute" : `vor ${d} T`; };
   function tiles() {
+    const by = (f) => rows.filter(f);
     const K = [
-      ["all", rows.length, "Geladen", loadedAll ? "alle Einträge" : "aktive Stufen + Targets ≥ 60", "accent"],
-      ["prio", rows.filter((r) => tierIdx(r.fit) === 0).length, "Priority", "LP-Fit ≥ 80", "alert"],
-      ["active", rows.filter((r) => r.status === ST.discussion).length, ST.discussion, "Gespräche laufen", ""],
-      ["soft", rows.filter((r) => r.status === ST.soft).length, ST.soft, "mündlich zugesagt", ""],
-      ["hard", rows.filter((r) => r.status === ST.hard || r.status === ST.closed).length, "Hard · Closed", "unterschrieben, gewired", "good"],
-      ["quiet", rows.filter(isQuiet).length, `Still seit ${QUIET_DAYS} Tagen`, "aktiv, aber ohne Kontakt", "warn"],
-      ["unscored", rows.filter((r) => r.fit === null && r.status !== ST.passive).length, "Ohne LP-Fit", "noch nicht gescort", ""],
+      ["all", rows, "Geladen", loadedAll ? "alle Einträge" : "aktive Stufen + Targets ≥ 60", "accent"],
+      ["prio", by((r) => tierIdx(r.fit) === 0), "Priority", "LP-Fit ≥ 80", "alert"],
+      ["active", by((r) => r.status === ST.discussion), ST.discussion, "Gespräche laufen", ""],
+      ["soft", by((r) => r.status === ST.soft), ST.soft, "mündlich zugesagt", ""],
+      ["hard", by((r) => r.status === ST.hard || r.status === ST.closed), "Hard · Closed", "unterschrieben, gewired", "good"],
+      ["quiet", by(isQuiet), `Still über ${QUIET_DAYS} Tage`, `aktiv, aber seit mehr als ${QUIET_DAYS} Tagen ohne Kontakt`, "warn"],
+      ["unscored", by((r) => r.fit === null && r.status !== ST.passive), "Ohne LP-Fit", "noch nicht gescort", ""],
     ];
-    $("tiles").innerHTML = K.map(([id, v, l, s, tone]) => `<button type="button" class="tile ${tone} ${filter.kpi === id ? "on" : ""}" data-kpi="${id}" aria-pressed="${filter.kpi === id}" title="${esc(s)}"><span class="v">${v}</span><span class="l">${esc(l)}</span></button>`).join("");
+    $("tiles").innerHTML = K.map(([id, list, l, s, tone]) => { const t = ticketSummary(list); return `<button type="button" class="tile ${tone} ${filter.kpi === id ? "on" : ""}" data-kpi="${id}" aria-pressed="${filter.kpi === id}" title="${esc(s)}"><span class="v">${list.length}</span><span class="l">${esc(l)}</span><span class="ts" title="${esc(TICKET_TITLE)}">${esc(t.counted ? t.text : "Σ —")}</span></button>`; }).join("");
   }
-  function board() {
-    const cols = CONFIG.boardColumns;
-    $("board").innerHTML = cols.map((s) => {
-      const list = rows.filter((r) => r.status === s).sort((a, b) => (b.fit ?? -1) - (a.fit ?? -1));
-      const top = list.slice(0, 3);
-      return `<div class="col"><div class="h"><span>${esc(s)}</span><span class="n">${list.length}${s === ST.target && !loadedAll ? "+" : ""}</span></div>
-        ${top.map((r) => `<button type="button" class="card ${isQuiet(r) ? "quiet" : ""}" data-id="${esc(r.entryId)}"><span>${esc(r.name)}</span><span class="s">${r.fit === null ? "kein Fit" : `${TIERS[tierIdx(r.fit)][0]} ${r.fit}`}${isQuiet(r) ? ` · still ${daysSince(parseWhen(r.lastInteraction))} T` : ""}</span></button>`).join("")}
-        ${list.length > 3 ? `<div class="more">+${list.length - 3} weitere</div>` : list.length === 0 ? `<div class="more">—</div>` : ""}</div>`;
+  // F022 · the pipeline as columns CONFIG.boardColumns (the target status and every active status); one compact card per investor (all of them, best LP-Fit first): name, LP-Fit chip, ticket, days since the last contact.
+  // `pending` is the card that waits for the inline confirm of a move into the hard or closed status: { id, to }. Returns the HTML so a check can run it on invented rows.
+  const BOARD_COLS = CONFIG.boardColumns;
+  const CONFIRM_STATUSES = [ST.hard, ST.closed];
+  function boardHtml(list, everything, pending) {
+    return BOARD_COLS.map((s) => {
+      const col = list.filter((r) => r.status === s).sort((a, b) => (b.fit ?? -1) - (a.fit ?? -1) || String(a.name).localeCompare(String(b.name)));
+      const t = ticketSummary(col);
+      return `<section class="col" aria-label="${esc(s)}" data-status="${esc(s)}"><div class="h"><span>${esc(s)}</span><span class="n">${col.length}${s === ST.target && !everything ? "+" : ""}</span></div>
+        <div class="ts" title="${esc(TICKET_TITLE)}">${esc(t.line)}${t.counted && t.missing ? ` · ${t.missing} ohne Ticket` : ""}</div>
+        <div class="cards">${col.length === 0 ? `<div class="more">—</div>` : col.map((r) => { const st = isStale(r) ? " stale" : "", tn = ticketNum(r), ti = tierIdx(r.fit); return `<div class="bcard"><button type="button" class="card" data-id="${esc(r.entryId)}"><span class="cn${st}">${esc(r.name)}</span><span class="cm"><span class="tier t${ti}">${r.fit === null ? "kein Fit" : `${TIERS[ti][0]} ${Math.round(r.fit)}`}</span><span class="s">${tn === null ? "kein Ticket" : `Ticket ${fmtCompact(tn)}`}</span></span><span class="s days${st}">${esc(contactText(r))}</span></button>${pending && pending.id === r.entryId ? `<div class="confirm bconfirm" role="group" aria-label="Bestätigen"><b>Nach „${esc(pending.to)}“ verschieben?</b><span class="muted">Das gilt als unterschrieben bzw. gewired.</span><div class="row"><button type="button" class="btn primary" data-bconfirm="yes">Verschieben</button><button type="button" class="btn" data-bconfirm="no">Abbrechen</button></div></div>` : ""}</div>`; }).join("")}</div></section>`;
     }).join("");
   }
+  // A card is repainted from the state; while a drag is running the repaint waits (the card under the finger must stay in the document).
+  let boardDirty = false;
+  function board() {
+    if (drag?.active) { boardDirty = true; return; }
+    boardDirty = false;
+    const fid = document.activeElement?.closest?.("#board .card[data-id]")?.dataset.id;
+    $("board").innerHTML = boardHtml(rows, loadedAll, pendingMove);
+    if (fid) focusCard(fid);
+  }
+  function focusCard(id) { const el = [...$("board").querySelectorAll(".card[data-id]")].find((c) => c.dataset.id === id); if (el) el.focus({ preventScroll: true }); }
   function passes(r) {
     const t = tierIdx(r.fit);
     if (filter.kpi === "prio" && t !== 0) return false;
@@ -646,13 +912,13 @@
     $("count").textContent = `${vis.length} von ${rows.length}`;
     if (vis.length === 0) { $("rows").innerHTML = `<tr><td colspan="8" class="empty">${rows.length ? "Kein Investor passt zu diesen Filtern." : "Noch keine Investoren geladen."}</td></tr>`; return; }
     $("rows").innerHTML = vis.map((r) => { const t = tierIdx(r.fit); const q = daysSince(parseWhen(r.lastInteraction)); return `<tr tabindex="0" data-id="${esc(r.entryId)}">
-      <td><div class="name">${esc(r.name)}</div><div class="dom">${esc([r.location, r.domain].filter(Boolean).join(" · "))}</div></td>
+      <td><div class="name${isStale(r) ? " stale" : ""}">${esc(r.name)}</div><div class="dom">${esc([r.location, r.domain].filter(Boolean).join(" · "))}</div></td>
       <td>${esc(r.status ?? "—")}</td>
       <td class="num">${r.fit === null ? '<span class="muted">—</span>' : Math.round(r.fit)}</td>
       <td><span class="tier t${t}">${r.fit === null ? "ungescort" : TIERS[t][0]}</span></td>
       <td>${esc(r.ticket ?? "—")}</td>
       <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.focus ?? "")}">${esc(r.focus ?? r.categories ?? "—")}</td>
-      <td class="${isQuiet(r) ? "quiet" : ""}">${q === null ? '<span class="muted">nie</span>' : q === 0 ? "heute" : `vor ${q} Tagen`}</td>
+      <td class="${isStale(r) ? "stale" : ""}">${q === null ? '<span class="muted">nie</span>' : q === 0 ? "heute" : `vor ${q} Tagen`}</td>
       <td>${esc(nextAction(r))}</td></tr>`; }).join("");
   }
   function statusOptions() { const sel = $("statusSel"); const seen = new Set(rows.map((r) => r.status).filter(Boolean)); sel.innerHTML = `<option value="">Alle Status</option>` + STATUSES.filter((s) => seen.has(s)).map((s) => `<option value="${esc(s)}" ${filter.status === s ? "selected" : ""}>${esc(s)} (${rows.filter((r) => r.status === s).length})</option>`).join(""); }
@@ -665,9 +931,9 @@
     const fact = (k, v) => `<div class="fact"><div class="k">${esc(k)}</div><div class="v">${v}</div></div>`;
     host.innerHTML = `<div class="scrim" data-close="1"></div><aside class="drawer" role="dialog" aria-label="${esc(r.name)}">
       <div class="row" style="justify-content:space-between"><span class="tier t${t}">${r.fit === null ? "ungescort" : `${TIERS[t][0]} · LP-Fit ${Math.round(r.fit)}`}</span><button type="button" class="btn" data-close="1">Schließen</button></div>
-      <h2>${esc(r.name)}</h2>
+      <h2 class="${isStale(r) ? "stale" : ""}">${esc(r.name)}</h2>
       <div class="muted">${esc([r.location, r.domain, r.ticket ? `Ticket ${r.ticket}` : null, r.lifecycle].filter(Boolean).join(" · "))}</div>
-      <div class="facts">${fact("Status", esc(r.status ?? "—"))}${fact("LP-Fit", r.fit === null ? "—" : Math.round(r.fit))}${fact("Letzter Kontakt", r.lastInteraction ? `vor ${daysSince(parseWhen(r.lastInteraction))} T` : "nie")}${fact("Zugesagt", esc(r.funded ?? "—"))}</div>
+      <div class="facts">${fact("Status", esc(r.status ?? "—"))}${fact("LP-Fit", r.fit === null ? "—" : Math.round(r.fit))}${fact("Letzter Kontakt", `<span class="${isStale(r) ? "stale" : ""}">${r.lastInteraction ? `vor ${daysSince(parseWhen(r.lastInteraction))} T` : "nie"}</span>`)}${fact("Zugesagt", esc(r.funded ?? "—"))}</div>
       ${r.fit !== null ? `<div class="note ${t === 0 ? "bad" : t === 1 ? "ok" : ""}"><b>Als LP:</b> ${esc(TIERS[t][2])}<br><b>Als Co-Investor:</b> ${esc(TIERS[t][3])}</div>` : `<div class="note warn"><b>Noch kein LP-Fit.</b> LP-Scoring im Artefakt kommt mit Backlog F7; bis dahin wird der LP-Fit außerhalb dieser Ansicht gescort (Skill lp-investor-scoring).</div>`}
       <div class="note"><b>Next action:</b> ${esc(nextAction(r))}</div>
       <div class="actions">${r.recordId ? `<a class="btn" href="${attioUrl(r.recordId)}" target="_blank" rel="noopener">In Attio öffnen</a>` : ""}<button type="button" class="btn" data-act="status">Status ändern…</button><button type="button" class="btn" data-act="note">Notiz anlegen…</button></div>
@@ -676,7 +942,7 @@
       ${r.fitEval ? `<h3>LP-Fit-Bewertung</h3><pre>${esc(r.fitEval)}</pre>` : ""}
       ${r.statusNotes ? `<h3>Status-Notizen</h3><pre>${esc(r.statusNotes)}</pre>` : ""}
       ${[["Fokus", r.focus], ["Investment-Thesis", r.thesis], ["Kriterien", r.criteria], ["Ziele", r.targets], ["Portfolio", r.portfolio], ["Beschreibung", r.description]].filter(([, v]) => v).map(([k, v]) => `<h3>${k}</h3><pre>${esc(v)}</pre>`).join("")}
-      <div class="muted" style="font-size:12px">Statuswechsel, Notizen und Aufgaben werden nach deiner Bestätigung direkt in Attio geschrieben, unter deinem Attio-Konto. Outreach-Entwürfe laufen über die Inbox.</div></aside>`;
+      <div class="muted" style="font-size:12px">Statuswechsel, Notizen und Aufgaben werden nach deiner Bestätigung direkt in Attio geschrieben, unter deinem Attio-Konto. Outreach-Entwürfe stehen im Reiter Inbox.</div></aside>`;
     if (r.recordId) {
       ensureTasks(r.recordId);
       if (!membersFailed) loadMembers().then(() => paintTasks(r), () => paintTasks(r));
@@ -689,24 +955,200 @@
     else host.innerHTML = `<div class="confirm"><b>Notiz an ${esc(r.name)}</b><textarea id="noteText" placeholder="Call-Zusammenfassung, Zusage, nächster Schritt…"></textarea><div class="row"><button type="button" class="btn primary" data-do="note">Notiz in Attio anlegen</button><button type="button" class="btn" data-cancel="1">Abbrechen</button></div><div id="actMsg"></div></div>`;
     const sel = $("toStatus"); if (sel) { const f = STATUSES.find((s) => s !== r.status); if (f) sel.value = f; }
   }
+  // The one status write of this page: the drawer's confirm box and the board's drag and drop both go through it (list-entry level on LIST, attribute `status`), then the list read is invalidated.
+  // The caller sets r.status; nothing here touches the screen.
+  async function writeStatus(r, to) {
+    if (!mcp) throw Object.assign(new Error("Kein Connector in dieser Ansicht"), { code: "server_not_connected" });
+    await callAttio("update-list-entry-by-id", { list: LIST, entry_id: r.entryId, entry_values: { [FIELD.status]: to } }, { cache: false });
+    try { await mcp.invalidate(SERVER, "list-records-in-list"); } catch { /* ok */ }
+  }
   async function doAction(r, kind) {
     const msg = $("actMsg"); const btn = document.querySelector("[data-do]");
     if (kind === "status" && !r.entryId) { msg.innerHTML = `<div class="note bad">Keine Eintrags-ID.</div>`; return; }
     if (kind === "note" && !r.recordId) { msg.innerHTML = `<div class="note bad">Kein Firmendatensatz.</div>`; return; }
     btn.disabled = true; msg.innerHTML = `<div class="note"><span class="spin"></span> Schreibe…</div>`;
     try {
-      if (kind === "status") { const to = $("toStatus").value; await callAttio("update-list-entry-by-id", { list: LIST, entry_id: r.entryId, entry_values: { [FIELD.status]: to } }, { cache: false }); r.status = to; msg.innerHTML = `<div class="note ok"><b>Status: ${esc(to)}.</b></div>`; }
+      if (kind === "status") { const to = $("toStatus").value; await writeStatus(r, to); r.status = to; msg.innerHTML = `<div class="note ok"><b>Status: ${esc(to)}.</b></div>`; }
       else { const text = $("noteText").value.trim(); if (!text) { msg.innerHTML = `<div class="note warn">Erst etwas schreiben.</div>`; btn.disabled = false; return; } await callAttio("create-note", { parent_object: "companies", parent_record_id: r.recordId, title: `Investor Relations · ${new Date().toISOString().slice(0, 10)}`, content: text }, { cache: false }); msg.innerHTML = `<div class="note ok"><b>Notiz angelegt.</b></div>`; }
-      try { await mcp.invalidate(SERVER, "list-records-in-list"); } catch { /* ok */ }
+      if (kind !== "status") { try { await mcp.invalidate(SERVER, "list-records-in-list"); } catch { /* ok */ } }
       render();
     } catch (err) { const [, html] = explain(err); const ambiguous = ["server_unavailable", "upstream_error", "cancelled"].includes(err?.code); msg.innerHTML = `<div class="note bad">${html}${ambiguous ? " <b>Der Schreibvorgang kann trotzdem durchgegangen sein</b>; in Attio prüfen." : ""}</div>`; btn.disabled = false; }
   }
+
+  // ── F022 · Status per Drag and Drop auf dem Board (Gründer 2026-10-05) ───────
+  // The move is the partner's own action in the partner's own view, so it writes at once through writeStatus() (the drawer's write); no proposal, no approval step.
+  // A move that was in flight when a load started, or finished after it, wins over the status that load read (the read may predate the write).
+  function applyMoves(out, moved, t0) {
+    for (const x of out) { const m = moved.get(x.entryId); if (m && (m.doneAt === null || m.doneAt >= t0)) x.status = m.status; }
+    return out;
+  }
+  // "none": no write (same column, unknown column). "confirm": into the hard or closed status, signed money, asks the inline confirm first. "move": write now.
+  function dropDecision(from, to, confirmed) {
+    if (!to || to === from || !BOARD_COLS.includes(to)) return "none";
+    if (CONFIRM_STATUSES.includes(to) && !confirmed) return "confirm";
+    return "move";
+  }
+  // Optimistic: the investor changes column on screen first (opts.paint), the write follows (opts.write), a failed write moves the investor back. The undo is the same call with the old status and confirmed.
+  async function moveStatus(r, to, opts) {
+    const d = dropDecision(r.status, to, opts.confirmed === true);
+    if (d !== "move") return { result: d, from: r.status, to };
+    const from = r.status;
+    r.status = to; if (opts.paint) opts.paint();
+    try { await opts.write(r, to); return { result: "moved", from, to }; }
+    catch (err) { r.status = from; if (opts.paint) opts.paint(); return { result: "failed", from, to, err }; }
+  }
+
+  const HOLD_MS = 350, TOAST_MS = 10000, SLOP = 6, HOLD_SLOP = 10, EDGE = 56, SCROLL_STEP = 16;
+  let drag = null;            // the running gesture: { id, pointerId, type, sx, sy, x, y, active, timer, card, ghost, over, raf, dx, dy }
+  let pendingMove = null;     // { id, to }: the card that waits for the inline confirm
+  let lastDragEnd = 0, toastTimer = null, toastUndo = null, menuFor = null;
+  const moving = new Set();   // entry ids with a write in flight
+  const movedTo = new Map();  // entry id → { status, doneAt }: what this page wrote (doneAt null while in flight). A load that read before the write finished must not put the old column back.
+  const cardOf = (id) => [...$("board").querySelectorAll(".card[data-id]")].find((c) => c.dataset.id === id) ?? null;
+
+  function hideToast() { clearTimeout(toastTimer); toastTimer = null; toastUndo = null; $("toast").hidden = true; $("toast").innerHTML = ""; }
+  function showToast(kind, html, undo) {
+    clearTimeout(toastTimer); toastUndo = undo ?? null;
+    const t = $("toast"); t.className = "toast" + (kind === "bad" ? " bad" : ""); t.hidden = false;
+    t.innerHTML = `<span class="tx">${html}</span>${undo ? `<button type="button" class="btn primary" data-toast="undo">Rückgängig</button>` : `<button type="button" class="btn" data-toast="close">Schließen</button>`}`;
+    toastTimer = setTimeout(hideToast, TOAST_MS);
+  }
+  $("toast").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-toast]"); if (!b) return;
+    const undo = b.dataset.toast === "undo" ? toastUndo : null; hideToast();
+    if (undo) undo();
+  });
+
+  // The one entry point of every move (drop, menu, confirm, undo).
+  async function requestMove(id, to, { confirmed = false, undo = false } = {}) {
+    const r = rows.find((x) => x.entryId === id);
+    const d = !r || moving.has(id) ? "none" : dropDecision(r.status, to, confirmed);
+    if (d === "none") { pendingMove = null; board(); return; }  // also repaints a board that went stale during the drag
+    if (d === "confirm") { pendingMove = { id, to }; board(); focusCard(id); return; }
+    pendingMove = null; moving.add(id); movedTo.set(id, { status: to, doneAt: null });
+    const res = await moveStatus(r, to, { confirmed, write: writeStatus, paint: render });
+    moving.delete(id); movedTo.set(id, { status: r.status, doneAt: Date.now() });
+    const cur = rows.find((x) => x.entryId === id); if (cur && cur !== r) { cur.status = r.status; render(); }  // a load replaced the rows during the write
+    if (res.result === "failed") {
+      const [, html] = explain(res.err); const ambiguous = ["server_unavailable", "upstream_error", "cancelled"].includes(res.err?.code);
+      showToast("bad", `<b>${esc(r.name)}</b> bleibt in ${esc(res.from)}. ${html}${ambiguous ? " <b>Der Schreibvorgang kann trotzdem durchgegangen sein</b>; in Attio prüfen." : ""}`, null);
+    } else if (res.result === "moved") {
+      showToast("ok", undo ? `<b>${esc(r.name)}</b> zurück nach ${esc(res.to)}.` : `<b>${esc(r.name)}</b>: ${esc(res.from)} → ${esc(res.to)}`, undo ? null : () => requestMove(id, res.from, { confirmed: true, undo: true }));
+      if (undo) { clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, 4000); }
+    }
+    if (boardDirty) board();
+  }
+
+  // Pointer Events: mouse and pen start after SLOP px, touch after a long press (HOLD_MS) so the board still scrolls sideways under a swipe.
+  const colAt = (x, y) => {
+    const sc = $("boardScroll").getBoundingClientRect();
+    if (y < sc.top || y > sc.bottom || x < sc.left || x > sc.right) return null;
+    return [...$("board").querySelectorAll(".col")].find((c) => { const q = c.getBoundingClientRect(); return x >= q.left - 5 && x <= q.right + 5; }) ?? null;
+  };
+  function setOver() {
+    if (!drag?.active) return;
+    const c = colAt(drag.x, drag.y); drag.over = c ? c.dataset.status : null;
+    for (const el of $("board").querySelectorAll(".col")) el.classList.toggle("over", c === el);
+  }
+  function placeGhost() { if (drag?.ghost) { drag.ghost.style.left = `${drag.x - drag.dx}px`; drag.ghost.style.top = `${drag.y - drag.dy}px`; } }
+  function startDrag() {
+    if (!drag || drag.active) return;
+    clearTimeout(drag.timer); drag.active = true;
+    const q = drag.card.getBoundingClientRect();
+    drag.dx = drag.sx - q.left; drag.dy = drag.sy - q.top;
+    const g = drag.card.cloneNode(true); g.removeAttribute("data-id"); g.setAttribute("aria-hidden", "true"); g.tabIndex = -1; g.classList.add("ghost");
+    g.style.width = `${q.width}px`; document.body.appendChild(g); drag.ghost = g;
+    drag.card.classList.add("dragging"); document.body.classList.add("dragging");
+    try { navigator.vibrate?.(12); } catch { /* no haptics */ }
+    placeGhost(); setOver(); autoScroll();
+  }
+  // Near the left or right edge of the board the board scrolls on its own, faster the closer the finger is.
+  function autoScroll() {
+    if (!drag?.active) return;
+    const sc = $("boardScroll"), q = sc.getBoundingClientRect();
+    if (drag.y > q.top - 40 && drag.y < q.bottom + 40) {
+      const l = drag.x - q.left, r = q.right - drag.x;
+      const dir = l < EDGE ? -1 : r < EDGE ? 1 : 0;
+      if (dir) { sc.scrollLeft += dir * Math.max(3, Math.round(SCROLL_STEP * (1 - Math.min(dir < 0 ? l : r, EDGE) / EDGE))); setOver(); }
+    }
+    drag.raf = requestAnimationFrame(autoScroll);
+  }
+  function endGesture() {
+    if (!drag) return;
+    clearTimeout(drag.timer); cancelAnimationFrame(drag.raf);
+    drag.ghost?.remove(); drag.card?.classList.remove("dragging"); document.body.classList.remove("dragging");
+    for (const el of $("board").querySelectorAll(".col.over")) el.classList.remove("over");
+    if (drag.active) lastDragEnd = Date.now();
+    const g = drag; drag = null; return g;
+  }
+  function cancelDrag() { const g = endGesture(); if (g?.active && boardDirty) board(); }
+  $("board").addEventListener("pointerdown", (e) => {
+    if (drag || e.button > 0 || !e.isPrimary) return;
+    const card = e.target.closest(".card[data-id]"); if (!card) return;
+    drag = { id: card.dataset.id, pointerId: e.pointerId, type: e.pointerType, sx: e.clientX, sy: e.clientY, x: e.clientX, y: e.clientY, active: false, timer: null, card, ghost: null, over: null, raf: 0, dx: 0, dy: 0 };
+    if (e.pointerType === "touch") drag.timer = setTimeout(startDrag, HOLD_MS);
+  });
+  window.addEventListener("pointermove", (e) => {
+    if (!drag || e.pointerId !== drag.pointerId) return;
+    drag.x = e.clientX; drag.y = e.clientY;
+    if (!drag.active) {
+      const far = Math.hypot(drag.x - drag.sx, drag.y - drag.sy);
+      if (drag.type === "touch") { if (far > HOLD_SLOP) endGesture(); }  // a swipe: the board scrolls, no drag
+      else if (far > SLOP) startDrag();
+      return;
+    }
+    placeGhost(); setOver();
+  });
+  window.addEventListener("pointerup", (e) => {
+    if (!drag || e.pointerId !== drag.pointerId) return;
+    drag.x = e.clientX; drag.y = e.clientY; if (drag.active) setOver();
+    const g = endGesture();
+    if (g?.active) { if (g.over) requestMove(g.id, g.over); else if (boardDirty) board(); }
+  });
+  window.addEventListener("pointercancel", (e) => { if (drag && e.pointerId === drag.pointerId) cancelDrag(); });
+  window.addEventListener("blur", cancelDrag);
+  // Once the long press has started the drag, a touch move must not scroll the page. A listener on the document is passive by default, so this one says it is not.
+  document.addEventListener("touchmove", (e) => { if (drag?.active && e.cancelable) e.preventDefault(); }, { passive: false });
+  $("board").addEventListener("contextmenu", (e) => { if (drag && drag.type === "touch") e.preventDefault(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (drag?.active) { cancelDrag(); e.stopPropagation(); return; }
+    if (pendingMove) { pendingMove = null; board(); }
+  }, true);
+
+  // Keyboard: Enter on a focused card opens "Status ändern" with the columns; arrow keys move, Enter picks, Escape closes. Space still opens the drawer.
+  function closeMenu(refocus) { const m = $("smenu"); const id = menuFor; menuFor = null; m.hidden = true; m.innerHTML = ""; if (refocus && id) focusCard(id); }
+  function openMenu(id) {
+    const r = rows.find((x) => x.entryId === id), card = cardOf(id); if (!r || !card) return;
+    menuFor = id; const m = $("smenu");
+    m.innerHTML = `<div class="mh">Status ändern</div>` + BOARD_COLS.map((c) => `<button type="button" class="btn" role="menuitem" data-to="${esc(c)}"${c === r.status ? ' aria-current="true"' : ""}>${esc(c)}${c === r.status ? " · aktuell" : ""}</button>`).join("");
+    m.hidden = false;
+    const q = card.getBoundingClientRect(), h = m.offsetHeight, w = m.offsetWidth;
+    m.style.left = `${Math.max(8, Math.min(q.left, innerWidth - w - 8))}px`;
+    m.style.top = `${q.bottom + 4 + h > innerHeight - 8 ? Math.max(8, q.top - h - 4) : q.bottom + 4}px`;
+    (m.querySelector('[aria-current="true"]') ?? m.querySelector("[data-to]")).focus();
+  }
+  $("board").addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" || e.target.closest("[data-bconfirm]")) return;
+    const c = e.target.closest(".card[data-id]"); if (!c) return;
+    e.preventDefault(); openMenu(c.dataset.id);
+  });
+  $("smenu").addEventListener("keydown", (e) => {
+    const items = [...$("smenu").querySelectorAll("[data-to]")], i = items.indexOf(document.activeElement);
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); items[(i + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length].focus(); }
+    else if (e.key === "Home") { e.preventDefault(); items[0].focus(); }
+    else if (e.key === "End") { e.preventDefault(); items[items.length - 1].focus(); }
+    else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeMenu(true); }
+    else if (e.key === "Tab") closeMenu(false);
+  });
+  $("smenu").addEventListener("click", (e) => { const b = e.target.closest("[data-to]"); if (!b) return; const id = menuFor; closeMenu(false); requestMove(id, b.dataset.to).then(() => focusCard(id)); });
+  document.addEventListener("pointerdown", (e) => { if (menuFor && !e.target.closest("#smenu")) closeMenu(false); });
 
   // ── Aufgaben (F008): Attio hält die Aufgaben; die Seite liest, legt an und hakt ab ──
   // Aus der Aufgabenansicht wird kein Status geändert und keine Zahl (LP-Fit) in eine Aufgabe geschrieben; der Text kommt allein aus dem Formular.
   const HARD = new Set(["needs_reauth", "server_not_connected", "selection_required", "not_in_manifest", "blocked_by_policy", "not_granted", "capability_disabled", "capability_removed"]);
   const MEMBER_CACHE = { staleTime: 3600000 };
-  let viewerEmail = null, membersP = null, membersList = [], membersFailed = false, view = "investors";
+  let viewerEmail = null, membersP = null, membersList = [], membersFailed = false, view = "list";
   const taskState = new Map();  // recordId -> { status: "loading" | "ok" | "err", tasks, truncated, err, promise }
   let tkPending = null;          // the open confirm box: { kind: "done", taskId } or { kind: "new", input }, busy while the write runs
   let tkDraft = { content: "", date: "", who: null };  // the form; who null = the default assignee
@@ -759,7 +1201,6 @@
   }
   const memberName = (id) => { const m = membersList.find((x) => x.id === id); return m ? (m.name || m.email) : String(id).slice(0, 8); };
   const fmtDay = (iso) => { const t = Date.parse(iso); return Number.isFinite(t) ? new Date(t).toLocaleDateString("de-DE", { timeZone: "UTC", day: "2-digit", month: "2-digit", year: "numeric" }) : String(iso); };
-  const inboxLink = (d) => `${LINKS.inbox}#record=${encodeURIComponent(d.recordId)}`;
   const tkWho = () => (tkDraft.who !== null ? tkDraft.who : defaultAssignee(membersList, viewerEmail) ?? "");
   const TK_ERRORS = { content_empty: "Erst die Aufgabe beschreiben.", content_too_long: `Die Aufgabe darf höchstens ${TASK_MAX} Zeichen haben.`, date_invalid: "Das Datum ist ungültig.", no_record: "Dieser Eintrag hat keinen Firmendatensatz." };
 
@@ -806,7 +1247,7 @@
         <button type="button" class="btn" data-tk="new"${tkPending?.busy ? " disabled" : ""}>Anlegen…</button>
       </div>${membersNote}</div>
       <div id="taskConfirm" aria-live="polite">${tkConfirmBox(d)}</div>
-      <div class="actions"><a class="btn" href="${esc(inboxLink(d))}" target="_blank" rel="noopener">Vorschläge in der Inbox</a></div>`;
+      ${isUuid(d.recordId) ? `<div class="actions"><button type="button" class="btn" data-ib-record="${esc(d.recordId)}">Vorschläge in der Inbox</button></div>` : ""}`;
   }
   function paintTasks(d) {
     const h = $("taskHost"); if (!h || selected !== d.entryId) return;
@@ -901,15 +1342,697 @@
     if (fatal) { const [kind, html] = explain(fatal); banner(kind, html); $("diag").open = true; }
     paintTasksView(); tabCount();
   }
-  function setView(v) {
+  // The chosen tab (Liste or Board) is remembered in this browser; storage may be missing or blocked, then the page opens on Liste. Aufgaben is not remembered: it reads every investor's tasks. Inbox and Autopilot (F027) are not remembered either.
+  const TAB_KEY = "fundos.investors.tab", VIEWS = ["list", "board", "tasks", "inbox", "autopilot"];
+  const PANELS = { list: "invView", board: "boardView", tasks: "tasksView", inbox: "inboxView", autopilot: "autopilotView" };
+  const readTab = () => { try { return window.localStorage.getItem(TAB_KEY) === "board" ? "board" : "list"; } catch { return "list"; } };
+  const saveTab = (v) => { try { window.localStorage.setItem(TAB_KEY, v); } catch { /* storage blocked or full: the tab is simply not remembered */ } };
+  function setView(v, remember) {
     view = v;
-    $("invView").hidden = v !== "investors"; $("tasksView").hidden = v !== "tasks";
-    for (const b of document.querySelectorAll("[data-view]")) { const on = b.dataset.view === v; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }
+    for (const k of VIEWS) $(PANELS[k]).hidden = k !== v;
+    for (const b of document.querySelectorAll("[data-view]")) { const on = b.dataset.view === v; b.classList.toggle("on", on); b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; }
+    if (remember && (v === "list" || v === "board")) saveTab(v);
     if (v === "tasks") { paintTasksView(); loadAllTasks(false); }
+    if (v === "inbox") renderInbox();
+    if (v === "autopilot") { renderAutopilot(); refreshToday(); }
   }
 
+  // ── F027 · Vorschläge und Autopilot im eigenen Speicher: dieselben Werte und Prüfungen wie inbox.html und deal-cockpit.html ──
+  const DEALS = CONFIG.dealList, INVESTORS = LIST;
+  const STAGES = CONFIG.stages;  // der Guard kennt auch Stage-Wechsel; diese Seite entscheidet sie nicht
+  const KIND_LABEL = { email: "Mail", "deal-stage": "Stage", "investor-status": "Status", digest: "Digest", newsletter: "Newsletter", task: "Aufgabe", note: "Notiz" };
+  const STATUS_LABEL = { pending: "offen", approved: "freigegeben", rejected: "abgelehnt", sent: "gesendet" };
+  const SKILL = "investor-relations/1.0";
+  const DRIVE = "Google Drive", GMAIL = "Gmail";
+  const COMPANIES_OBJECT = CONFIG.companiesObjectId;
+  // Die Zustandsmaschine, wie in functions/src/ops/store.ts: pending → alles; approved → nur sent.
+  const transitionAllowed = (from, to) => from === "pending" || (to === "sent" && from === "approved");
+
+  // ==== guards:begin ====
+  // Alles, was aus dem Speicher kommt, ist unvertraut: erst prüfen, dann anzeigen oder nach Attio schreiben.
+  const FORBIDDEN_STAGES = CONFIG.forbiddenStages;
+  const FORBIDDEN_STATUSES = CONFIG.forbiddenStatuses;
+  // Streng: genau die Form 8-4-4-4-12 aus Kleinbuchstaben-Hex. Vor dem Test wird kleingeschrieben und mit dem Original verglichen:
+  // eine Kennung mit Großbuchstaben (oder 36 Bindestrichen) wird abgelehnt, nie stillschweigend geändert und dann geschrieben.
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+  const isUuid = (v) => typeof v === "string" && v === v.toLowerCase() && UUID_RE.test(v.toLowerCase());
+  const own = (o, k) => typeof k === "string" && Object.prototype.hasOwnProperty.call(o, k);
+  const kindLabel = (k) => (own(KIND_LABEL, k) ? KIND_LABEL[k] : "unbekannt");
+  const kindClass = (k) => (own(KIND_LABEL, k) ? "k-" + k : "k-unknown");
+  const statusValid = (s) => own(STATUS_LABEL, s);
+  const statusLabel = (s) => (statusValid(s) ? STATUS_LABEL[s] : "ungültiger Status");
+  const safeHref = (u) => (/^https:\/\//i.test(String(u ?? "")) ? String(u) : null);
+  const attioLink = (id) => (isUuid(id) ? attioUrl(id) : null);
+  // Eine Aufgaben-Freigabe (F014, Modul notes) legt über create-task genau diese fünf Felder an (deadline_at nur, wenn gesetzt): alles andere wird nie geschrieben.
+  // Namen (linked_record_name, assignee_name) dürfen im Dokument stehen, werden nur angezeigt und nie gesendet.
+  function taskBlock(t) {
+    if (!t || typeof t !== "object") return "keine Aufgabe im Dokument";
+    if (typeof t.content !== "string" || !t.content.trim() || t.content.length > 2000) return "Aufgabentext fehlt oder ist zu lang";
+    if (!isUuid(t.assignee_workspace_member_id)) return "Zuständige Person (Workspace-Member-ID) ist ungültig";
+    if (!["companies", "people"].includes(t.linked_record_object) || !isUuid(t.linked_record_id)) return "Verknüpfter Datensatz ist ungültig";
+    if (t.deadline_at !== undefined && t.deadline_at !== null && !(typeof t.deadline_at === "string" && /^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(t.deadline_at) && Number.isFinite(Date.parse(t.deadline_at)))) return "Fälligkeit ist kein ISO-Datum (UTC)";
+    return null;
+  }
+  // Eine Notiz-Freigabe (F014) legt über create-note genau diese vier Felder an: title, content, parent_object, parent_record_id.
+  function noteBlock(n) {
+    if (!n || typeof n !== "object") return "keine Notiz im Dokument";
+    if (typeof n.title !== "string" || !n.title.trim() || n.title.length > 500) return "Titel der Notiz fehlt oder ist zu lang (höchstens 500 Zeichen)";
+    if (typeof n.content !== "string" || !n.content.trim() || n.content.length > 50000) return "Text der Notiz fehlt oder ist zu lang (höchstens 50 000 Zeichen)";
+    if (!["companies", "people"].includes(n.parent_object) || !isUuid(n.parent_record_id)) return "Datensatz der Notiz ist ungültig";
+    return null;
+  }
+  // Die Art, mit der die Karte geöffnet wurde, muss die Art des frisch gelesenen Dokuments sein; sonst würde eine andere Handlung
+  // ausgeführt, als die Person gesehen und freigegeben hat.
+  function kindChanged(openedKind, cur) {
+    return cur?.kind === openedKind ? null : `Die Art der Freigabe hat sich seit dem Öffnen geändert (${String(openedKind).slice(0, 40)} → ${String(cur?.kind).slice(0, 40)}); bitte neu öffnen`;
+  }
+  // Ausführungssperre (nur Arten, die Attio anlegen und nicht zweimal angelegt werden dürfen): `locking.executing` ist ein ISO-Zeitpunkt.
+  // Jünger als 10 Minuten oder unlesbar: nicht ausführen. Älter oder null: frei.
+  const EXEC_LOCK_MS = 10 * 60 * 1000;
+  const LOCKED_KINDS = ["task", "note"];
+  function lockBlock(cur, nowMs) {
+    const e = cur?.locking?.executing;
+    if (e === undefined || e === null) return null;
+    const t = typeof e === "string" ? Date.parse(e) : NaN;
+    if (!Number.isFinite(t)) return "Die Ausführungssperre ist unlesbar; nichts geschrieben";
+    return nowMs - t < EXEC_LOCK_MS ? `Diese Freigabe wird seit ${Math.max(0, Math.round((nowMs - t) / 60000))} Min. ausgeführt (oder der Ausgang ist unklar); frühestens nach 10 Min. erneut, vorher in Attio prüfen` : null;
+  }
+  // Darf diese Freigabe nach Attio schreiben? → null (ja) oder der Grund, warum nicht.
+  function approvalBlock(ap) {
+    if (!ap || typeof ap !== "object") return "kein Dokument";
+    if (ap.kind === "task") return taskBlock(ap.task);
+    if (ap.kind === "note") return noteBlock(ap.crmNote);
+    if (ap.kind !== "deal-stage" && ap.kind !== "investor-status") return null;
+    const stage = ap.kind === "deal-stage", to = ap.change?.to;
+    if (ap.target?.list !== (stage ? DEALS : INVESTORS)) return "Liste passt nicht zur Art des Vorschlags";
+    if (!isUuid(ap.target?.entryId)) return "Eintrags-ID ist ungültig";
+    if (typeof to !== "string" || !(stage ? STAGES : STATUSES).includes(to)) return "Zielwert ist keine bekannte Option";
+    if ((stage ? FORBIDDEN_STAGES : FORBIDDEN_STATUSES).includes(to)) return `„${to}“ ist gesperrt: nur ein Mensch setzt das in Attio selbst`;
+    return null;
+  }
+  // Rückgängig nur für erlaubte Handlungen mit geprüftem Ziel; sonst nie ein Schreibvorgang aus Speicherdaten.
+  function undoTargetOk(act) {
+    const t = act?.target ?? {};
+    // recordId ist Pflicht: ohne den Datensatz gäbe es keine Vorabprüfung des Ist-Werts.
+    if (!isUuid(t.entryId) || !isUuid(t.recordId)) return false;
+    if (typeof act.before !== "string" || typeof act.after !== "string") return false;
+    if (act.kind === "stage") return t.list === DEALS && STAGES.includes(act.before) && !FORBIDDEN_STAGES.includes(act.before);
+    if (act.kind === "status") return t.list === INVESTORS && STATUSES.includes(act.before) && !FORBIDDEN_STATUSES.includes(act.before);
+    return false;
+  }
+  // Empfänger-Feld aus dem Speicher: Liste, Text (getrennt durch Komma, Semikolon oder Leerraum) oder nichts → immer eine Liste.
+  const toList = (v) => (Array.isArray(v) ? v : typeof v === "string" ? v.split(/[,;\s]+/).filter(Boolean) : []);
+  // N6: Eine Freigabe, die schon einen Entscheidungszeitpunkt oder (Mail) eine Entwurfs-ID trägt, wird nicht noch einmal ausgeführt:
+  // ein früherer Versuch hat den Aufruf vermutlich gemacht und nur den Status nicht mehr gespeichert.
+  const STATUS_WRITE_FAILED = "Entwurf/Attio-Änderung ist ausgeführt, der Status konnte nicht gespeichert werden — nicht erneut freigeben; Status von Hand setzen";
+  const filled = (v) => v !== undefined && v !== null && v !== "";
+  function executedBlock(cur) {
+    if (filled(cur?.decidedAt)) return "Diese Freigabe trägt schon einen Entscheidungszeitpunkt (decidedAt); sie wurde vermutlich schon ausgeführt. In Attio bzw. Gmail prüfen und den Status von Hand setzen";
+    if ((cur?.kind === "email" || cur?.kind === "digest") && filled(cur.email?.draftId)) return "Zu dieser Freigabe liegt schon ein Gmail-Entwurf (draftId); ein zweiter wird nicht angelegt. Den Entwurf in Gmail öffnen und hier „Als gesendet markieren“";
+    return null;
+  }
+  // Eine Mail-Freigabe mit Gmail-Entwurf (draftId) bietet „Entwurf öffnen“ und „Als gesendet markieren“ statt „Freigeben“;
+  // der Link ist die gespeicherte draftUrl, sonst die Gmail-Adresse des Entwurfs. Beides ohne Gmail-Aufruf.
+  const hasDraft = (a) => (a?.kind === "email" || a?.kind === "digest") && filled(a.email?.draftId);
+  const draftOpenHref = (a) => (hasDraft(a) ? safeHref(a.email?.draftUrl) ?? `https://mail.google.com/mail/u/0/#drafts?compose=${encodeURIComponent(String(a.email.draftId))}` : null);
+  // Wer hat den Schalter zuletzt gesetzt? Ein Agent darf es nicht still tun: das zeigt die Seite an.
+  const looksLikeAgent = (by) => /^(agent|orchestrator)/i.test(String(by ?? "").trim());
+  // Das Protokoll ist nur anhängend: ein "mail-sent" wird nie geändert. Die Bestätigung ist ein zweiter Eintrag
+  // (act.kind "mail-confirmed" oder "mail-failed", act.ref = Dokument-ID des Versand-Eintrags).
+  // → null (kein Versand) | "failed" | "confirmed" | "open" (noch nicht bestätigt). "failed" geht vor "confirmed".
+  function sendState(e, docs) {
+    if (e?.act?.kind !== "mail-sent") return null;
+    const list = Array.isArray(docs) ? docs : [];
+    const has = (k) => list.some((x) => x?.act?.kind === k && typeof e.id === "string" && x.act.ref === e.id);
+    return has("mail-failed") ? "failed" : has("mail-confirmed") ? "confirmed" : "open";
+  }
+  // Deep-Link aus Deal Cockpit und Investor Relations: <Inbox-URL>#record=<recordId> (F007). Gilt nur, wenn der Wert eine UUID ist; alles andere wird ignoriert.
+  const RECORD_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+  function recordFromHash(hash) {
+    for (const part of String(hash ?? "").replace(/^#/, "").split("&")) {
+      if (!part.startsWith("record=")) continue;
+      let v;
+      try { v = decodeURIComponent(part.slice(7)); } catch { return null; }
+      v = v.trim().toLowerCase();
+      return RECORD_ID_RE.test(v) ? v : null;
+    }
+    return null;
+  }
+  const sameRecord = (id, rec) => typeof id === "string" && id.toLowerCase() === rec;
+  // Freigabe: target.recordId (alle Arten) oder, bei Aufgaben, task.linked_record_id. Audit-Eintrag: act.target.recordId.
+  const approvalHasRecord = (ap, rec) => sameRecord(ap?.target?.recordId, rec) || sameRecord(ap?.task?.linked_record_id, rec) || sameRecord(ap?.crmNote?.parent_record_id, rec);
+  const actHasRecord = (e, rec) => sameRecord(e?.act?.target?.recordId, rec);
+  // ==== guards:end ====
+  const AUTOPILOT_DOC = "settings/autopilot", RUNS = "runs"; // Speicherpfade des Vertrags
+  // F027: dieses Artefakt führt nur das Modul Investoren. Die Zeile MODULES ist die einzige, die sich von der Region in inbox.html unterscheidet
+  // (tools/check-screen-templates.sh hält den Rest byte-gleich); die anderen Module bleiben im Dokument unberührt, weil der Schalter nur einen Schlüssel zusammenführt.
+  // ==== autopilot:begin ====
+  const MODULES = ["investors"];
+  const MODULE_LABEL = { dealflow: "Dealflow", investors: "Investoren", newsletter: "Newsletter", notes: "Meeting-Notizen" };
+  const MODES = ["off", "review-first", "on"];
+  const MODE_LABEL = { off: "Aus", "review-first": "Erst prüfen", on: "An" };
+  // Fehlt settings/autopilot oder ist es unlesbar, ist jedes Modul aus.
+  const AUTOPILOT_DEFAULTS = {
+    version: 1,
+    modules: {
+      dealflow: { mode: "off", maxOutboundPerDay: 20, purposes: ["acknowledge", "request-deck", "schedule-call", "pass"] },
+      investors: { mode: "off", maxOutboundPerDay: 20, purposes: ["lp-first-touch", "lp-follow-up", "schedule-call"] },
+      newsletter: { mode: "off", maxOutboundPerDay: 20, purposes: ["newsletter"] },
+      notes: { mode: "off", maxOutboundPerDay: 20, purposes: ["note", "task", "status-proposal"] },
+    },
+  };
+  // settings/autopilot (auch teilweise oder kaputt) → wirksame Einstellungen; unbekannter Modus gilt als "off".
+  function readAutopilot(doc) {
+    const src = doc && typeof doc === "object" && doc.modules && typeof doc.modules === "object" ? doc.modules : {};
+    const modules = {};
+    for (const m of MODULES) {
+      const d = AUTOPILOT_DEFAULTS.modules[m];
+      const g = src[m] && typeof src[m] === "object" ? src[m] : {};
+      modules[m] = {
+        mode: MODES.includes(g.mode) ? g.mode : "off",
+        maxOutboundPerDay: Number.isFinite(g.maxOutboundPerDay) && g.maxOutboundPerDay >= 0 ? g.maxOutboundPerDay : d.maxOutboundPerDay,
+        purposes: Array.isArray(g.purposes) && g.purposes.every((p) => typeof p === "string") ? g.purposes.slice() : d.purposes.slice(),
+        updatedAt: g.updatedAt ?? null,
+        updatedBy: g.updatedBy ?? null,
+      };
+    }
+    return { version: 1, modules };
+  }
+  // Audit-Einträge des Agenten → Läufe, neuester zuerst; innerhalb eines Laufs in zeitlicher Reihenfolge.
+  // Einträge ohne runId stehen gesammelt unter "einzeln".
+  function groupActs(entries) {
+    const byRun = new Map();
+    for (const e of Array.isArray(entries) ? entries : []) {
+      if (!e || typeof e !== "object") continue;
+      const id = typeof e.runId === "string" && e.runId ? e.runId : "einzeln";
+      if (!byRun.has(id)) byRun.set(id, { runId: id, module: e.module ?? null, at: "", acts: [] });
+      const r = byRun.get(id);
+      r.acts.push(e);
+      if (!r.module && e.module) r.module = e.module;
+    }
+    const runs = [...byRun.values()];
+    for (const r of runs) {
+      r.acts.sort((a, b) => String(a.timestampUtc ?? "").localeCompare(String(b.timestampUtc ?? "")));
+      r.at = r.acts.reduce((mx, e) => (String(e.timestampUtc ?? "") > mx ? String(e.timestampUtc) : mx), "");
+    }
+    return runs.sort((a, b) => b.at.localeCompare(a.at));
+  }
+  // ==== autopilot:end ====
+
+  // region:context (the context under every proposal; builders, render and load; no globals but esc, safeHref, attioLink and parsePayload of the page, the connector calls and their error text come in through `io`; mirrored byte for byte in inbox.html and deal-cockpit.html, held still by tools/check-screen-templates.sh)
+  const CTX_TEXT_CAP = 4000, CTX_MAX_MSGS = 50, CTX_DRIVE_PAGE = 20;
+  const ctxCache = Object.create(null);  // approval id -> { open, secOpen, msgOpen, thread, drive }; each section is { state: idle | loading | done | error, data?, html? }
+  const ctxState = (id) => (ctxCache[id] ??= { open: false, secOpen: {}, msgOpen: {}, thread: { state: "idle" }, drive: { state: "idle" } });
+  const ctxStr = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+  // Drive's grammar knows title, fullText, mimeType, the time terms, parentId, owner, sharedWithMe: no name, no trashed. A quote and a backslash inside the name are escaped.
+  function driveQuery(name) {
+    const n = ctxStr(name, 200);
+    return n ? `title contains '${n.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'` : null;
+  }
+  // The thread of a proposal: its own field, else the source's, else the message a reply answers (the first message of a thread has the thread's id).
+  function threadIdOf(a) {
+    for (const v of [a?.target?.threadId, a?.source?.threadId, a?.email?.replyToMessageId]) { const s = ctxStr(v, 80); if (/^[A-Za-z0-9_-]{4,80}$/.test(s)) return s; }
+    return null;
+  }
+  // Gmail get_thread (PLAIN_TEXT): { id, messageCount, viewUrl, messages: [{ sender, date, internalDate, snippet, plaintextBody, attachments: [{ filename }] }] }; null when the answer is not that.
+  function flattenThread(p) {
+    if (!p || typeof p !== "object" || !Array.isArray(p.messages)) return null;
+    const all = p.messages.filter((m) => m && typeof m === "object");  // the newest CTX_MAX_MSGS stay (a long thread is read from its end); total says how many there were
+    const messages = all.slice(-CTX_MAX_MSGS).map((m) => {
+      const full = [m.plaintextBody ?? m.plaintext_body, m.snippet].find((v) => typeof v === "string" && v.trim()) ?? "";
+      const ms = Number(m.internalDate), date = ctxStr(m.date, 40) || (Number.isFinite(ms) && ms > 0 ? new Date(ms).toISOString() : "");
+      const preview = full.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith(">")).slice(0, 3).join(" ").slice(0, 240);
+      const attachments = (Array.isArray(m.attachments) ? m.attachments : []).slice(0, 10).map((x) => ctxStr(x?.filename ?? x?.name ?? x?.id, 80) || "Anhang");
+      return { from: ctxStr(m.sender ?? m.from, 200), date, preview, text: full.slice(0, CTX_TEXT_CAP), cut: full.length > CTX_TEXT_CAP, attachments };
+    });
+    return { viewUrl: safeHref(p.viewUrl), messages, total: all.length };
+  }
+  // Drive search_files: { files: [{ title, mimeType, modifiedTime, viewUrl }] }, and the bare object {} when nothing matches; null when the answer is not an object.
+  function flattenFiles(p) {
+    if (!p || typeof p !== "object" || Array.isArray(p) || (p.files !== undefined && !Array.isArray(p.files))) return null;
+    return (p.files ?? []).slice(0, CTX_DRIVE_PAGE).filter((f) => f && typeof f === "object").map((f) => ({ title: ctxStr(f.title ?? f.name, 200) || "(ohne Titel)", mimeType: ctxStr(f.mimeType, 100), modifiedTime: ctxStr(f.modifiedTime, 40), href: safeHref(f.viewUrl) }));
+  }
+  // The record the proposal is about, its list entry and, for a note, the source line the notes run appends ("Source: Granola · <date> · [notes](<url>)").
+  function ctxRecord(a) {
+    const rid = a?.kind === "task" ? (a.task?.linked_record_object === "companies" ? a.task.linked_record_id : null) : a?.kind === "note" ? (a.crmNote?.parent_object === "companies" ? a.crmNote.parent_record_id : null) : a?.target?.recordId;
+    const lines = a?.kind === "note" ? String(a.crmNote?.content ?? "").split("\n").map((l) => l.trim()).filter(Boolean) : [], last = lines[lines.length - 1] ?? "";
+    const m = /\]\((https:\/\/[^\s)]+)\)/.exec(last) ?? /(https:\/\/[^\s)\]>]+)/.exec(last);
+    let href = null; try { href = m && /(^|\.)granola\.ai$/.test(new URL(m[1]).hostname) ? safeHref(m[1]) : null; } catch { href = null; }
+    const source = /granola/i.test(last) ? last.slice(0, 200) : "";
+    const out = { attio: attioLink(rid), list: ctxStr(a?.target?.list, 80), entry: ctxStr(a?.target?.entryId, 80), source, href };
+    return out.attio || out.entry || out.source ? out : null;
+  }
+  const ctxWhen = (iso, time) => { const d = new Date(iso); return Number.isFinite(d.getTime()) ? (time ? d.toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" }) : d.toLocaleDateString("de-DE")) : String(iso ?? "").slice(0, 16); };
+  const ctxType = (mime) => ({ "application/vnd.google-apps.folder": "Ordner", "application/vnd.google-apps.document": "Google Doc", "application/vnd.google-apps.spreadsheet": "Google Sheet", "application/vnd.google-apps.presentation": "Google Slides", "application/pdf": "PDF" })[mime] ?? (String(mime).split("/").pop() || "Datei").slice(0, 24);
+  const ctxCount = (id, key) => { const s = ctxState(id)[key]; return s.state === "done" ? ` · ${key === "thread" ? (s.data.total > s.data.messages.length ? `${s.data.messages.length} von ${s.data.total}` : s.data.messages.length) : s.data.length}` : ""; };
+  function ctxBody(id, key) {
+    const s = ctxState(id)[key];
+    if (s.state === "loading") return `<div class="ctxnote"><span class="spin"></span> ${key === "thread" ? "Lese den Thread…" : "Suche auf dem Drive…"}</div>`;
+    if (s.state === "error") return `<div class="note bad">${s.html}</div><button type="button" class="btn" data-ctx-retry="${key}">Erneut laden</button>`;
+    if (s.state !== "done") return "";
+    if (key === "drive") return s.data.length ? s.data.map((f) => { const inner = `<span class="ctxfrom">${esc(f.title)}</span><span class="ctxdate">${esc(ctxType(f.mimeType))}${f.modifiedTime ? ` · geändert ${esc(ctxWhen(f.modifiedTime, false))}` : ""}</span>`; return f.href ? `<a class="ctxfile" href="${esc(f.href)}" target="_blank" rel="noopener">${inner}</a>` : `<div class="ctxfile">${inner}</div>`; }).join("") : `<div class="ctxnote">Nichts auf dem Drive gefunden</div>`;
+    const t = s.data, n = t.messages.length;
+    const head = `<div class="ctxhead"><span>${t.total > n ? `${n} von ${t.total} Nachrichten` : `${n} Nachricht${n === 1 ? "" : "en"}`}</span>${t.viewUrl ? `<a class="ctxlink" href="${esc(t.viewUrl)}" target="_blank" rel="noopener">In Gmail öffnen</a>` : ""}</div>`;
+    return head + (n ? t.messages.map((g, i) => `<details class="ctxmsg" data-ctx-msg="${i}" ${ctxState(id).msgOpen[i] ? "open" : ""}><summary><span class="ctxsum"><span class="ctxfrom">${esc(g.from || "(unbekannt)")}</span><span class="ctxdate">${esc(ctxWhen(g.date, true))}</span><span class="ctxprev">${esc(g.preview)}</span></span></summary>${g.attachments.length ? `<div class="row">${g.attachments.map((n) => `<span class="pill">${esc(n)}</span>`).join("")}</div>` : ""}<pre>${esc(g.text)}${g.cut ? "\n… (gekürzt)" : ""}</pre></details>`).join("") : `<div class="ctxnote">Keine Nachrichten im Thread.</div>`);
+  }
+  const ctxRecordBody = (r) => `${r.attio ? `<a class="ctxlink" href="${esc(r.attio)}" target="_blank" rel="noopener">In Attio öffnen</a>` : ""}${r.entry ? `<div class="ctxnote">Listeneintrag${r.list ? ` in <code>${esc(r.list)}</code>` : ""}: <code>${esc(r.entry)}</code></div>` : ""}${r.source ? `<div class="ctxnote">${esc(r.source)}</div>` : ""}${r.href ? `<a class="ctxlink" href="${esc(r.href)}" target="_blank" rel="noopener">Granola-Notiz öffnen</a>` : ""}`;
+  // The block under the proposal body: closed by default, a section only when its input is there. Opening a section loads it (ctxBind); nothing here calls a connector.
+  function ctxRender(a) {
+    if (!a || typeof a.id !== "string") return "";
+    const c = ctxState(a.id), rec = ctxRecord(a);
+    const secs = [["thread", "E-Mail-Thread", threadIdOf(a)], ["drive", "Dokumente auf dem Drive", driveQuery(a.target?.name)], ["record", "Datensatz", rec]].filter((x) => x[2]);
+    if (!secs.length) return "";
+    return `<details class="ctx" data-ctx-block="${esc(a.id)}" ${c.open ? "open" : ""}><summary>Kontext</summary><div class="ctxbody">${secs.map(([key, label]) => `<details class="ctxsec" data-ctx-sec="${key}" ${c.secOpen[key] ? "open" : ""}><summary><span class="ctxlbl">${label}</span><span class="ctxcount">${key === "record" ? "" : esc(ctxCount(a.id, key))}</span></summary><div class="ctxin">${key === "record" ? ctxRecordBody(rec) : ctxBody(a.id, key)}</div></details>`).join("")}</div></details>`;
+  }
+  function ctxPaint(host, id, key) {
+    const blk = [...host.querySelectorAll("[data-ctx-block]")].find((el) => el.dataset.ctxBlock === id), sec = blk?.querySelector(`[data-ctx-sec="${key}"]`);
+    if (!sec) return;  // another proposal is on screen now; the result waits in the cache
+    sec.querySelector(".ctxin").innerHTML = ctxBody(id, key); sec.querySelector(".ctxcount").textContent = ctxCount(id, key);
+  }
+  // One load per open per proposal: only an idle section loads; a failure stays in the cache until the partner taps "Erneut laden".
+  async function ctxLoad(host, a, key, io) {
+    const s = ctxState(a.id)[key];
+    if (s.state !== "idle") return;
+    s.state = "loading"; ctxPaint(host, a.id, key);
+    try {
+      if (key === "thread") {
+        const t = flattenThread(parsePayload(await io.gmail("get_thread", { threadId: threadIdOf(a), messageFormat: "PLAIN_TEXT" }, { cache: { staleTime: 300000 } })));
+        if (!t) throw Object.assign(new Error("unerwartete Antwort"), { code: "upstream_error" });
+        s.data = t;
+      } else {
+        const f = flattenFiles(parsePayload(await io.drive("search_files", { query: driveQuery(a.target?.name), pageSize: CTX_DRIVE_PAGE, excludeContentSnippets: true })));
+        if (!f) throw Object.assign(new Error("unerwartete Antwort"), { code: "upstream_error" });
+        s.data = f;
+      }
+      s.state = "done";
+    } catch (e) { s.state = "error"; s.html = io.explain(e, key === "thread" ? "Gmail" : "Google Drive"); }
+    ctxPaint(host, a.id, key);
+  }
+  // Wired once on the element that holds the detail: <details> toggle events do not bubble, so the listener captures them.
+  function ctxBind(host, getApproval, io) {
+    host.addEventListener("toggle", (ev) => {
+      const el = ev.target, blk = el.closest?.("[data-ctx-block]"), a = getApproval();
+      if (!blk || !a || a.id !== blk.dataset.ctxBlock) return;
+      const c = ctxState(a.id);
+      if (el === blk) c.open = el.open;
+      else if (el.dataset.ctxSec) { c.secOpen[el.dataset.ctxSec] = el.open; if (el.open && (el.dataset.ctxSec === "thread" || el.dataset.ctxSec === "drive")) ctxLoad(host, a, el.dataset.ctxSec, io); }
+      else if (el.dataset.ctxMsg !== undefined) c.msgOpen[el.dataset.ctxMsg] = el.open;
+    }, true);
+    host.addEventListener("click", (ev) => {
+      const b = ev.target.closest?.("[data-ctx-retry]"), a = getApproval(), key = b?.dataset.ctxRetry;
+      if (!b || !a || (key !== "thread" && key !== "drive")) return;
+      const s = ctxState(a.id)[key];
+      if (s.state === "error") { s.state = "idle"; ctxLoad(host, a, key, io); }
+    });
+  }
+  // endregion:context
+
+  // ── Google Drive: nur für den Kontext unter einem Vorschlag (region:context) ──
+  async function callDrive(tool, input, opts) {
+    const t0 = Date.now();
+    try {
+      if (!mcp) throw Object.assign(new Error("keine Connectoren in dieser Ansicht"), { code: "not_granted" });
+      const res = await mcp.callTool(DRIVE, tool, input, opts);
+      let p = res?.payload;
+      if (typeof p === "string") { try { p = JSON.parse(p); } catch { /* Text bleibt Text */ } }
+      log("ok", `${DRIVE} · ${tool} · ${Date.now() - t0} ms · payload: ${p === undefined ? "undefined" : Array.isArray(p) ? "array" : typeof p}${res?.cache ? " · aus Cache" : ""}`, typeof p === "string" ? p.slice(0, 600) : (p && typeof p.content === "string" ? { ...p, content: `[${p.content.length} base64-Zeichen]` } : (p ?? res)));
+      return p;
+    } catch (err) { log("err", `${DRIVE} · ${tool} · ${err?.code ?? "?"} · ${err?.message ?? ""}`, input); throw err; }
+  }
+
+  // F027: what differs between the two pages that carry the store-tabs region (the Deal Cockpit and this one). The region reads only these names;
+  // everything else in it is byte-identical in both pages (tools/check-screen-templates.sh). MODULE is also the one module of this page's autopilot (MODULES above).
+  const MODULE = "investors";
+  const DOMAIN_KINDS = ["investor-status", "email"];                                         // the kinds this page decides; everything else stays in the Inbox
+  const STAGE_KIND = "investor-status", STAGE_SLUG = FIELD.status, STAGE_AUDIT = "write-status";  // the one kind that is a list-entry write: the attribute and the audit verb
+  const DEAL_STAGE_SLUG = CONFIG.dealStageField, INVESTOR_STATUS_SLUG = FIELD.status;  // the attributes the undo of an audit entry writes back, per kind
+  const NOUN = { many: "Investoren", one: "Investor" };
+  // Die Vorschläge dieses Artefakts: Status-Wechsel und Mails zu Investoren. Alles andere (Deals, Newsletter, Notizen, Digest) bleibt in der Inbox.
+  const isDomainApproval = (a) => Boolean(a) && typeof a === "object" && (a.kind === "investor-status" || (a.kind === "email" && (a.module === "investors" || a.target?.list === INVESTORS)));
+  const recordName = (rec) => rows.find((x) => x.recordId === rec)?.name ?? "";                 // the name of the record the Inbox is filtered on, when the page knows it
+
+  // ==== store-tabs:begin ==== (F017: Inbox and Autopilot of one domain on the page's own store; F027: mirrored byte for byte in deal-cockpit.html and investors.html, held by tools/check-screen-templates.sh; the unescaped-value scan of check-artifacts reads this region)
+  let db = null, actor = "unbekannt", canEdit = false;
+  let approvals = [], auditDocs = [], runsDocs = [], autopilotRaw = null;
+  let ibFilter = "pending", ibSelected = null, ibNew = null, ibShown = "", ibRecord = null;
+  let confirmOn = false, apMsg = "", undoOpen = null, feedMsgs = {}, undoFresh = {};
+  let todayDocs = [], todayOk = false, todayBusy = false;
+  const FEED_LIMIT = 200;
+  const RUN_STATUS = { running: "läuft", done: "fertig", failed: "fehlgeschlagen" };
+  const ACT_LABEL = { "issue-draft": "Newsletter-Entwurf", "campaign-draft": "Kampagnen-Entwurf", "mail-draft": "Mail-Entwurf", "mail-sent": "Mail gesendet", "mail-confirmed": "Versand bestätigt", "mail-failed": "Versand fehlgeschlagen", score: "Scoring", record: "CRM-Datensatz", stage: "Stage", status: "Status", note: "Notiz", task: "Aufgabe", invite: "Termin" };
+  const ago = (iso) => { const d = new Date(iso); if (!Number.isFinite(d.getTime())) return ""; const m = Math.round((Date.now() - d.getTime()) / 60000); return m < 1 ? "jetzt" : m < 60 ? `vor ${m} min` : m < 1440 ? `vor ${Math.round(m / 60)} h` : `vor ${Math.round(m / 1440)} T`; };
+  const fmtTime = (iso) => { const d = new Date(iso); return Number.isFinite(d.getTime()) ? d.toLocaleString("de-DE") : "—"; };
+  const fmtVal = (v) => v === undefined || v === null ? "—" : typeof v === "string" ? v : JSON.stringify(v);
+  const AMBIGUOUS = ["server_unavailable", "upstream_error", "cancelled"];
+  // Fehlertexte je Connector (wie in der Inbox).
+  function explainFor(err, server) { const code = err?.code ?? "upstream_error"; switch (code) {
+    case "needs_reauth": return `<b>${server} muss neu verbunden werden.</b> In claude.ai unter Einstellungen → Connectoren.`;
+    case "server_not_connected": case "selection_required": return `<b>Kein ${server}-Connector in dieser Ansicht.</b> In claude.ai unter Einstellungen → Connectoren hinzufügen.`;
+    case "not_in_manifest": return `<b>${server} ist für diese Seite nicht erlaubt.</b> Beim Aufruf erlauben.`;
+    case "server_unavailable": case "rate_limited": return `<b>${server} hat nicht rechtzeitig geantwortet.</b> Gleich noch einmal.`;
+    case "tool_error": return `<b>${server} meldet einen Fehler:</b> ${esc(err.message ?? "")}`;
+    case "cancelled": return `<b>Abgebrochen.</b> Ausgang unbekannt; in ${server} prüfen.`;
+    default: return `<b>${server}: etwas ist fehlgeschlagen</b> (${esc(code)}). ${esc(err?.message ?? "")}`; } }
+  async function callGmail(tool, input, opts) {
+    const t0 = Date.now();
+    try {
+      const res = await mcp.callTool(GMAIL, tool, input, opts);
+      const p = res?.payload;
+      log("ok", `${GMAIL} · ${tool} · ${Date.now() - t0} ms · payload: ${p === undefined ? "undefined" : Array.isArray(p) ? "array" : typeof p}`, typeof p === "string" ? p.slice(0, 600) : (p ?? res));
+      return res;
+    } catch (err) { log("err", `${GMAIL} · ${tool} · ${err?.code ?? "?"} · ${err?.message ?? ""}`, input); throw err; }
+  }
+
+  // ── Audit: nur anhängen (Eintragsform wie in der Inbox) ──
+  async function sha(input) { try { const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(input))); return "sha256:" + [...new Uint8Array(buf)].slice(0, 8).map((b) => b.toString(16).padStart(2, "0")).join(""); } catch { return "sha256:unavailable"; } }
+  async function audit(action, input, outputRef, rationale, actorType = "human", extra = null) {
+    if (!db) return;
+    const entry = { timestampUtc: new Date().toISOString(), actor: actor || "unknown", actorType, skillVersion: SKILL, action: action || "unknown", inputHash: await sha(input ?? null), outputRef: outputRef || "unknown", rationale: rationale || "unknown", ...(extra ?? {}) };
+    try { await db.collection("audit").add(entry); } catch (e) { log("err", `audit.add ${e?.code ?? "?"}`); }
+  }
+
+  // ── Reiter Inbox: die Vorschläge dieser Domäne ──
+  function updateBadges() {
+    const n = approvals.filter((x) => isDomainApproval(x) && x.status === "pending").length, b = $("tabInboxN");
+    b.textContent = String(n); b.hidden = n === 0; b.title = `${n} offene Vorschläge zu ${NOUN.many}`;
+  }
+  function renderInbox() {
+    updateBadges();
+    if (!db) { $("ibList").innerHTML = `<div class="empty">Der Speicher ist in dieser Ansicht nicht verfügbar. Das Artefakt im Browser auf claude.ai öffnen, angemeldet.</div>`; $("ibDetail").hidden = true; return; }
+    $("ibDetail").hidden = false;
+    const base = approvals.filter(isDomainApproval).filter((x) => !ibRecord || approvalHasRecord(x, ibRecord));
+    const vis = base.filter((a) => ibFilter === "all" || a.status === ibFilter || (ibFilter === "pending" && !statusValid(a.status))).sort((x, y) => String(y.createdAt).localeCompare(String(x.createdAt)));
+    const counts = Object.fromEntries(["pending", "approved", "rejected", "sent"].map((s) => [s, base.filter((a) => a.status === s).length]));
+    $("ibList").innerHTML = ibChip() + `<div class="row">${["pending", "approved", "sent", "rejected", "all"].map((s) => `<button type="button" class="btn ${ibFilter === s ? "primary" : ""}" data-f="${s}">${s === "all" ? "alle" : STATUS_LABEL[s]} · ${s === "all" ? base.length : counts[s]}</button>`).join("")}</div>` +
+      (vis.length ? vis.map((a) => `<button type="button" class="itemcard ${a.id === ibSelected ? "on" : ""} ${a.status !== "pending" ? "done" : ""}" data-id="${esc(a.id)}"><div class="row" style="justify-content:space-between"><span class="kind ${kindClass(a.kind)}">${esc(kindLabel(a.kind))}${a.email?.purpose ? " · " + esc(a.email.purpose) : ""}</span><span class="s">${esc(ago(a.createdAt))}</span></div><div style="font-weight:600">${esc(a.title)}</div><div class="s">${esc(a.createdBy ?? "")} · ${esc(statusLabel(a.status))}${a.decidedBy ? " von " + esc(a.decidedBy) : ""}</div></button>`).join("") : `<div class="empty">${ibRecord ? `Keine Vorschläge zu diesem ${NOUN.one}.` : ibFilter === "pending" ? "Nichts wartet. Gut." : "Keine Einträge."}</div>`);
+    if (ibNew) return;  // the follow-up form owns the detail pane
+    const sel = base.find((x) => x.id === ibSelected);
+    if (!sel) { ibShown = ""; const h = $("ibDetail"); h.className = "ibdetail nosel"; h.innerHTML = `<div class="empty">Links einen Vorschlag wählen.</div>`; return; }
+    if (JSON.stringify(sel) !== ibShown) ibRenderDetail(sel);  // an unchanged document is not repainted: edits in the mail fields survive other snapshots
+  }
+  // Filter auf einen Datensatz (#inbox&record=<uuid>, aus dem Drawer): nur eine strenge UUID gilt; die Marke hebt ihn auf.
+  function ibChip() {
+    if (!ibRecord) return "";
+    const nm = (approvals.find((x) => approvalHasRecord(x, ibRecord) && typeof x.target?.name === "string" && x.target.name.trim())?.target.name ?? recordName(ibRecord) ?? "").trim();
+    return `<div class="row"><button type="button" class="btn" data-rec-clear="1" title="Filter aufheben">Nur ${NOUN.one}${nm && nm !== "…" ? " " + esc(nm) : ""} <code>${esc(ibRecord.slice(0, 8))}…</code> · alle anzeigen</button></div>`;
+  }
+  function ibSetRecord(rec, hash) {
+    ibRecord = rec; ibSelected = null; ibNew = null; ibShown = "";
+    if (hash !== undefined) { try { history.replaceState(null, "", hash); } catch { /* Adresse nicht änderbar: der Filter gilt trotzdem */ } }
+    renderInbox();
+  }
+  function ibApplyHash() {
+    const rec = recordFromHash(location.hash);
+    if (rec) { if (rec !== ibRecord) ibSetRecord(rec); setView("inbox"); }
+    else if (ibRecord && !location.hash) ibSetRecord(null);
+  }
+  function ibRenderDetail(a) {
+    ibShown = JSON.stringify(a);
+    const host = $("ibDetail"); host.className = "ibdetail";
+    const close = `<button type="button" class="btn" data-ib-close="1">Schließen</button>`;
+    if (!statusValid(a.status)) { host.innerHTML = `<div class="ibhead"><span class="kind ${kindClass(a.kind)}">${esc(kindLabel(a.kind))} · ungültiger Status</span>${close}</div><h2>${esc(a.title)}</h2><div class="note bad"><b>Ungültiger Status.</b> Das Dokument im Speicher trägt einen Status, den diese Seite nicht kennt. Es gibt dafür keine Aktionen.</div><div id="ibMsg"></div>`; return; }
+    const isMail = a.kind === "email", can = canEdit, off = a.status !== "pending" ? "disabled" : "";
+    const attio = attioLink(a.target?.recordId), draftHref = safeHref(a.email?.draftUrl);
+    const openHref = isMail ? draftOpenHref(a) : null, drafted = Boolean(openHref) && (a.status === "pending" || a.status === "approved");
+    const words = String(a.email?.body ?? "").trim().split(/\s+/).filter(Boolean).length;
+    host.innerHTML = `
+      <div class="ibhead"><span class="kind ${kindClass(a.kind)}">${esc(kindLabel(a.kind))} · ${esc(statusLabel(a.status))}</span>${close}</div>
+      <div><h2>${esc(a.title)}</h2><div class="meta">Vorgeschlagen von ${esc(a.createdBy ?? "?")} · ${esc(new Date(a.createdAt).toLocaleString("de-DE"))}${a.decidedAt ? ` · entschieden von ${esc(a.decidedBy ?? "?")} · ${esc(new Date(a.decidedAt).toLocaleString("de-DE"))}` : ""}</div></div>
+      ${attio ? `<div class="row"><a class="btn" href="${esc(attio)}" target="_blank" rel="noopener">In Attio öffnen</a></div>` : ""}
+      ${a.rationale ? `<div class="note acc"><b>Warum:</b> ${esc(a.rationale)}</div>` : ""}
+      ${!isMail ? `<div class="note"><b>${esc(a.target?.name ?? "")}</b>: ${esc(a.change?.from ?? "?")} → <b>${esc(a.change?.to ?? "?")}</b> auf <code>${esc(a.target?.list ?? "")}</code></div>` : `
+        <div class="grid2"><div><label class="flbl" for="eTo">An</label><input id="eTo" value="${esc(toList(a.email?.to).join(", "))}" ${off}></div><div><label class="flbl" for="eSub">Betreff</label><input id="eSub" value="${esc(a.email?.subject ?? "")}" ${off}></div></div>
+        <div><label class="flbl" for="eBody">Text · ${words} Wörter</label><textarea id="eBody" ${off}>${esc(a.email?.body ?? "")}</textarea></div>
+        ${draftHref ? `<div class="note ok"><b>Entwurf liegt in Gmail.</b> <a href="${esc(draftHref)}" target="_blank" rel="noopener">Entwurf öffnen</a>, senden, dann „als gesendet markieren“.</div>` : drafted ? `<div class="note ok"><b>Entwurf liegt in Gmail.</b> Ein zweiter wird nicht angelegt: den Entwurf öffnen, senden, dann unten „Als gesendet markieren“.</div>` : ""}`}
+      ${a.note ? `<div class="note warn"><b>Notiz:</b> ${esc(a.note)}</div>` : ""}
+      ${ctxRender(a)}
+      <div id="ibMsg" aria-live="polite"></div>
+      <div class="ibactions">
+        ${drafted ? `<a class="btn primary" href="${esc(openHref)}" target="_blank" rel="noopener" data-draft-open="1">Entwurf öffnen</a>` : ""}
+        ${a.status === "pending" && can ? `${drafted ? "" : `<button type="button" class="btn primary" data-dec="approved">${isMail ? "Freigeben und Gmail-Entwurf anlegen" : "Freigeben und in Attio schreiben"}</button>`}<button type="button" class="btn danger" data-dec="rejected">Ablehnen…</button>` : ""}
+        ${isMail && (a.status === "approved" || a.status === "pending") && can ? `<button type="button" class="btn" data-dec="sent">Als gesendet markieren</button>` : ""}
+        ${isMail ? `<button type="button" class="btn" data-copy="1">Text kopieren</button>` : ""}
+        ${!can ? `<span class="meta">Nur Bearbeiter dieses Artefakts dürfen entscheiden.</span>` : ""}
+      </div>`;
+  }
+  const ibSay = (html) => { const m = $("ibMsg"); if (m) m.innerHTML = html; };
+  function ibClose() { ibSelected = null; ibNew = null; ibShown = ""; renderInbox(); }
+  async function decide(a, decision) {
+    if (!transitionAllowed(a.status, decision)) { ibSay(`<div class="note bad">Schon ${esc(statusLabel(a.status))}; dieser Übergang ist nicht erlaubt.</div>`); return; }
+    if (!DOMAIN_KINDS.includes(a.kind) || !own(KIND_LABEL, a.kind)) { ibSay(`<div class="note bad">Unbekannte Art; nichts geschrieben.</div>`); return; }
+    if (decision === "approved") {
+      const why = approvalBlock(a); if (why) { ibSay(`<div class="note bad"><b>Nicht freigegeben, nichts geschrieben:</b> ${esc(why)}.</div>`); return; }
+      if (!mcp) { ibSay(`<div class="note bad"><b>Keine Connectoren in dieser Ansicht.</b> Freigeben braucht Attio bzw. Gmail; nichts geschrieben.</div>`); return; }
+    }
+    if (decision === "rejected") {
+      ibSay(`<div class="note warn"><b>Warum ablehnen?</b><div class="row" style="margin-top:6px"><input id="rejNote" placeholder="kurzer Grund"><button type="button" class="btn danger" id="rejGo">Ablehnen</button></div></div>`);
+      $("rejGo").addEventListener("click", () => { ibFinish(a, "rejected", $("rejNote").value.trim() || "ohne Grund"); });
+      return;
+    }
+    await ibFinish(a, decision, null);
+  }
+  // finish: `a` ist die Karte, wie sie geöffnet wurde (veraltet); entschieden und ausgeführt wird nur, was frisch gelesen (`cur`) und geprüft ist.
+  // Reihenfolge bei „freigeben“: frisch lesen; Übergang erlaubt? Art des frischen Dokuments = Art der geöffneten Karte? approvalBlock(cur) bestanden?
+  // Dann genau ein Connector-Aufruf mit den geprüften Feldern aus `cur`; erst danach der Status `approved` und der Audit-Eintrag.
+  async function ibFinish(a, decision, note) {
+    ibSay(`<div class="note"><span class="spin"></span> ${decision === "approved" ? "Führe aus…" : "Speichere…"}</div>`);
+    const ref = db.collection("approvals").doc(a.id);
+    const refuse = (why) => { ibSay(`<div class="note bad"><b>Nicht freigegeben, nichts geschrieben:</b> ${esc(why)}.</div>`); };
+    let kind = a.kind, toolDone = false;
+    try {
+      // Erst noch einmal lesen: zweimal anwenden ist der Fehler, den die Zustandsmaschine verhindern soll.
+      const snap = await ref.get(); const cur = snap.exists ? snap.data() : null;
+      if (!cur || !transitionAllowed(cur.status, decision)) { ibSay(`<div class="note bad">Inzwischen ${esc(statusValid(cur?.status) ? STATUS_LABEL[cur.status] : "geändert")}; nichts geschrieben.</div>`); return; }
+      if (decision === "approved") {
+        // Ab hier gilt nur noch `cur`, nie `a`: die Art, die Felder, der Datensatz.
+        const why = kindChanged(a.kind, cur) ?? (DOMAIN_KINDS.includes(cur.kind) && own(KIND_LABEL, cur.kind) ? approvalBlock(cur) : "Diese Art gehört nicht in dieses Artefakt") ?? executedBlock(cur);
+        if (why) { refuse(why); return; }
+      }
+      kind = cur.kind;
+      let outputRef = `approval/${a.id}`; const patch = {};
+      if (decision === "approved") {
+        if (kind === STAGE_KIND) {
+          await callAttio("update-list-entry-by-id", { list: cur.target.list, entry_id: cur.target.entryId, entry_values: { [STAGE_SLUG]: cur.change.to } }, { cache: false }); toolDone = true;
+          outputRef = `attio:entry/${cur.target.entryId}`;
+          await audit(STAGE_AUDIT, { entryId: cur.target.entryId, to: cur.change.to }, outputRef, `Effekt der Freigabe ${a.id}: ${cur.target.name} ${cur.change.from} → ${cur.change.to}`);
+        } else {
+          const to = toList($("eTo")?.value ?? toList(cur.email?.to).join(",")); const subject = $("eSub")?.value ?? cur.email?.subject ?? ""; const body = $("eBody")?.value ?? cur.email?.body ?? "";
+          const res = await callGmail("create_draft", { to, subject, body }, { cache: false }); toolDone = true;
+          const p = parsePayload(res); const draftUrl = p?.viewUrl ?? p?.draft?.viewUrl ?? null; const draftId = p?.id ?? p?.draft?.id ?? null;
+          patch.email = { ...(cur.email ?? {}), to, subject, body, draftUrl, draftId };
+          outputRef = draftId ? `gmail:draft/${draftId}` : "gmail:draft";
+          await audit("draft-created", { to, subject }, outputRef, `Entwurf aus Freigabe ${a.id} im Postfach von ${actor}`);
+        }
+      }
+      const next = { ...cur, ...patch, status: decision, decidedAt: new Date().toISOString(), decidedBy: actor, note: note ?? cur.note ?? null };
+      await ref.set(next);
+      await audit(decision === "approved" ? "approve" : decision === "rejected" ? "reject" : "mark-sent", { approvalId: a.id, kind }, outputRef, note ?? `${cur.title ?? a.id}: ${STATUS_LABEL[decision]}`);
+      ibSay(`<div class="note ok"><b>${STATUS_LABEL[decision]}.</b></div>`);
+    } catch (e) {
+      const server = kind === "email" ? GMAIL : SERVER, ambiguous = AMBIGUOUS.includes(e?.code);
+      if (toolDone) await audit("status-write-failed", { approvalId: a.id, kind }, `approval/${a.id}`, `Status der Freigabe ${a.id} nicht gespeichert, obwohl der Aufruf ausgeführt wurde (${e?.code ?? "?"})`, "human", { act: { kind: "status-write-failed", target: { name: a.title ?? null }, reversible: false } });
+      ibSay(`<div class="note bad">${explainFor(e, server)}${ambiguous && !toolDone ? ` <b>Der Schreibvorgang kann trotzdem durchgegangen sein</b>; in ${server} prüfen, bevor du es erneut versuchst.` : ""}${toolDone ? ` <b>${esc(STATUS_WRITE_FAILED)}.</b>` : ""} Die Freigabe bleibt ${esc(statusLabel(a.status))}.</div>`);
+    }
+  }
+
+  // Nachfassen: ein Mail-Vorschlag an denselben Empfänger. Er wartet auf eine Freigabe; die Seite sendet nichts.
+  function ibCompose(pre) {
+    ibNew = pre; ibSelected = null; ibShown = ""; renderInbox();
+    const host = $("ibDetail"); host.hidden = false; host.className = "ibdetail";
+    host.innerHTML = `
+      <div class="ibhead"><span class="kind k-email">Neuer Vorschlag · Nachfassen</span><button type="button" class="btn" data-ib-close="1">Schließen</button></div>
+      <div class="grid2"><div><label class="flbl" for="nTo">An</label><input id="nTo" value="${esc(pre.to)}"></div><div><label class="flbl" for="nSub">Betreff</label><input id="nSub" value="${esc(pre.subject)}"></div></div>
+      <div><label class="flbl" for="nBody">Text</label><textarea id="nBody"></textarea></div>
+      <div><label class="flbl" for="nWhy">Warum</label><input id="nWhy" value="${esc(pre.why)}"></div>
+      <div id="ibMsg" aria-live="polite"></div>
+      <div class="ibactions"><button type="button" class="btn primary" id="nSave">Vorschlag anlegen</button><button type="button" class="btn" data-ib-close="1">Abbrechen</button></div>`;
+    $("nSave").disabled = !canEdit; $("nSave").addEventListener("click", ibSaveNew);
+    if (!canEdit) ibSay(`<div class="note warn">Nur Bearbeiter dieses Artefakts dürfen Vorschläge anlegen.</div>`);
+    $("nBody").focus?.();
+  }
+  async function ibSaveNew() {
+    const pre = ibNew; if (!pre) return;
+    const to = $("nTo").value.split(/[,;\s]+/).filter(Boolean), subject = $("nSub").value.trim(), body = $("nBody").value;
+    if (!to.length || !body.trim()) { ibSay(`<div class="note warn">Empfänger und Text fehlen noch.</div>`); return; }
+    ibSay(`<div class="note"><span class="spin"></span> Speichere…</div>`);
+    const why = $("nWhy").value.trim() || "ohne Begründung";
+    const a = { kind: "email", module: MODULE, title: `${pre.name || to[0] || "Mail"} · ${subject || "ohne Betreff"}`, target: pre.recordId ? { recordId: pre.recordId, name: pre.name } : {}, email: { purpose: "follow-up", to, subject, body }, status: "pending", rationale: why, createdAt: new Date().toISOString(), createdBy: actor, decidedAt: null, decidedBy: null, note: null };
+    try { const ref = await db.collection("approvals").add(a); await audit("propose", a, `approval/${ref.id}`, why); ibNew = null; ibSelected = ref.id; ibShown = ""; renderInbox(); }
+    catch (e) { ibSay(`<div class="note bad">Speichern fehlgeschlagen (${esc(e?.code ?? "?")}). ${esc(e?.message ?? "")}</div>`); }
+  }
+
+  // ── Reiter Autopilot: der Schalter des Moduls, die Zählung, der letzte Lauf, das Protokoll ──
+  // Ausgehende Handlungen des Agenten heute (UTC-Tag, wie die Zeitstempel). Der Feed lädt nur die neuesten 200 Einträge;
+  // für die Tageszählung fragt die Seite den ganzen Tag ab (refreshToday) und fällt bei einem Fehler auf die geladene Liste zurück.
+  // Ein fehlgeschlagener Versand (zweiter Eintrag "mail-failed") zählt nicht.
+  const dayStart = () => new Date().toISOString().slice(0, 10) + "T00:00:00.000Z";
+  function allAudit() { const m = new Map(); for (const d of [...auditDocs, ...todayDocs]) if (d && d.id) m.set(d.id, d); return [...m.values()]; }
+  function sentToday(module) { const day = dayStart().slice(0, 10), pool = allAudit(); return pool.filter((e) => e.actorType === "agent" && e.module === module && ["mail-sent", "invite"].includes(e.act?.kind) && String(e.timestampUtc ?? "").startsWith(day) && sendState(e, pool) !== "failed").length; }
+  const todayNote = () => (todayOk ? "Zählung aus allen Einträgen des heutigen UTC-Tags." : auditDocs.length >= FEED_LIMIT ? "Die Tagesabfrage ist fehlgeschlagen; gezählt wurden nur die neuesten 200 Einträge. Die Zahl kann unvollständig sein." : "Die Tagesabfrage ist fehlgeschlagen; gezählt wurde aus der geladenen Liste (weniger als 200 Einträge, daher vollständig).");
+  async function refreshToday() {
+    if (!db || todayBusy) return; todayBusy = true;
+    try { const snap = await db.collection("audit").where("timestampUtc", ">=", dayStart()).get(); todayDocs = snap.docs.filter((x) => x.exists).map((x) => ({ id: x.id, ...x.data() })); todayOk = true; }
+    catch (err) { todayOk = false; log("err", `audit.heute ${err?.code ?? err?.message ?? "?"}`); }
+    finally { todayBusy = false; }
+    renderAutopilot();
+  }
+  function renderAutopilot() {
+    if (!db) { $("apBody").innerHTML = `<div class="empty">Der Speicher ist in dieser Ansicht nicht verfügbar. Ohne Speicher gilt: aus.</div>`; $("feed").innerHTML = ""; return; }
+    const c = readAutopilot(autopilotRaw).modules[MODULE], run = runsDocs.find((r) => r.module === MODULE) ?? null, n = sentToday(MODULE), over = n >= c.maxOutboundPerDay;
+    const sw = MODES.map((mode) => `<button type="button" role="radio" aria-checked="${c.mode === mode}" class="m-${mode}" data-mode="${esc(mode)}" ${canEdit ? "" : "disabled"}>${MODE_LABEL[mode]}</button>`).join("");
+    const confirm = confirmOn ? `<div class="note warn"><b>Autopilot für ${esc(MODULE_LABEL[MODULE])} einschalten?</b> Der Agent sendet dann selbst, bis zu <b>${esc(c.maxOutboundPerDay)} Mails pro Tag</b>, nur zu diesen Zwecken: <code>${esc(c.purposes.join(", "))}</code>. Jede Mail steht vor dem Senden im Protokoll. Diese Leitplanken gelten weiter: <ul style="margin:6px 0 0;padding-left:18px"><li>höchstens eine Antwort je Thread und 24 Stunden</li><li>keine Mail an einen Empfänger, dem das Modul in den letzten 7 Tagen geschrieben hat, es sei denn, er hat geantwortet</li><li>nur die genannten Zwecke</li><li>höchstens ${esc(c.maxOutboundPerDay)} ausgehende Handlungen pro Tag</li><li>keine Stage oder kein Status in Invested, Term sheet, Soft Commitment, Hard Commitment oder Closed / Wired</li><li>den Schalter ändert nur ein Mensch, hier</li></ul><div class="row" style="margin-top:8px"><button type="button" class="btn primary" data-go="1">Autopilot einschalten</button><button type="button" class="btn" data-cancel="1">Abbrechen</button></div></div>` : "";
+    const runHtml = run ? `<div class="note ${run.status === "failed" ? "bad" : run.status === "running" ? "warn" : "ok"}"><b>Letzter Lauf</b> · ${esc(fmtTime(run.startedAt))} · ${esc(RUN_STATUS[run.status] ?? run.status ?? "?")}<div class="s" style="margin-top:4px">${esc(run.acts ?? 0)} Handlungen · ${esc(run.outbound ?? 0)} ausgehend${run.mode ? " · Modus " + esc(MODE_LABEL[run.mode] ?? run.mode) : ""}</div>${run.summary ? `<div style="margin-top:4px">${esc(run.summary)}</div>` : ""}${run.error ? `<div style="margin-top:4px;color:var(--alert)">${esc(run.error)}</div>` : ""}</div>` : `<div class="note">Noch kein Lauf.</div>`;
+    $("apBody").innerHTML = (canEdit ? "" : `<div class="note warn">Nur Bearbeiter dieses Artefakts dürfen den Schalter ändern.</div>`) +
+      `<div class="apcard"><div class="row" style="justify-content:space-between"><h2 class="sechead" style="font-size:16px;letter-spacing:0;text-transform:none;color:var(--fg)">${esc(MODULE_LABEL[MODULE])}</h2><span class="pill ${c.mode === "on" ? "ok" : c.mode === "review-first" ? "wait" : ""}"><span class="dot"></span>${esc(MODE_LABEL[c.mode])}</span></div>
+        <div class="sw" role="radiogroup" aria-label="Autopilot ${esc(MODULE_LABEL[MODULE])}">${sw}</div>
+        <div class="s">Aus: nur Vorschläge · Erst prüfen: Datensätze, Scores und Entwürfe selbst, jede Mail als Freigabe · An: sendet selbst, in den Leitplanken. Nicht lesbar heißt aus.</div>
+        ${confirm}${apMsg}
+        <div class="s" title="${esc(todayNote())}">heute: <b style="color:${over ? "var(--alert)" : "var(--fg)"}">${n}</b> von ${esc(c.maxOutboundPerDay)} ausgehenden Handlungen</div>
+        <div class="s">Zwecke: ${esc(c.purposes.join(" · "))}</div>
+        <div class="s">${c.updatedAt ? `zuletzt geändert von ${esc(c.updatedBy ?? "?")} am ${esc(fmtTime(c.updatedAt))}` : "noch nie geändert (Standard: aus)"}</div>
+        ${runHtml}</div>`;
+    renderFeed();
+  }
+  async function setMode(mode) {
+    confirmOn = false; apMsg = `<div class="note"><span class="spin"></span> Speichere…</div>`; renderAutopilot();
+    try {
+      const ref = db.doc(AUTOPILOT_DOC);
+      const snap = await ref.get(); const cur = snap.exists ? (snap.data() ?? {}) : {};
+      const eff = readAutopilot(cur).modules[MODULE], before = eff.mode;
+      if (before === mode) { apMsg = ""; renderAutopilot(); return; }
+      const at = new Date().toISOString();
+      // Ein Modul je Schreibvorgang, zusammengeführt: nie das ganze `modules`-Objekt aus dem Lesen, nie fremde Schlüssel.
+      const next = { modules: { [MODULE]: { mode, maxOutboundPerDay: eff.maxOutboundPerDay, purposes: eff.purposes, updatedAt: at, updatedBy: actor } } };
+      await ref.set(next, { merge: true });
+      await audit("autopilot-set", { module: MODULE, before, after: mode }, AUTOPILOT_DOC, `${MODULE}: ${before} → ${mode}`);
+      apMsg = `<div class="note ok"><b>${esc(MODULE_LABEL[MODULE])}: ${esc(MODE_LABEL[before])} → ${esc(MODE_LABEL[mode])}.</b></div>`;
+    } catch (e) { apMsg = `<div class="note bad">Speichern fehlgeschlagen (${esc(e?.code ?? "?")}). ${esc(e?.message ?? "")}</div>`; }
+    renderAutopilot();
+  }
+
+  // ── Protokoll: die Handlungen des Agenten in diesem Modul ──
+  const actChip = (kind) => kind === "mail-sent" || kind === "mail-confirmed" || kind === "mail-failed" ? "k-email" : kind === "issue-draft" || kind === "campaign-draft" ? "k-newsletter" : "k-deal-stage";
+  const canUndo = (e) => Boolean(e.act?.reversible && !e.corrected && undoTargetOk(e.act));
+  function renderFeed() {
+    if (!db) return;
+    const runs = groupActs(auditDocs.filter((e) => e.actorType === "agent" && e.module === MODULE));
+    if (!runs.length) { $("feed").innerHTML = `<div class="empty">Noch keine Handlungen des Agenten im Modul ${esc(MODULE_LABEL[MODULE])}. Sobald es läuft, steht hier jede Handlung, mit Weg zurück.</div>`; return; }
+    const pool = allAudit();
+    $("feed").innerHTML = runs.slice(0, 20).map((r) => {
+      const run = runsDocs.find((x) => x.id === r.runId);
+      const head = `<div class="row" style="justify-content:space-between"><div><b>${r.runId === "einzeln" ? "Einzelne Handlungen" : esc(MODULE_LABEL[r.module] ?? r.module ?? "Lauf")}</b> <span class="s">${esc(fmtTime(r.at))} · ${Number(r.acts.length)} Handlung(en)${run?.status ? " · " + esc(RUN_STATUS[run.status] ?? run.status) : ""}</span></div>${r.runId !== "einzeln" ? `<span class="s">${esc(r.runId)}</span>` : ""}</div>${run?.summary ? `<div class="meta">${esc(run.summary)}</div>` : ""}`;
+      const rows = [...r.acts].reverse().map((e) => {
+        const a = e.act ?? null, t = a?.target ?? {}, id = esc(e.id);
+        const label = a ? (own(ACT_LABEL, a.kind) ? ACT_LABEL[a.kind] : a.kind) : e.action;
+        const fm = feedMsgs[e.id] ?? "", open = undoOpen === e.id, fresh = open ? undoFresh[e.id] : null, link = attioLink(t.recordId), ss = sendState(e, pool);
+        const sendNote = ss === "confirmed" ? `<div class="s" style="color:var(--good)"><b>bestätigt</b></div>` : ss === "failed" ? `<div class="s" style="color:var(--alert)"><b>fehlgeschlagen</b> · zählt nicht zu „heute“</div>` : ss === "open" ? `<div class="s" style="color:var(--warn)"><b>Versand nicht bestätigt</b></div>` : "";
+        return `<div class="actrow"><div class="row" style="justify-content:space-between"><div class="row"><span class="kind ${actChip(a?.kind)}">${esc(label)}</span><b>${esc(t.name ?? "")}</b>${link ? `<a class="s" href="${esc(link)}" target="_blank" rel="noopener">In Attio öffnen</a>` : ""}</div><span class="s">${esc(fmtTime(e.timestampUtc))}</span></div>
+          ${a && (a.before !== undefined || a.after !== undefined) ? `<div class="m">${esc(fmtVal(a.before))} → <b>${esc(fmtVal(a.after))}</b></div>` : ""}
+          ${a?.kind === "mail-sent" && t.to ? `<div class="m">an ${esc(Array.isArray(t.to) ? t.to.join(", ") : t.to)}</div>` : ""}
+          ${(a?.kind === "mail-sent" || a?.kind === "mail-draft") && t.subject ? `<div class="m">Betreff: ${esc(t.subject)}</div>` : ""}
+          ${sendNote}
+          <div>${esc(e.rationale)}</div>
+          ${e.corrected ? `<div class="s">korrigiert (${esc(e.corrected.how ?? "?")}) von ${esc(e.corrected.by ?? "?")} am ${esc(fmtTime(e.corrected.at))}</div>` : ""}
+          <div class="row">${canUndo(e) && canEdit && mcp ? `<button type="button" class="btn danger" data-undo="${id}">Rückgängig</button>` : ""}${a?.kind === "mail-sent" ? `<button type="button" class="btn" data-follow="${id}" ${canEdit && mcp ? "" : "disabled"}>Nachfassen</button>` : ""}</div>
+          ${open && fresh ? `<div class="note warn"><b>${esc(fresh.act.target.name ?? "Eintrag")}</b> zurück auf <b>${esc(fmtVal(fresh.act.before))}</b> setzen? Der Eintrag wurde eben frisch aus dem Speicher gelesen; vorher wird der aktuelle Wert in Attio gelesen, und nur wenn er noch <b>${esc(fmtVal(fresh.act.after))}</b> ist, wird geschrieben und im Protokoll vermerkt.<div class="row" style="margin-top:8px"><button type="button" class="btn danger" data-undo-go="${id}">Rückgängig machen</button><button type="button" class="btn" data-undo-cancel="1">Abbrechen</button></div></div>` : ""}
+          ${fm}</div>`;
+      }).join("");
+      return `<div class="apcard">${head}<div>${rows}</div></div>`;
+    }).join("") + (runs.length > 20 ? `<div class="meta">Die 20 neuesten Läufe.</div>` : "");
+  }
+  // Den Eintrag frisch aus dem Speicher lesen (nach ID); die Liste auf dem Bildschirm kann veraltet oder verändert sein.
+  async function undoFetch(id) {
+    try { const snap = await db.collection("audit").doc(id).get(); return snap.exists ? { id, ...snap.data() } : null; }
+    catch (err) { log("err", `audit.get ${err?.code ?? "?"}`); return null; }
+  }
+  // Vor dem Bestätigungsfeld: frisch lesen, prüfen (recordId Pflicht, Ziel, Werte); angezeigt wird der Name des frisch gelesenen Ziels.
+  async function undoPrepare(e) {
+    feedMsgs[e.id] = `<div class="note"><span class="spin"></span> Lese den Eintrag…</div>`; undoOpen = null; delete undoFresh[e.id]; renderFeed();
+    const fresh = await undoFetch(e.id);
+    delete feedMsgs[e.id];
+    if (!fresh || !canUndo(fresh)) { feedMsgs[e.id] = `<div class="note bad">Kein Undo: der Eintrag ist im Speicher nicht mehr zu finden oder nicht (mehr) rückgängig zu machen; nichts geschrieben.</div>`; renderFeed(); return; }
+    undoFresh[e.id] = fresh; undoOpen = e.id; renderFeed();
+  }
+  async function undoAct(listed) {
+    const shown = undoFresh[listed.id] ?? null;
+    feedMsgs[listed.id] = `<div class="note"><span class="spin"></span> Schreibe zurück…</div>`; undoOpen = null; renderFeed();
+    // Geschrieben wird nur, was jetzt im Speicher steht und genau das ist, was die Person im Bestätigungsfeld gesehen hat.
+    const e = await undoFetch(listed.id);
+    if (!shown || !e || !canUndo(e) || JSON.stringify(e.act) !== JSON.stringify(shown.act)) { feedMsgs[listed.id] = `<div class="note bad">Kein Undo: der Eintrag hat sich seit dem Öffnen geändert oder ist nicht zulässig; nichts geschrieben.</div>`; delete undoFresh[listed.id]; renderFeed(); return; }
+    delete undoFresh[listed.id];
+    const a = e.act, slug = a.kind === "stage" ? DEAL_STAGE_SLUG : INVESTOR_STATUS_SLUG;
+    let wrote = false;
+    try {
+      if (a.target.recordId) {
+        // Erst den Ist-Zustand lesen: zurückgeschrieben wird nur, wenn der Wert noch der ist, den der Agent gesetzt hat.
+        const res = await callAttio("list-records-in-list", { list: a.target.list, limit: 1, filter: { attribute: "parent_record", op: "eq", value: { object_id: COMPANIES_OBJECT, record_id: a.target.recordId } } }, { cache: false });
+        const ent = (entriesOf(res).entries ?? [])[0];
+        const entId = ent ? (ent.entry_id ?? ent.id?.entry_id ?? null) : null;
+        const now = ent ? str((ent.attributes ?? ent.entry_values ?? {})[slug]) : null;
+        if (entId !== a.target.entryId || now !== a.after) { feedMsgs[e.id] = `<div class="note warn"><b>Wert hat sich inzwischen geändert; kein Undo.</b> Nichts geschrieben.</div>`; renderFeed(); return; }
+      }
+      await callAttio("update-list-entry-by-id", { list: a.target.list, entry_id: a.target.entryId, entry_values: { [slug]: a.before } }, { cache: false });
+      wrote = true;
+      await audit("undo", { auditId: e.id, act: a }, `attio/entry/${a.target.entryId}`, `Rückgängig: ${a.target.name ?? a.target.entryId} ${fmtVal(a.after)} → ${fmtVal(a.before)} (Eintrag ${e.id}${e.runId ? ", Lauf " + e.runId : ""})`);
+      await db.doc(`audit/${e.id}`).update({ corrected: { at: new Date().toISOString(), by: actor, how: "undo" } });
+      feedMsgs[e.id] = `<div class="note ok"><b>Rückgängig gemacht.</b> ${esc(a.target.name ?? "")}: ${esc(fmtVal(a.before))}</div>`;
+    } catch (err) {
+      const ambiguous = AMBIGUOUS.includes(err?.code);
+      feedMsgs[e.id] = wrote
+        ? `<div class="note bad"><b>In Attio zurückgeschrieben, aber der Vermerk „korrigiert“ konnte nicht gespeichert werden</b> (${esc(err?.code ?? "?")} ${esc(err?.message ?? "")}). Nicht erneut rückgängig machen.</div>`
+        : `<div class="note bad">${explainFor(err, SERVER)}${ambiguous ? ` <b>Der Schreibvorgang kann trotzdem durchgegangen sein</b>; in Attio prüfen.` : ""}</div>`;
+    }
+    renderFeed();
+  }
+  function followUp(e) {
+    const a = e.act, t = a.target ?? {};
+    const subj = String(t.subject ?? a.after?.subject ?? t.name ?? "").trim();
+    const to = Array.isArray(t.to) ? t.to.join(", ") : String(t.to ?? "");
+    setView("inbox");
+    ibCompose({ to, subject: subj ? (/^(re|aw):/i.test(subj) ? subj : "Re: " + subj) : "", why: `Nachfassen zur Mail an ${to}${e.runId ? " (Lauf " + e.runId + ")" : ""}`, recordId: isUuid(t.recordId) ? t.recordId : null, name: typeof t.name === "string" ? t.name.slice(0, 120) : "" });
+  }
+
+  // ── Speicher: Listener (Vorschläge, Protokoll, Schalter, Läufe) ──
+  function startStore() {
+    if (!db) { renderInbox(); renderAutopilot(); return; }
+    db.collection("approvals").onSnapshot((snap) => { approvals = snap.docs.filter((x) => x.exists).map((x) => ({ id: x.id, ...x.data() })); renderInbox(); }, (e) => log("err", `approvals.onSnapshot ${e?.code}`));
+    db.collection("audit").orderBy("timestampUtc", "desc").limit(FEED_LIMIT).onSnapshot((snap) => { auditDocs = snap.docs.filter((x) => x.exists).map((x) => ({ id: x.id, ...x.data() })); renderAutopilot(); refreshToday(); }, (e) => log("err", `audit.onSnapshot ${e?.code}`));
+    db.collection("settings").onSnapshot((snap) => { const d = snap.docs.find((x) => x.exists && x.id === "autopilot"); autopilotRaw = d ? d.data() : null; renderAutopilot(); }, (e) => { log("err", `settings.onSnapshot ${e?.code}`); autopilotRaw = null; renderAutopilot(); });
+    db.collection(RUNS).orderBy("startedAt", "desc").limit(30).onSnapshot((snap) => { runsDocs = snap.docs.filter((x) => x.exists).map((x) => ({ id: x.id, ...x.data() })); renderAutopilot(); }, (e) => log("err", `runs.onSnapshot ${e?.code}`));
+  }
+
+  // ── Ereignisse der beiden Reiter ──
+  $("ibList").addEventListener("click", (e) => { if (e.target.closest("[data-rec-clear]")) { ibSetRecord(null, location.pathname + location.search); return; } const f = e.target.closest("[data-f]"); if (f) { ibFilter = f.dataset.f; renderInbox(); return; } const c = e.target.closest("[data-id]"); if (c) { ibSelected = c.dataset.id; ibNew = null; ibShown = ""; renderInbox(); } });
+  ctxBind($("ibDetail"), () => approvals.find((x) => x.id === ibSelected), { gmail: callGmail, drive: (tool, input, opts) => callDrive(tool, input, opts).then((payload) => ({ payload })), explain: explainFor });
+  $("ibDetail").addEventListener("click", (e) => {
+    if (e.target.closest("[data-ib-close]")) { ibClose(); return; }
+    const a = approvals.find((x) => x.id === ibSelected);
+    const d = e.target.closest("[data-dec]"); if (d && a) { decide(a, d.dataset.dec); return; }
+    const c = e.target.closest("[data-copy]"); if (c && a) { const text = `${$("eSub")?.value ?? a.email?.subject ?? ""}\n\n${$("eBody")?.value ?? a.email?.body ?? ""}`; navigator.clipboard?.writeText(text).then(() => { c.textContent = "Kopiert"; }).catch(() => { $("eBody")?.select(); }); }
+  });
+  $("apBody").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-mode]"); if (b) { const mode = b.dataset.mode; apMsg = ""; if (mode === "on" && readAutopilot(autopilotRaw).modules[MODULE].mode !== "on") { confirmOn = true; renderAutopilot(); } else { confirmOn = false; if (readAutopilot(autopilotRaw).modules[MODULE].mode !== mode) setMode(mode); else renderAutopilot(); } return; }
+    if (e.target.closest("[data-go]")) { setMode("on"); return; }
+    if (e.target.closest("[data-cancel]")) { confirmOn = false; renderAutopilot(); }
+  });
+  $("feed").addEventListener("click", (ev) => {
+    const find = (sel, attr) => { const b = ev.target.closest(sel); return b ? auditDocs.find((x) => x.id === b.dataset[attr]) : null; };
+    let e;
+    if ((e = find("[data-undo]", "undo"))) { if (canUndo(e)) undoPrepare(e); return; }
+    if ((e = find("[data-undo-go]", "undoGo"))) { if (canUndo(e)) undoAct(e); return; }
+    if (ev.target.closest("[data-undo-cancel]")) { undoOpen = null; undoFresh = {}; renderFeed(); return; }
+    if ((e = find("[data-follow]", "follow"))) { if (e.act?.kind === "mail-sent") followUp(e); }
+  });
+  // ==== store-tabs:end ====
+
   $("tiles").addEventListener("click", (e) => { const t = e.target.closest("[data-kpi]"); if (!t) return; filter.kpi = filter.kpi === t.dataset.kpi ? "" : t.dataset.kpi; tiles(); table(); });
-  $("board").addEventListener("click", (e) => { const c = e.target.closest("[data-id]"); if (!c) return; const r = rows.find((x) => x.entryId === c.dataset.id); if (r) drawer(r); });
+  // A click on a card opens the drawer; a click that ends a drag does not. The inline confirm of a move into the hard or closed status sits under the card.
+  $("board").addEventListener("click", (e) => {
+    const yn = e.target.closest("[data-bconfirm]");
+    if (yn) { const p = pendingMove; if (yn.dataset.bconfirm === "yes" && p) requestMove(p.id, p.to, { confirmed: true }); else { pendingMove = null; board(); if (p) focusCard(p.id); } return; }
+    if (Date.now() - lastDragEnd < 400) return;
+    const c = e.target.closest(".card[data-id]"); if (!c) return; const r = rows.find((x) => x.entryId === c.dataset.id); if (r) drawer(r);
+  });
   $("q").addEventListener("input", (e) => { filter.q = e.target.value.trim(); table(); });
   $("statusSel").addEventListener("change", (e) => { filter.status = e.target.value; table(); });
   $("tierSel").addEventListener("change", (e) => { filter.tier = e.target.value; table(); });
@@ -918,18 +2041,29 @@
   const openRow = (tr) => { const r = rows.find((x) => x.entryId === tr.dataset.id); if (r) drawer(r); };
   $("rows").addEventListener("click", (e) => { const tr = e.target.closest("tr[data-id]"); if (tr) openRow(tr); });
   $("rows").addEventListener("keydown", (e) => { if (e.key !== "Enter") return; const tr = e.target.closest("tr[data-id]"); if (tr) openRow(tr); });
-  $("drawerHost").addEventListener("click", (e) => { if (e.target.closest("[data-close]")) { closeDrawer(); return; } const r = rows.find((x) => x.entryId === selected); if (!r) return; const tk = e.target.closest("[data-tk]"); if (tk) { taskAction(r, tk); return; } const act = e.target.closest("[data-act]"); if (act) { confirmBox(r, act.dataset.act); return; } if (e.target.closest("[data-cancel]")) { $("confirmHost").innerHTML = ""; return; } const go = e.target.closest("[data-do]"); if (go) doAction(r, go.dataset.do); });
+  $("drawerHost").addEventListener("click", (e) => { if (e.target.closest("[data-close]")) { closeDrawer(); return; } const r = rows.find((x) => x.entryId === selected); if (!r) return; const ib = e.target.closest("[data-ib-record]"); if (ib) { const rec = recordFromHash("#record=" + ib.dataset.ibRecord); if (rec) { closeDrawer(); ibSetRecord(rec, "#inbox&record=" + rec); setView("inbox"); } return; } const tk = e.target.closest("[data-tk]"); if (tk) { taskAction(r, tk); return; } const act = e.target.closest("[data-act]"); if (act) { confirmBox(r, act.dataset.act); return; } if (e.target.closest("[data-cancel]")) { $("confirmHost").innerHTML = ""; return; } const go = e.target.closest("[data-do]"); if (go) doAction(r, go.dataset.do); });
   const draftField = (e) => { const id = e.target.id; if (id === "tkContent") tkDraft.content = e.target.value; else if (id === "tkDate") tkDraft.date = e.target.value; else if (id === "tkWho") tkDraft.who = e.target.value; };
   $("drawerHost").addEventListener("input", draftField);
   $("drawerHost").addEventListener("change", draftField);
-  for (const b of document.querySelectorAll("[data-view]")) b.addEventListener("click", () => setView(b.dataset.view));
+  for (const b of document.querySelectorAll("[data-view]")) b.addEventListener("click", () => setView(b.dataset.view, true));
+  $("tabs").addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    const next = VIEWS[(VIEWS.indexOf(view) + (e.key === "ArrowRight" ? 1 : VIEWS.length - 1)) % VIEWS.length];
+    setView(next, true); document.querySelector(`[data-view="${next}"]`).focus();
+  });
   $("tkReload").addEventListener("click", () => loadAllTasks(true));
   $("taskRows").addEventListener("click", (e) => { const tr = e.target.closest("tr[data-id]"); if (tr) openRow(tr); });
   $("taskRows").addEventListener("keydown", (e) => { if (e.key !== "Enter") return; const tr = e.target.closest("tr[data-id]"); if (tr) openRow(tr); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && selected) closeDrawer(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (selected) closeDrawer();
+    else if (view === "inbox" && (ibSelected || ibNew) && window.matchMedia("(max-width: 980px)").matches) ibClose();
+  });
+  window.addEventListener("hashchange", ibApplyHash);
   setInterval(freshness, 60000);
 
-  tiles(); board();
+  tiles(); board(); setView(readTab(), false);
+  ibApplyHash();  // F027: #inbox&record=<uuid> opens the Inbox tab on one investor
   $("cacheClear").addEventListener("click", () => { investorCache.clear(); cacheSaved = null; cacheGen++; paintCacheLine(); load(true, loadedAll); });
   try { const c = readInvestorCache(); if (c) { rows = c.entries; cacheAt = c.savedAt; cacheSaved = c.savedAt; render(); } paintCacheLine(); }  // the stored list first, before any connector call
   catch (err) { rows = []; cacheAt = null; cacheSaved = null; investorCache.clear(); try { paintCacheLine(); } catch { /* nothing to paint */ } }  // a stored list that cannot be drawn is dropped; the live load below runs as if there were none
@@ -940,10 +2074,16 @@
       const u = window.claude?.use ? await window.claude.use("user") : null;
       const me = u ? await u.me() : null;
       viewerEmail = String(me?.email ?? "").trim() || null;
+      actor = String(me?.name ?? "").trim() || (me?.id ? `user:${String(me.id).slice(0, 8)}` : "unbekannt");
+      canEdit = u ? await u.canEdit().catch(() => false) : false;
       log(viewerEmail ? "ok" : "info", `use('user') ${u ? "aufgelöst" : "→ null"} · E-Mail ${viewerEmail ? "bekannt" : "unbekannt: Standard-Zuständige ist der erste Admin"}`);
     } catch (e) { viewerEmail = null; log("err", `use('user'): ${e?.code ?? "?"} ${e?.message ?? ""}`); }
+    // Investor Relations' own store (F027): proposals, audit, runs and the investors switch. Without it the Inbox and Autopilot tabs say so.
+    try { db = window.claude?.use ? await window.claude.use("db") : null; } catch (e) { db = null; log("err", `use('db'): ${e?.code ?? "?"} ${e?.message ?? ""}`); }
+    log(db ? "ok" : "info", db ? "use('db') aufgelöst" : "use('db') → null: Inbox und Autopilot sind in dieser Ansicht nicht verfügbar");
+    startStore();
     const cap = await (window.claude?.use ? window.claude.use("mcp") : Promise.resolve(null));
-    if (!cap) { log("err", "use('mcp') → null"); setConn("bad", "Keine Connectoren in dieser Ansicht"); banner("bad", `<b>Diese Ansicht erreicht keine Connectoren.</b> Das Artefakt im Browser auf claude.ai öffnen, angemeldet, mit verbundenem Attio-Connector.`); $("emptyCell").textContent = "Keine Connectoren in dieser Ansicht."; $("diag").open = true; return; }
+    if (!cap) { log("err", "use('mcp') → null"); setConn("bad", "Keine Connectoren in dieser Ansicht"); banner("bad", `<b>Diese Ansicht erreicht keine Connectoren.</b> Das Artefakt im Browser auf claude.ai öffnen, angemeldet, mit verbundenem Attio-Connector.`); $("emptyCell").textContent = "Keine Connectoren in dieser Ansicht."; $("diag").open = true; await permInit($("banner"), { claude: window.claude, esc, say: (t, raw) => log("info", t, raw), reload: () => location.reload() }); return; }
     mcp = cap; $("refresh").disabled = false; $("loadAll").disabled = false; log("ok", "use('mcp') aufgelöst");
     try { const lt = await mcp.listTools(SERVER); const s = lt?.servers?.[0]; log(s ? "ok" : "err", s ? `listTools: ${s.server} · ${s.authStatus} · ${s.tools?.length ?? 0} Tools` : "listTools: Attio nicht in der Liste", lt); } catch (e) { log("err", `listTools: ${e?.code ?? "?"}`); }
     await load(false, false);

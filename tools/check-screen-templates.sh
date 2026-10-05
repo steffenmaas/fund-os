@@ -9,13 +9,14 @@
 #      tools/ops/lib/scoring.mjs on the inline cases of tools/check-ops-tools.sh (tools/check-scoring-mirror.mjs)
 #   5. the rank region of deal-cockpit.html (// region:rank) is byte-identical to the one in tools/ops/digest-cli.mjs,
 #      and both rank the digest fixtures the same way (tools/check-digest-mirror.mjs)
-#   6. the shared pure regions do not drift between pages: the Inbox guards (// ==== guards:begin ... guards:end ====) and
-#      the context region (// region:context ... endregion:context) are byte-identical in inbox.html and
-#      deal-cockpit.html; the task region (// region:tasks ... endregion:tasks) and the local-cache region
-#      (// region:localcache ... endregion:localcache) are byte-identical in deal-cockpit.html and investors.html (the
-#      pages are lifted from the same sources, so a fix is made in every copy). Each comparison has a negative control:
-#      a mutated copy of the second page, read through the same extraction, must come out different
-#   7. exactly the six screens are present
+#   6. the shared pure regions do not drift between pages (a fix is made in every copy): the Inbox guards
+#      (// ==== guards:begin ... guards:end ====), the autopilot region (identical but for its MODULES line) and the context
+#      region in inbox.html, deal-cockpit.html and investors.html; the store-tabs region and the task region in
+#      deal-cockpit.html and investors.html; the local-cache region in deal-cockpit.html, investors.html and start.html;
+#      the permhelp region in all seven pages; the channels region in newsletter.html and profile.html. Each comparison has a
+#      negative control (a mutated copy of the last page, read through the same extraction, must come out different).
+#      The Start entry is the first item of the side menu in every page and CONFIG.links has the start URL
+#   7. exactly the seven screens are present
 #
 #   bash tools/check-screen-templates.sh
 
@@ -84,8 +85,9 @@ neutral_hits() {
   if [ -f "$DENYLIST" ]; then
     grep -niEf "$DENYLIST" "$1" | cut -c1-160 | sed "s|^|$(basename "$1"):|; s|\$| (local denylist)|"
   fi
+  return 0  # no hit is not a failure: under pipefail a status of 1 would make every "caught?" self-test below fail
 }
-EXPECTED="deal-cockpit investors inbox knowledge profile newsletter"
+EXPECTED="deal-cockpit investors inbox knowledge profile newsletter start"
 
 fails=0
 checked=0
@@ -167,7 +169,9 @@ else
   fail "rank region in deal-cockpit.html differs from tools/ops/digest-cli.mjs"; echo "$out" | head -12 | sed 's/^/      /'
 fi
 
-# 6. the shared pure regions must be byte-identical across pages
+# 6. the shared pure regions do not drift between pages (the pages are lifted from the same sources, so a fix is made in every copy).
+#    Each comparison has a negative control: a copy of one other page with a trailing space on a line in the middle of the region,
+#    read through the same extraction, must come out different. The autopilot regions may differ in their one MODULES line only.
 if out=$(python3 - "$DIR" "$WORK" <<'PY'
 import os, re, sys
 d, work = sys.argv[1], sys.argv[2]
@@ -181,26 +185,40 @@ def first_diff(x, y):
         return None
     lx, ly = x.split("\n"), y.split("\n")
     return next((i for i, (p, q) in enumerate(zip(lx, ly)) if p != q), min(len(lx), len(ly)))
+MODULES = re.compile(r"const MODULES = \[[^\]]*\];")
+ALL = ["inbox", "deal-cockpit", "investors", "knowledge", "newsletter", "profile", "start"]
+REGIONS = [
+    # (name, start marker, end marker, pages, normaliser)
+    ("Inbox guards", "==== guards:begin", "==== guards:end", ["inbox", "deal-cockpit", "investors"], None),
+    ("autopilot region", "==== autopilot:begin", "==== autopilot:end", ["inbox", "deal-cockpit", "investors"], lambda r: MODULES.sub("const MODULES = [X];", r)),
+    ("store-tabs region", "==== store-tabs:begin", "==== store-tabs:end", ["deal-cockpit", "investors"], None),
+    ("context region", "region:context", "endregion:context", ["inbox", "deal-cockpit", "investors"], None),
+    ("task region", "region:tasks", "endregion:tasks", ["deal-cockpit", "investors"], None),
+    ("local-cache region", "region:localcache", "endregion:localcache", ["deal-cockpit", "investors", "start"], None),
+    ("permhelp region", "region:permhelp", "endregion:permhelp", ALL, None),
+    ("channels region", "==== channels:begin", "==== channels:end", ["newsletter", "profile"], None),
+]
 bad = 0
-for what, start, end, a, b in [
-    ("Inbox guards", "==== guards:begin", "==== guards:end", "inbox", "deal-cockpit"),
-    ("task region", "region:tasks", "endregion:tasks", "deal-cockpit", "investors"),
-    ("context region", "region:context", "endregion:context", "inbox", "deal-cockpit"),
-    ("local-cache region", "region:localcache", "endregion:localcache", "deal-cockpit", "investors"),
-]:
-    ra, rb = region(a, start, end), region(b, start, end)
-    if ra is None or rb is None:
-        print(f"{what}: the markers are missing in {a if ra is None else b}.html"); bad += 1; continue
+for what, start, end, pages, norm in REGIONS:
+    norm = norm or (lambda r: r)
+    regs = [region(p, start, end) for p in pages]
+    missing = [p for p, r in zip(pages, regs) if r is None]
+    if missing:
+        print(f"{what}: the markers are missing in {', '.join(m + '.html' for m in missing)}"); bad += 1; continue
+    ra = regs[0]
     if len(ra.split("\n")) < 20:
-        print(f"{what}: the region in {a}.html is suspiciously short ({len(ra.splitlines())} lines)"); bad += 1; continue
-    at = first_diff(ra, rb)
-    if at is not None:
-        la, lb = ra.split("\n"), rb.split("\n")
-        print(f"{what} differ between {a}.html and {b}.html (first difference at region line {at + 1}):\n  {a}: {la[at][:140] if at < len(la) else '(ends)'}\n  {b}: {lb[at][:140] if at < len(lb) else '(ends)'}"); bad += 1; continue
-    # negative control: a copy of the second page with one trailing space on a line in the middle of the region, read
-    # through the same extraction, must differ from the first page's region
-    tb = open(f"{d}/{b}.html", encoding="utf-8").read()
-    lines = tb.split("\n")
+        print(f"{what}: the region in {pages[0]}.html is suspiciously short ({len(ra.splitlines())} lines)"); bad += 1; continue
+    ok = True
+    for p, r in zip(pages[1:], regs[1:]):
+        at = first_diff(norm(ra), norm(r))
+        if at is not None:
+            la, lb = norm(ra).split("\n"), norm(r).split("\n")
+            print(f"{what} differ between {pages[0]}.html and {p}.html (first difference at region line {at + 1}):\n  {pages[0]}: {la[at][:140] if at < len(la) else '(ends)'}\n  {p}: {lb[at][:140] if at < len(lb) else '(ends)'}"); bad += 1; ok = False; break
+    if not ok:
+        continue
+    # negative control on the last page of the list
+    b = pages[-1]
+    lines = open(f"{d}/{b}.html", encoding="utf-8").read().split("\n")
     first = next(i for i, l in enumerate(lines) if re.match(rf"[ \t]*// {start}\b", l))
     last = next(i for i in range(first, len(lines)) if re.match(rf"[ \t]*// {end}\b", lines[i]))
     lines[(first + last) // 2] += " "
@@ -208,15 +226,30 @@ for what, start, end, a, b in [
     os.makedirs(mut, exist_ok=True)
     open(f"{mut}/{b}.html", "w", encoding="utf-8").write("\n".join(lines))
     rm = region(b, start, end, mut)
-    if rm is None or first_diff(ra, rm) is None:
+    if rm is None or first_diff(norm(ra), norm(rm)) is None:
         print(f"{what}: negative control failed (a drifted region would pass)"); bad += 1; continue
-    print(f"ok  {what} identical in {a}.html and {b}.html ({len(ra.splitlines())} lines)")
+    print(f"ok  {what} identical in {', '.join(p + '.html' for p in pages)} ({len(ra.splitlines())} lines)")
+# the Start entry first in every side menu: the six pages carry item("start", ...), and CONFIG.links has the seventh URL
+for p in ALL:
+    t = open(f"{d}/{p}.html", encoding="utf-8").read()
+    has_item = 'item("start", "Start")' in t
+    has_link = re.search(r"links: \{[^}]*\bstart: \"\"", t) is not None
+    if not (has_item and has_link):
+        print(f"{p}.html: the Start entry is missing from the side menu (item) or from CONFIG.links.start"); bad += 1
+    elif p != "start" and t.index('item("start", "Start")') > t.index('item("deals", "Deal Cockpit")'):
+        print(f"{p}.html: the Start entry is not the first in the side menu"); bad += 1
+# negative control of the menu check: a page without the entry must be reported
+probe = open(f"{d}/knowledge.html", encoding="utf-8").read().replace('${item("start", "Start")}', "")
+if 'item("start", "Start")' in probe:
+    print("side-menu negative control failed"); bad += 1
+else:
+    print("ok  the Start entry is the first item of the side menu in all seven pages (negative control: a page without it is reported)")
 sys.exit(1 if bad else 0)
 PY
 ); then
   echo "$out" | sed 's/^/  /'
 else
-  fail "a shared pure region differs between pages"; echo "$out" | head -12 | sed 's/^/      /'
+  fail "a shared pure region differs between pages, or the Start entry is missing"; echo "$out" | head -14 | sed 's/^/      /'
 fi
 
 # a page nobody listed must not slip in unchecked

@@ -169,7 +169,7 @@
   .k-deal-stage { color: var(--warn); background: color-mix(in srgb, var(--warn) 16%, transparent); }
   .k-newsletter { color: var(--good); background: color-mix(in srgb, var(--good) 16%, transparent); }
   .k-unknown { color: var(--muted); background: color-mix(in srgb, var(--muted) 14%, transparent); }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .apcard { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
   .note.acc { border-left-color: var(--accent); }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .flbl { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; display: block; margin-bottom: 4px; }
@@ -262,7 +262,7 @@
     .tabs button { min-height: 44px; padding-inline: 4px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
     .itemcard, .sw button { min-height: 44px; }
     .grid2 { grid-template-columns: minmax(0, 1fr); }
-    .card { padding: 14px; }
+    .apcard { padding: 14px; }
   }
   /* Kontext unter dem Vorschlag (region:context); Zusammenfassungen 44 px hoch, lange Absender brechen um */
   .ctx { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); min-width: 0; }
@@ -309,7 +309,7 @@
 
     <div id="banner" class="note" hidden></div>
     <div class="tabs" role="tablist" id="tabs" aria-label="Ansicht">
-      <button type="button" role="tab" class="on" id="tabDeals" data-view="deals" aria-selected="true" aria-controls="dealsView">Deals</button>
+      <button type="button" role="tab" class="on" id="tabDeals" data-view="deals" aria-selected="true" aria-controls="dealsView" title="Deals in der Pipeline: Awareness bis Term sheet, ohne Invested, Watchlist, Rejected und Lost">Deals<span id="tabDealsN"></span></button>
       <button type="button" role="tab" id="tabTasks" data-view="tasks" aria-selected="false" aria-controls="tasksView" tabindex="-1">Aufgaben<span id="tabTasksN"></span></button>
       <button type="button" role="tab" id="tabInbox" data-view="inbox" aria-selected="false" aria-controls="inboxView" tabindex="-1">Inbox <span class="badge" id="tabInboxN" hidden>0</span></button>
       <button type="button" role="tab" id="tabAutopilot" data-view="autopilot" aria-selected="false" aria-controls="autopilotView" tabindex="-1">Autopilot</button>
@@ -391,6 +391,7 @@
     driveFolderId: "",       // Google Drive folder holding investment-thesis, evaluation-criteria, startup-scoring-matrix (the id at the end of the folder URL)
     stages: ["Awareness", "Screening", "Initial contact", "Due diligence", "Term sheet", "Invested", "Watchlist", "Rejected", "Lost"],  // deal stage titles in pipeline order; must match the Attio status titles exactly
     liveStages: ["Due diligence", "Term sheet"],   // stages that count as a live process
+    pipelineStages: ["Awareness", "Screening", "Initial contact", "Due diligence", "Term sheet"],  // the running pipeline, counted on the Deals tab: open stages only (not the portfolio, the watchlist or passed deals)
     passedStages: ["Rejected", "Lost"],            // stages that count as passed
     rejectedStage: "Rejected",                     // the passed stage that means "we declined" (the other passed stages mean "we lost it")
     statuses: ["Target", "Outreach", "Active discussion", "Due diligence", "Soft commitment", "Hard commitment", "Closed", "Passive"],  // investor status titles in pipeline order; must match the Attio status titles exactly (used to check proposals and undo in the in-page Inbox)
@@ -410,13 +411,14 @@
       source: "",            // where the deal came from; shown on the deal card as "via ..."
       createdAt: "",         // when the deal entered the list; written into the scoring prompt as "Added to pipeline"
     },
-    links: {  // The six side-menu URLs. Publish all screens first, then paste the six URLs here in EVERY screen (README.md).
+    links: {  // The seven side-menu URLs. Publish all screens first, then paste the seven URLs here in EVERY screen (README.md).
       deals: "",
       investors: "",
       inbox: "",
       knowledge: "",
       newsletter: "",
       profile: "",
+      start: "",
     },
   };
   // ── Die anderen Domänen. Ein Artefakt je Domäne; die Links stehen in CONFIG.links und werden beim Publizieren gesetzt. ──
@@ -429,13 +431,15 @@
     knowledge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 012-2h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2z M8 7h8M8 11h8M8 15h5"/></svg>',
     newsletter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
     profile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>',
+    start: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>',
   };
   function rail() {
     const item = (k, label) => `<a class="item ${k === HERE ? "on" : ""}" href="${LINKS[k].startsWith("http") ? LINKS[k] : "#"}" ${k === HERE ? 'aria-current="page"' : 'target="_blank" rel="noopener"'}>${ICONS[k]}${label}</a>`;
     document.getElementById("rail").innerHTML = `
       <div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 7c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg><span>${String(CONFIG.fundName || "Fund OS").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}<br>Operations</span></div>
+      ${item("start", "Start")}
       <div class="lbl">Domänen</div>
-      ${item("deals", "Deal Cockpit")}${item("investors", "Investor Relations")}${item("inbox", "Inbox")}${item("knowledge", "Knowledge")}${item("newsletter", "Newsletter")}
+      ${item("deals", "Deal Cockpit")}${item("investors", "Investor Relations")}${item("inbox", "Agent Workbench")}${item("knowledge", "Knowledge")}${item("newsletter", "Content")}
       <div class="spacer"></div>
       ${item("profile", "Profil")}
       <div class="foot">Fund OS · Scoring v2.0</div>`;
@@ -906,7 +910,7 @@
   }
   // ==== scorecard:end ====
 
-  // region:tasks (F007; pure: no DOM, no mcp, no globals; input is the output of parseAttioText() or JSON.parse; held still by scripts/check-artifact-tasks.mjs)
+  // region:tasks (F007; pure: no DOM, no mcp, no globals; input is the output of parseAttioText() or JSON.parse; held still by tools/check-screen-templates.sh)
   const TASK_MAX = 2000;   // longest task text the form sends
   const TASK_PAGE = 10;    // list-tasks answers at most 10 per call
   const TASK_CAP = 100;    // open tasks read per record
@@ -981,7 +985,7 @@
   }
   // endregion:tasks
 
-  // ── F017 · Vorschläge und Autopilot im eigenen Speicher: dieselben Werte und Prüfungen wie artifacts/ops/inbox.html ──
+  // ── F017 · Vorschläge und Autopilot im eigenen Speicher: dieselben Werte und Prüfungen wie inbox.html ──
   const DEALS = LIST, INVESTORS = CONFIG.investorList;
   const STATUSES = CONFIG.statuses;
   const KIND_LABEL = { email: "Mail", "deal-stage": "Stage", "investor-status": "Status", digest: "Digest", newsletter: "Newsletter", task: "Aufgabe", note: "Notiz" };
@@ -993,7 +997,7 @@
   const transitionAllowed = (from, to) => from === "pending" || (to === "sent" && from === "approved");
 
   // ==== guards:begin ====
-  // Alles, was aus dem Speicher kommt, ist unvertraut: erst prüfen, dann anzeigen oder nach Attio schreiben (Audit 2026-10-04, ADR-0008).
+  // Alles, was aus dem Speicher kommt, ist unvertraut: erst prüfen, dann anzeigen oder nach Attio schreiben.
   const FORBIDDEN_STAGES = CONFIG.forbiddenStages;
   const FORBIDDEN_STATUSES = CONFIG.forbiddenStatuses;
   // Streng: genau die Form 8-4-4-4-12 aus Kleinbuchstaben-Hex. Vor dem Test wird kleingeschrieben und mit dem Original verglichen:
@@ -1026,7 +1030,7 @@
     return null;
   }
   // Die Art, mit der die Karte geöffnet wurde, muss die Art des frisch gelesenen Dokuments sein; sonst würde eine andere Handlung
-  // ausgeführt, als die Person gesehen und freigegeben hat (Audit F014, B1).
+  // ausgeführt, als die Person gesehen und freigegeben hat.
   function kindChanged(openedKind, cur) {
     return cur?.kind === openedKind ? null : `Die Art der Freigabe hat sich seit dem Öffnen geändert (${String(openedKind).slice(0, 40)} → ${String(cur?.kind).slice(0, 40)}); bitte neu öffnen`;
   }
@@ -1051,13 +1055,13 @@
     if (ap.target?.list !== (stage ? DEALS : INVESTORS)) return "Liste passt nicht zur Art des Vorschlags";
     if (!isUuid(ap.target?.entryId)) return "Eintrags-ID ist ungültig";
     if (typeof to !== "string" || !(stage ? STAGES : STATUSES).includes(to)) return "Zielwert ist keine bekannte Option";
-    if ((stage ? FORBIDDEN_STAGES : FORBIDDEN_STATUSES).includes(to)) return `„${to}“ ist gesperrt: nur ein Mensch setzt das in Attio selbst (ADR-0008)`;
+    if ((stage ? FORBIDDEN_STAGES : FORBIDDEN_STATUSES).includes(to)) return `„${to}“ ist gesperrt: nur ein Mensch setzt das in Attio selbst`;
     return null;
   }
   // Rückgängig nur für erlaubte Handlungen mit geprüftem Ziel; sonst nie ein Schreibvorgang aus Speicherdaten.
   function undoTargetOk(act) {
     const t = act?.target ?? {};
-    // recordId ist Pflicht: ohne den Datensatz gäbe es keine Vorabprüfung des Ist-Werts (Sicherheitsprüfung F017, Low).
+    // recordId ist Pflicht: ohne den Datensatz gäbe es keine Vorabprüfung des Ist-Werts.
     if (!isUuid(t.entryId) || !isUuid(t.recordId)) return false;
     if (typeof act.before !== "string" || typeof act.after !== "string") return false;
     if (act.kind === "stage") return t.list === DEALS && STAGES.includes(act.before) && !FORBIDDEN_STAGES.includes(act.before);
@@ -1109,7 +1113,7 @@
   // ==== guards:end ====
   const AUTOPILOT_DOC = "settings/autopilot", RUNS = "runs"; // Speicherpfade des Vertrags
   // F017: dieses Artefakt führt nur das Modul Dealflow. Die Zeile MODULES ist die einzige, die sich von der Region in inbox.html unterscheidet
-  // (check-artifacts hält den Rest byte-gleich); die anderen Module bleiben im Dokument unberührt, weil der Schalter nur einen Schlüssel zusammenführt.
+  // (tools/check-screen-templates.sh hält den Rest byte-gleich); die anderen Module bleiben im Dokument unberührt, weil der Schalter nur einen Schlüssel zusammenführt.
   // ==== autopilot:begin ====
   const MODULES = ["dealflow"];
   const MODULE_LABEL = { dealflow: "Dealflow", investors: "Investoren", newsletter: "Newsletter", notes: "Meeting-Notizen" };
@@ -1163,7 +1167,83 @@
   }
   // ==== autopilot:end ====
 
-  // region:localcache (a copy of a list in this browser's local storage; every access guarded; nothing is thrown, a missing, damaged or foreign entry reads as null; mirrored byte for byte in deal-cockpit.html and investors.html, held still by tools/check-screen-templates.sh)
+  // region:permhelp (F029: when use('mcp') is null, the built-in `permissions` capability tells why and offers the way out; never declared, read-only on load, request / manage only on a click; the namespace, esc, the Diagnose line and the reload come in as arguments; mirrored byte for byte in every page that resolves mcp, held still by tools/check-screen-templates.sh)
+  const PERM_TEXT = {
+    denied: "Connectoren sind für dieses Artefakt abgelehnt. Über ‚Berechtigungen öffnen‘ wieder einschalten.",
+    prompt: "Noch nicht erlaubt: ‚Connectoren anfragen‘.",
+    granted: "Connectoren sind erlaubt, aber diese Ansicht hat sie nicht geladen. Die Seite neu laden.",
+    unavailable: "Als Gast von außerhalb der Organisation bietet claude.ai in geteilten Artefakten keine Connectoren an. Abhilfe: Artefakt duplizieren oder gemeinsamer Team-Account.",
+  };
+  const PERM_MANAGE_FAIL = "Das Panel ließ sich nicht öffnen. Menü des Artefakts oben rechts → Berechtigungen.";
+  const PERM_REQUEST_FAIL = "Die Anfrage ist fehlgeschlagen. Menü des Artefakts oben rechts → Berechtigungen.";
+  const permKnown = (s) => (s === "granted" || s === "prompt" || s === "denied" ? s : "unavailable");
+  const permText = (s) => PERM_TEXT[permKnown(s)];
+  // The box under the "keine Connectoren" banner: the text for the state of "mcp" and the two buttons. Every text goes through the page's esc.
+  function permHtml(esc, state) {
+    const s = permKnown(state);
+    return `<div class="permhelp" data-perm-help="1" style="margin-top:8px"><div data-perm-text>${esc(permText(s))}</div><div class="row" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><button type="button" class="btn" data-perm="request"${s === "denied" ? " disabled" : ""}>Connectoren anfragen</button><button type="button" class="btn" data-perm="manage">Berechtigungen öffnen</button></div><div data-perm-msg aria-live="polite" style="margin-top:6px"></div></div>`;
+  }
+  // Reads without prompting and logs the answers verbatim: the full map, "mcp" and "sample". { mcp, sample, all } holds the raw answers.
+  async function permRead(permissions, say) {
+    const one = async (name) => { try { return await permissions.state(name); } catch (e) { say(`permissions.state("${name}") fehlgeschlagen: ${e?.code ?? "?"}`); return "unavailable"; } };
+    let all = null;
+    try { all = await permissions.state(); } catch (e) { say(`permissions.state() fehlgeschlagen: ${e?.code ?? "?"}`); }
+    const mcp = await one("mcp"), sample = await one("sample");
+    say(`permissions.state() = ${JSON.stringify(all) ?? "undefined"}`);
+    say(`permissions.state("mcp") = ${String(mcp)}`);
+    say(`permissions.state("sample") = ${String(sample)}`);
+    return { mcp, sample, all };
+  }
+  // What one click does. "request": one dialog for ["mcp"], branch on the returned state. "manage": open the panel, then read the state again. { state, reload, msg }: state null = unchanged; reload true only when mcp is granted. Never throws; never asks twice.
+  async function permAct(kind, permissions, say) {
+    if (kind === "request") {
+      try {
+        const res = await permissions.request(["mcp"]);
+        say(`permissions.request(["mcp"]) = ${JSON.stringify(res) ?? "undefined"}`);
+        const s = res && typeof res === "object" && "mcp" in res ? res.mcp : await permissions.state("mcp");
+        return { state: permKnown(s), reload: s === "granted", msg: "" };
+      } catch (e) { say(`permissions.request(["mcp"]) fehlgeschlagen: ${e?.code ?? "?"}`); return { state: null, reload: false, msg: PERM_REQUEST_FAIL }; }
+    }
+    if (kind === "manage") {
+      try { await permissions.manage(); } catch (e) { say(`permissions.manage() abgelehnt: ${e?.code ?? "?"}`); return { state: null, reload: false, msg: PERM_MANAGE_FAIL }; }
+      let s; try { s = await permissions.state("mcp"); } catch { s = "unavailable"; }
+      say(`permissions.state("mcp") nach manage() = ${String(s)}`);
+      return { state: permKnown(s), reload: s === "granted", msg: "" };
+    }
+    return { state: null, reload: false, msg: "" };
+  }
+  // The clicks of the box, delegated on the banner element (the box is repainted with it). One click at a time.
+  function permBind(root, permissions, { say, reload }) {
+    if (root.dataset.permBound === "1") return;
+    root.dataset.permBound = "1";
+    let busy = false;
+    root.addEventListener("click", async (e) => {
+      const b = e.target?.closest?.("[data-perm]"); if (!b || busy || !root.contains(b)) return;
+      busy = true;
+      const set = (sel, fn) => { const el = root.querySelector(sel); if (el) fn(el); };
+      root.querySelectorAll("[data-perm]").forEach((x) => { x.disabled = true; });
+      const r = await permAct(b.dataset.perm, permissions, say);
+      if (r.state) set("[data-perm-text]", (el) => { el.textContent = permText(r.state); });
+      set("[data-perm-msg]", (el) => { el.textContent = r.reload ? "Erlaubt. Die Seite lädt neu …" : r.msg; });
+      root.querySelectorAll("[data-perm]").forEach((x) => { x.disabled = x.dataset.perm === "request" && r.state === "denied"; });
+      busy = false;
+      if (r.reload) reload();
+    });
+  }
+  // The one call of a page whose use('mcp') came back null: reads the state, logs it, mounts the box under the banner (a hidden banner becomes this note), wires the buttons. Returns the read states, or null when the view has no `permissions` (then nothing is shown).
+  async function permInit(root, { claude, esc, say, reload }) {
+    let permissions = null;
+    try { permissions = claude?.use ? await claude.use("permissions") : null; } catch (e) { say(`use('permissions'): ${e?.code ?? "?"}`); }
+    if (!permissions || !root) { say("use('permissions') → null: keine Hilfe beim Erlauben von Connectoren in dieser Ansicht"); return null; }
+    const perm = await permRead(permissions, say), box = permHtml(esc, perm.mcp);
+    if (root.hidden) { root.className = "note warn"; root.innerHTML = `<b>Diese Ansicht erreicht keine Connectoren.</b> ${box}`; root.hidden = false; }
+    else root.insertAdjacentHTML("beforeend", box);
+    permBind(root, permissions, { say, reload });
+    return perm;
+  }
+  // endregion:permhelp
+
+  // region:localcache (a copy of a list in this browser's local storage; every access guarded; nothing is thrown, a missing, damaged or foreign entry reads as null; mirrored byte for byte in deal-cockpit.html, investors.html and start.html, held still by tools/check-screen-templates.sh)
   function localCache(key, version) {
     const MAX_CHARS = 4 * 1024 * 1024;
     const store = () => { try { return typeof window !== "undefined" && window.localStorage ? window.localStorage : null; } catch { return null; } };
@@ -1446,7 +1526,7 @@
     } catch (err) { log("err", `${tool} · ${err?.code ?? "?"} · ${err?.message ?? ""}`, input); throw err; }
   }
 
-  // ── Google Drive: Wissensdokumente (gleiche Abfrage und Dekodierung wie artifacts/ops/knowledge.html) ──
+  // ── Google Drive: Wissensdokumente (gleiche Abfrage und Dekodierung wie knowledge.html) ──
   const b64utf8 = (b) => { try { const bin = atob(b); const bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i); return new TextDecoder("utf-8").decode(bytes); } catch { return null; } };
   async function callDrive(tool, input, opts) {
     const t0 = Date.now();
@@ -1816,7 +1896,11 @@
         <td>${esc(r.next)}</td></tr>`; }).join("");
   }
   function stageOptions() { const sel = $("stageSel"); const seen = new Set(deals.map((d) => d.stage).filter(Boolean)); const opts = STAGES.filter((s) => seen.has(s)).concat([...seen].filter((s) => !STAGES.includes(s))); sel.innerHTML = `<option value="">Alle Stages</option>` + opts.map((s) => `<option value="${esc(s)}" ${filter.stage === s ? "selected" : ""}>${esc(s)} (${deals.filter((d) => d.stage === s).length})</option>`).join(""); }
-  function render() { ranked = rank(deals, new Date()); tiles(); stageOptions(); table(); freshness(); if (selected) { const r = ranked.find((x) => x.d.entryId === selected); if (r) drawer(r); else closeDrawer(); } }
+  // The pipeline count on the Deals tab: open stages only, the portfolio, the watchlist and passed deals do not count.
+  const PIPELINE_STAGES = new Set(CONFIG.pipelineStages);
+  const pipelineCount = (list) => list.filter((d) => d && PIPELINE_STAGES.has(d.stage)).length;
+  function dealTabCount() { const n = pipelineCount(deals); $("tabDealsN").textContent = n ? ` (${n})` : ""; }
+  function render() { ranked = rank(deals, new Date()); dealTabCount(); tiles(); stageOptions(); table(); freshness(); if (selected) { const r = ranked.find((x) => x.d.entryId === selected); if (r) drawer(r); else closeDrawer(); } }
 
   // ── Drawer: ein Deal, seine Bewertungen, zwei Aktionen mit Bestätigung ───────
   function drawer(r) {
@@ -1988,18 +2072,26 @@
     }
   }
 
-  // ==== store-tabs:begin ==== (F017: Inbox and Autopilot of the deal domain on the cockpit's own store; the unescaped-value scan of check-artifacts reads this region)
+  // F027: what differs between the two pages that carry the store-tabs region (this one and Investor Relations). The region reads only these names;
+  // everything else in it is byte-identical in both pages (tools/check-screen-templates.sh). MODULE is also the one module of this page's autopilot (MODULES below).
+  const MODULE = "dealflow";
+  const DOMAIN_KINDS = ["deal-stage", "email"];                                    // the kinds this page decides; everything else stays in the Inbox
+  const STAGE_KIND = "deal-stage", STAGE_SLUG = CONFIG.fields.dealStage, STAGE_AUDIT = "write-stage";  // the one kind that is a list-entry write: the attribute and the audit verb
+  const DEAL_STAGE_SLUG = CONFIG.fields.dealStage, INVESTOR_STATUS_SLUG = CONFIG.investorStatusField;  // the attributes the undo of an audit entry writes back, per kind
+  const NOUN = { many: "Deals", one: "Deal" };
+  // Die Vorschläge dieses Artefakts: Stage-Wechsel und Mails zu Deals. Alles andere bleibt in der Inbox.
+  const isDomainApproval = (a) => Boolean(a) && typeof a === "object" && (a.kind === "deal-stage" || (a.kind === "email" && (a.module === "dealflow" || a.target?.list === DEALS)));
+  const recordName = (rec) => deals.find((x) => x.recordId === rec)?.name ?? "";    // the name of the record the Inbox is filtered on, when the page knows it
+
+  // ==== store-tabs:begin ==== (F017: Inbox and Autopilot of one domain on the page's own store; F027: mirrored byte for byte in deal-cockpit.html and investors.html, held by tools/check-screen-templates.sh; the unescaped-value scan of check-artifacts reads this region)
   let db = null, actor = "unbekannt", canEdit = false;
   let approvals = [], auditDocs = [], runsDocs = [], autopilotRaw = null;
   let ibFilter = "pending", ibSelected = null, ibNew = null, ibShown = "", ibRecord = null;
   let confirmOn = false, apMsg = "", undoOpen = null, feedMsgs = {}, undoFresh = {};
   let todayDocs = [], todayOk = false, todayBusy = false;
-  const MODULE = "dealflow", FEED_LIMIT = 200;
-  const DEAL_KINDS = ["deal-stage", "email"];
+  const FEED_LIMIT = 200;
   const RUN_STATUS = { running: "läuft", done: "fertig", failed: "fehlgeschlagen" };
   const ACT_LABEL = { "issue-draft": "Newsletter-Entwurf", "campaign-draft": "Kampagnen-Entwurf", "mail-draft": "Mail-Entwurf", "mail-sent": "Mail gesendet", "mail-confirmed": "Versand bestätigt", "mail-failed": "Versand fehlgeschlagen", score: "Scoring", record: "CRM-Datensatz", stage: "Stage", status: "Status", note: "Notiz", task: "Aufgabe", invite: "Termin" };
-  // Die Vorschläge dieses Artefakts: Stage-Wechsel und Mails zu Deals. Alles andere bleibt in der Inbox.
-  const isDealApproval = (a) => Boolean(a) && typeof a === "object" && (a.kind === "deal-stage" || (a.kind === "email" && (a.module === "dealflow" || a.target?.list === DEALS)));
   const ago = (iso) => { const d = new Date(iso); if (!Number.isFinite(d.getTime())) return ""; const m = Math.round((Date.now() - d.getTime()) / 60000); return m < 1 ? "jetzt" : m < 60 ? `vor ${m} min` : m < 1440 ? `vor ${Math.round(m / 60)} h` : `vor ${Math.round(m / 1440)} T`; };
   const fmtTime = (iso) => { const d = new Date(iso); return Number.isFinite(d.getTime()) ? d.toLocaleString("de-DE") : "—"; };
   const fmtVal = (v) => v === undefined || v === null ? "—" : typeof v === "string" ? v : JSON.stringify(v);
@@ -2031,30 +2123,30 @@
     try { await db.collection("audit").add(entry); } catch (e) { log("err", `audit.add ${e?.code ?? "?"}`); }
   }
 
-  // ── Reiter Inbox: die Vorschläge zu Deals ──
+  // ── Reiter Inbox: die Vorschläge dieser Domäne ──
   function updateBadges() {
-    const n = approvals.filter((x) => isDealApproval(x) && x.status === "pending").length, b = $("tabInboxN");
-    b.textContent = String(n); b.hidden = n === 0; b.title = `${n} offene Vorschläge zu Deals`;
+    const n = approvals.filter((x) => isDomainApproval(x) && x.status === "pending").length, b = $("tabInboxN");
+    b.textContent = String(n); b.hidden = n === 0; b.title = `${n} offene Vorschläge zu ${NOUN.many}`;
   }
   function renderInbox() {
     updateBadges();
     if (!db) { $("ibList").innerHTML = `<div class="empty">Der Speicher ist in dieser Ansicht nicht verfügbar. Das Artefakt im Browser auf claude.ai öffnen, angemeldet.</div>`; $("ibDetail").hidden = true; return; }
     $("ibDetail").hidden = false;
-    const base = approvals.filter(isDealApproval).filter((x) => !ibRecord || approvalHasRecord(x, ibRecord));
+    const base = approvals.filter(isDomainApproval).filter((x) => !ibRecord || approvalHasRecord(x, ibRecord));
     const vis = base.filter((a) => ibFilter === "all" || a.status === ibFilter || (ibFilter === "pending" && !statusValid(a.status))).sort((x, y) => String(y.createdAt).localeCompare(String(x.createdAt)));
     const counts = Object.fromEntries(["pending", "approved", "rejected", "sent"].map((s) => [s, base.filter((a) => a.status === s).length]));
     $("ibList").innerHTML = ibChip() + `<div class="row">${["pending", "approved", "sent", "rejected", "all"].map((s) => `<button type="button" class="btn ${ibFilter === s ? "primary" : ""}" data-f="${s}">${s === "all" ? "alle" : STATUS_LABEL[s]} · ${s === "all" ? base.length : counts[s]}</button>`).join("")}</div>` +
-      (vis.length ? vis.map((a) => `<button type="button" class="itemcard ${a.id === ibSelected ? "on" : ""} ${a.status !== "pending" ? "done" : ""}" data-id="${esc(a.id)}"><div class="row" style="justify-content:space-between"><span class="kind ${kindClass(a.kind)}">${esc(kindLabel(a.kind))}${a.email?.purpose ? " · " + esc(a.email.purpose) : ""}</span><span class="s">${esc(ago(a.createdAt))}</span></div><div style="font-weight:600">${esc(a.title)}</div><div class="s">${esc(a.createdBy ?? "")} · ${esc(statusLabel(a.status))}${a.decidedBy ? " von " + esc(a.decidedBy) : ""}</div></button>`).join("") : `<div class="empty">${ibRecord ? "Keine Vorschläge zu diesem Deal." : ibFilter === "pending" ? "Nichts wartet. Gut." : "Keine Einträge."}</div>`);
+      (vis.length ? vis.map((a) => `<button type="button" class="itemcard ${a.id === ibSelected ? "on" : ""} ${a.status !== "pending" ? "done" : ""}" data-id="${esc(a.id)}"><div class="row" style="justify-content:space-between"><span class="kind ${kindClass(a.kind)}">${esc(kindLabel(a.kind))}${a.email?.purpose ? " · " + esc(a.email.purpose) : ""}</span><span class="s">${esc(ago(a.createdAt))}</span></div><div style="font-weight:600">${esc(a.title)}</div><div class="s">${esc(a.createdBy ?? "")} · ${esc(statusLabel(a.status))}${a.decidedBy ? " von " + esc(a.decidedBy) : ""}</div></button>`).join("") : `<div class="empty">${ibRecord ? `Keine Vorschläge zu diesem ${NOUN.one}.` : ibFilter === "pending" ? "Nichts wartet. Gut." : "Keine Einträge."}</div>`);
     if (ibNew) return;  // the follow-up form owns the detail pane
     const sel = base.find((x) => x.id === ibSelected);
     if (!sel) { ibShown = ""; const h = $("ibDetail"); h.className = "ibdetail nosel"; h.innerHTML = `<div class="empty">Links einen Vorschlag wählen.</div>`; return; }
     if (JSON.stringify(sel) !== ibShown) ibRenderDetail(sel);  // an unchanged document is not repainted: edits in the mail fields survive other snapshots
   }
-  // Filter auf einen Deal (#inbox&record=<uuid>, aus dem Deal-Drawer): nur eine strenge UUID gilt; die Marke hebt ihn auf.
+  // Filter auf einen Datensatz (#inbox&record=<uuid>, aus dem Drawer): nur eine strenge UUID gilt; die Marke hebt ihn auf.
   function ibChip() {
     if (!ibRecord) return "";
-    const nm = (approvals.find((x) => approvalHasRecord(x, ibRecord) && typeof x.target?.name === "string" && x.target.name.trim())?.target.name ?? deals.find((x) => x.recordId === ibRecord)?.name ?? "").trim();
-    return `<div class="row"><button type="button" class="btn" data-rec-clear="1" title="Filter aufheben">Nur Deal${nm && nm !== "…" ? " " + esc(nm) : ""} <code>${esc(ibRecord.slice(0, 8))}…</code> · alle anzeigen</button></div>`;
+    const nm = (approvals.find((x) => approvalHasRecord(x, ibRecord) && typeof x.target?.name === "string" && x.target.name.trim())?.target.name ?? recordName(ibRecord) ?? "").trim();
+    return `<div class="row"><button type="button" class="btn" data-rec-clear="1" title="Filter aufheben">Nur ${NOUN.one}${nm && nm !== "…" ? " " + esc(nm) : ""} <code>${esc(ibRecord.slice(0, 8))}…</code> · alle anzeigen</button></div>`;
   }
   function ibSetRecord(rec, hash) {
     ibRecord = rec; ibSelected = null; ibNew = null; ibShown = "";
@@ -2099,7 +2191,7 @@
   function ibClose() { ibSelected = null; ibNew = null; ibShown = ""; renderInbox(); }
   async function decide(a, decision) {
     if (!transitionAllowed(a.status, decision)) { ibSay(`<div class="note bad">Schon ${esc(statusLabel(a.status))}; dieser Übergang ist nicht erlaubt.</div>`); return; }
-    if (!DEAL_KINDS.includes(a.kind) || !own(KIND_LABEL, a.kind)) { ibSay(`<div class="note bad">Unbekannte Art; nichts geschrieben.</div>`); return; }
+    if (!DOMAIN_KINDS.includes(a.kind) || !own(KIND_LABEL, a.kind)) { ibSay(`<div class="note bad">Unbekannte Art; nichts geschrieben.</div>`); return; }
     if (decision === "approved") {
       const why = approvalBlock(a); if (why) { ibSay(`<div class="note bad"><b>Nicht freigegeben, nichts geschrieben:</b> ${esc(why)}.</div>`); return; }
       if (!mcp) { ibSay(`<div class="note bad"><b>Keine Connectoren in dieser Ansicht.</b> Freigeben braucht Attio bzw. Gmail; nichts geschrieben.</div>`); return; }
@@ -2125,16 +2217,16 @@
       if (!cur || !transitionAllowed(cur.status, decision)) { ibSay(`<div class="note bad">Inzwischen ${esc(statusValid(cur?.status) ? STATUS_LABEL[cur.status] : "geändert")}; nichts geschrieben.</div>`); return; }
       if (decision === "approved") {
         // Ab hier gilt nur noch `cur`, nie `a`: die Art, die Felder, der Datensatz.
-        const why = kindChanged(a.kind, cur) ?? (DEAL_KINDS.includes(cur.kind) && own(KIND_LABEL, cur.kind) ? approvalBlock(cur) : "Diese Art gehört nicht in dieses Artefakt") ?? executedBlock(cur);
+        const why = kindChanged(a.kind, cur) ?? (DOMAIN_KINDS.includes(cur.kind) && own(KIND_LABEL, cur.kind) ? approvalBlock(cur) : "Diese Art gehört nicht in dieses Artefakt") ?? executedBlock(cur);
         if (why) { refuse(why); return; }
       }
       kind = cur.kind;
       let outputRef = `approval/${a.id}`; const patch = {};
       if (decision === "approved") {
-        if (kind === "deal-stage") {
-          await callAttio("update-list-entry-by-id", { list: cur.target.list, entry_id: cur.target.entryId, entry_values: { [CONFIG.fields.dealStage]: cur.change.to } }, { cache: false }); toolDone = true;
+        if (kind === STAGE_KIND) {
+          await callAttio("update-list-entry-by-id", { list: cur.target.list, entry_id: cur.target.entryId, entry_values: { [STAGE_SLUG]: cur.change.to } }, { cache: false }); toolDone = true;
           outputRef = `attio:entry/${cur.target.entryId}`;
-          await audit("write-stage", { entryId: cur.target.entryId, to: cur.change.to }, outputRef, `Effekt der Freigabe ${a.id}: ${cur.target.name} ${cur.change.from} → ${cur.change.to}`);
+          await audit(STAGE_AUDIT, { entryId: cur.target.entryId, to: cur.change.to }, outputRef, `Effekt der Freigabe ${a.id}: ${cur.target.name} ${cur.change.from} → ${cur.change.to}`);
         } else {
           const to = toList($("eTo")?.value ?? toList(cur.email?.to).join(",")); const subject = $("eSub")?.value ?? cur.email?.subject ?? ""; const body = $("eBody")?.value ?? cur.email?.body ?? "";
           const res = await callGmail("create_draft", { to, subject, body }, { cache: false }); toolDone = true;
@@ -2181,7 +2273,7 @@
     catch (e) { ibSay(`<div class="note bad">Speichern fehlgeschlagen (${esc(e?.code ?? "?")}). ${esc(e?.message ?? "")}</div>`); }
   }
 
-  // ── Reiter Autopilot: der Schalter für Dealflow, die Zählung, der letzte Lauf, das Protokoll ──
+  // ── Reiter Autopilot: der Schalter des Moduls, die Zählung, der letzte Lauf, das Protokoll ──
   // Ausgehende Handlungen des Agenten heute (UTC-Tag, wie die Zeitstempel). Der Feed lädt nur die neuesten 200 Einträge;
   // für die Tageszählung fragt die Seite den ganzen Tag ab (refreshToday) und fällt bei einem Fehler auf die geladene Liste zurück.
   // Ein fehlgeschlagener Versand (zweiter Eintrag "mail-failed") zählt nicht.
@@ -2203,7 +2295,7 @@
     const confirm = confirmOn ? `<div class="note warn"><b>Autopilot für ${esc(MODULE_LABEL[MODULE])} einschalten?</b> Der Agent sendet dann selbst, bis zu <b>${esc(c.maxOutboundPerDay)} Mails pro Tag</b>, nur zu diesen Zwecken: <code>${esc(c.purposes.join(", "))}</code>. Jede Mail steht vor dem Senden im Protokoll. Diese Leitplanken gelten weiter: <ul style="margin:6px 0 0;padding-left:18px"><li>höchstens eine Antwort je Thread und 24 Stunden</li><li>keine Mail an einen Empfänger, dem das Modul in den letzten 7 Tagen geschrieben hat, es sei denn, er hat geantwortet</li><li>nur die genannten Zwecke</li><li>höchstens ${esc(c.maxOutboundPerDay)} ausgehende Handlungen pro Tag</li><li>keine Stage oder kein Status in Invested, Term sheet, Soft Commitment, Hard Commitment oder Closed / Wired</li><li>den Schalter ändert nur ein Mensch, hier</li></ul><div class="row" style="margin-top:8px"><button type="button" class="btn primary" data-go="1">Autopilot einschalten</button><button type="button" class="btn" data-cancel="1">Abbrechen</button></div></div>` : "";
     const runHtml = run ? `<div class="note ${run.status === "failed" ? "bad" : run.status === "running" ? "warn" : "ok"}"><b>Letzter Lauf</b> · ${esc(fmtTime(run.startedAt))} · ${esc(RUN_STATUS[run.status] ?? run.status ?? "?")}<div class="s" style="margin-top:4px">${esc(run.acts ?? 0)} Handlungen · ${esc(run.outbound ?? 0)} ausgehend${run.mode ? " · Modus " + esc(MODE_LABEL[run.mode] ?? run.mode) : ""}</div>${run.summary ? `<div style="margin-top:4px">${esc(run.summary)}</div>` : ""}${run.error ? `<div style="margin-top:4px;color:var(--alert)">${esc(run.error)}</div>` : ""}</div>` : `<div class="note">Noch kein Lauf.</div>`;
     $("apBody").innerHTML = (canEdit ? "" : `<div class="note warn">Nur Bearbeiter dieses Artefakts dürfen den Schalter ändern.</div>`) +
-      `<div class="card"><div class="row" style="justify-content:space-between"><h2 class="sechead" style="font-size:16px;letter-spacing:0;text-transform:none;color:var(--fg)">${esc(MODULE_LABEL[MODULE])}</h2><span class="pill ${c.mode === "on" ? "ok" : c.mode === "review-first" ? "wait" : ""}"><span class="dot"></span>${esc(MODE_LABEL[c.mode])}</span></div>
+      `<div class="apcard"><div class="row" style="justify-content:space-between"><h2 class="sechead" style="font-size:16px;letter-spacing:0;text-transform:none;color:var(--fg)">${esc(MODULE_LABEL[MODULE])}</h2><span class="pill ${c.mode === "on" ? "ok" : c.mode === "review-first" ? "wait" : ""}"><span class="dot"></span>${esc(MODE_LABEL[c.mode])}</span></div>
         <div class="sw" role="radiogroup" aria-label="Autopilot ${esc(MODULE_LABEL[MODULE])}">${sw}</div>
         <div class="s">Aus: nur Vorschläge · Erst prüfen: Datensätze, Scores und Entwürfe selbst, jede Mail als Freigabe · An: sendet selbst, in den Leitplanken. Nicht lesbar heißt aus.</div>
         ${confirm}${apMsg}
@@ -2221,7 +2313,7 @@
       const eff = readAutopilot(cur).modules[MODULE], before = eff.mode;
       if (before === mode) { apMsg = ""; renderAutopilot(); return; }
       const at = new Date().toISOString();
-      // Ein Modul je Schreibvorgang, zusammengeführt: nie das ganze `modules`-Objekt aus dem Lesen, nie fremde Schlüssel (Sicherheitsprüfung F017, Low).
+      // Ein Modul je Schreibvorgang, zusammengeführt: nie das ganze `modules`-Objekt aus dem Lesen, nie fremde Schlüssel.
       const next = { modules: { [MODULE]: { mode, maxOutboundPerDay: eff.maxOutboundPerDay, purposes: eff.purposes, updatedAt: at, updatedBy: actor } } };
       await ref.set(next, { merge: true });
       await audit("autopilot-set", { module: MODULE, before, after: mode }, AUTOPILOT_DOC, `${MODULE}: ${before} → ${mode}`);
@@ -2230,13 +2322,13 @@
     renderAutopilot();
   }
 
-  // ── Protokoll: die Handlungen des Agenten im Modul Dealflow ──
+  // ── Protokoll: die Handlungen des Agenten in diesem Modul ──
   const actChip = (kind) => kind === "mail-sent" || kind === "mail-confirmed" || kind === "mail-failed" ? "k-email" : kind === "issue-draft" || kind === "campaign-draft" ? "k-newsletter" : "k-deal-stage";
   const canUndo = (e) => Boolean(e.act?.reversible && !e.corrected && undoTargetOk(e.act));
   function renderFeed() {
     if (!db) return;
     const runs = groupActs(auditDocs.filter((e) => e.actorType === "agent" && e.module === MODULE));
-    if (!runs.length) { $("feed").innerHTML = `<div class="empty">Noch keine Handlungen des Agenten im Modul Dealflow. Sobald es läuft, steht hier jede Handlung, mit Weg zurück.</div>`; return; }
+    if (!runs.length) { $("feed").innerHTML = `<div class="empty">Noch keine Handlungen des Agenten im Modul ${esc(MODULE_LABEL[MODULE])}. Sobald es läuft, steht hier jede Handlung, mit Weg zurück.</div>`; return; }
     const pool = allAudit();
     $("feed").innerHTML = runs.slice(0, 20).map((r) => {
       const run = runsDocs.find((x) => x.id === r.runId);
@@ -2257,7 +2349,7 @@
           ${open && fresh ? `<div class="note warn"><b>${esc(fresh.act.target.name ?? "Eintrag")}</b> zurück auf <b>${esc(fmtVal(fresh.act.before))}</b> setzen? Der Eintrag wurde eben frisch aus dem Speicher gelesen; vorher wird der aktuelle Wert in Attio gelesen, und nur wenn er noch <b>${esc(fmtVal(fresh.act.after))}</b> ist, wird geschrieben und im Protokoll vermerkt.<div class="row" style="margin-top:8px"><button type="button" class="btn danger" data-undo-go="${id}">Rückgängig machen</button><button type="button" class="btn" data-undo-cancel="1">Abbrechen</button></div></div>` : ""}
           ${fm}</div>`;
       }).join("");
-      return `<div class="card">${head}<div>${rows}</div></div>`;
+      return `<div class="apcard">${head}<div>${rows}</div></div>`;
     }).join("") + (runs.length > 20 ? `<div class="meta">Die 20 neuesten Läufe.</div>` : "");
   }
   // Den Eintrag frisch aus dem Speicher lesen (nach ID); die Liste auf dem Bildschirm kann veraltet oder verändert sein.
@@ -2280,7 +2372,7 @@
     const e = await undoFetch(listed.id);
     if (!shown || !e || !canUndo(e) || JSON.stringify(e.act) !== JSON.stringify(shown.act)) { feedMsgs[listed.id] = `<div class="note bad">Kein Undo: der Eintrag hat sich seit dem Öffnen geändert oder ist nicht zulässig; nichts geschrieben.</div>`; delete undoFresh[listed.id]; renderFeed(); return; }
     delete undoFresh[listed.id];
-    const a = e.act, slug = a.kind === "stage" ? CONFIG.fields.dealStage : CONFIG.investorStatusField;
+    const a = e.act, slug = a.kind === "stage" ? DEAL_STAGE_SLUG : INVESTOR_STATUS_SLUG;
     let wrote = false;
     try {
       if (a.target.recordId) {
@@ -2414,7 +2506,8 @@
       log("err", "use('mcp') → null: diese Ansicht liefert keine Connectoren");
       setConn("bad", "Keine Connectoren in dieser Ansicht");
       banner("bad", `<b>Diese Ansicht erreicht keine Connectoren.</b> Das Artefakt im Browser auf claude.ai öffnen (nicht eingebettet, nicht in der Vorschau), angemeldet, mit verbundenem Attio-Connector. In der mobilen App stehen Connectoren für Artefakte nicht auf jeder Ansicht zur Verfügung.`);
-      $("emptyCell").textContent = "Keine Connectoren in dieser Ansicht."; $("diag").open = true; return;
+      $("emptyCell").textContent = "Keine Connectoren in dieser Ansicht."; $("diag").open = true;
+      await permInit($("banner"), { claude: window.claude, esc, say: (t, raw) => log("info", t, raw), reload: () => location.reload() }); return;
     }
     mcp = cap; $("refresh").disabled = false; log("ok", "use('mcp') aufgelöst");
     for (const name of [SERVER, DRIVE]) {
