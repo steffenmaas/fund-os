@@ -761,6 +761,7 @@
     const list = Array.isArray(p) ? p : (p.records ?? p.data ?? Object.values(p).find(Array.isArray) ?? []);
     return Array.isArray(list) ? list : [];
   }
+  // region:rank (pure: no DOM, no mcp, no globals but CONFIG and the helpers above it; mirrored byte for byte in tools/ops/digest-cli.mjs, held still by tools/check-digest-mirror.mjs)
   function toDeal(e) {
     const a = e.attributes ?? e.entry_values ?? e.values ?? {};
     const parent = e.parent_record ?? {};
@@ -786,6 +787,7 @@
     }
     return rows;
   }
+  // endregion:rank
 
   // ── Connector ────────────────────────────────────────────────────────────────
   const syncRefresh = () => { $("refresh").disabled = !mcp || loading || scoringId !== null || rewriting; };

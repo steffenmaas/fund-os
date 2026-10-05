@@ -1,0 +1,185 @@
+entries[12]:
+  - entry_id: entry-001
+    parent_record:
+      object_slug: companies
+      object_id: obj-companies
+      record_id: rec-001
+    attributes:
+      example_quality: 78
+      example_thesis_fit: 70
+      example_urgency: 55
+      example_summary: "Warehouse picking arms sold as a monthly service to two pilot customers."
+      example_urgency_evaluation: "Urgency 55/100 (Open window) \u00b7 as of 2026-09-28 (observed)\n\u2022 Round: closing in Q4"
+      example_sector: Robotics
+      example_round: Seed
+      example_stage: In diligence
+      example_source: Event
+      example_created_at: "Wednesday, 2026-09-02 10:00:00"
+  - entry_id: entry-002
+    parent_record:
+      object_slug: companies
+      object_id: obj-companies
+      record_id: rec-002
+    attributes:
+      example_quality: 82
+      example_thesis_fit: 80
+      example_urgency: 85
+      example_summary: "Scheduling and billing platform for small physiotherapy practices."
+      example_urgency_evaluation: "Urgency 85/100 (Open window) \u00b7 as of 2026-09-28 (observed)\n\u2022 Round: closing in Q4"
+      example_sector: Digital health
+      example_round: Seed
+      example_stage: Initial contact
+      example_source: Event
+      example_created_at: "Wednesday, 2026-09-03 10:00:00"
+  - entry_id: entry-003
+    parent_record:
+      object_slug: companies
+      object_id: obj-companies
+      record_id: rec-003
+    attributes:
+      example_quality: 64
+      example_thesis_fit: 66
+      example_urgency: 45
+      example_summary: "Usage analytics for embedded finance products."
+      example_urgency_evaluation: "Urgency 45/100 (Open window) \u00b7 as of 2026-09-28 (observed)\n\u2022 Round: closing in Q4"
+      example_sector: Data tools
+      example_round: Pre-seed
+      example_stage: Screening
+      example_source: Event
+      example_created_at: "Wednesday, 2026-09-04 10:00:00"
+  - entry_id: entry-004
+    parent_record:
+      object_slug: companies
+      object_id: obj-companies
+      record_id: rec-004
+    attributes:
+      example_thesis_fit: 75
+      example_urgency: 50
+      example_summary: "Carbon accounting API for mid-size manufacturers."
+      example_urgency_evaluation: "Urgency 50/100 (Open window) \u00b7 as of 2026-09-28 (observed)\n\u2022 Round: closing in Q4"
+      example_sector: Climate software
+      example_round: Pre-seed
+      example_stage: Screening
+      example_source: Event
+      example_created_at: "Wednesday, 2026-09-05 10:00:00"
+  - entry_id: entry-005
+    parent_record:
+      object_slug: companies
+      object_id: obj-companies
+      record_id: rec-005
+    attributes:
+      example_quality: 88
+      example_thesis_fit: 84
+      example_urgency: 30
+      example_summary: "Software that balances home batteries across a neighbourhood."
+      example_urgency_evaluation: "Urgency 30/100 (Open window) \u00b7 as of 2026-09-28 (observed)\n\u2022 Round: closing in Q4"
+      example_sector: Energy
+      example_round: Seed
+      example_stage: Watchlist
+      example_source: Event
+      example_created_at: "Wednesday, 2026-09-06 10:00:00"
+  - entry_id: entry-006
+    parent_record:
+      object_slug: companies
+      object_id: obj-companies
+      record_id: rec-006
+    attributes:
+      example_quality: 60
+      example_thesis_fit: 60
+      example_urgency: 10
+      example_summary: "Document review assistant for small law firms."
+      example_urgency_evaluation: "Urgency 10/100 (Open window) \u00b7 as of 2026-09-28 (observed)\n\u2022 Round: closing in Q4"
+      example_sector: Machine learning
+      example_round: Pre-seed
+      example_stage: Screening
+      example_source: Event
+      example_created_at: "Wednesday, 2026-09-07 10:00:00"
+  - entry_id: entry-007
+    parent_record:
+      object_slug: companies
+      object_id: obj-companies
+      record_id: rec-007
+    attributes:
+      example_quality: 55
+      example_thesis_fit: 50
+      example_urgency: 20
+      example_summary: "Load matching for regional carriers."
+      example_urgency_evaluation: "Urgency 20/100 (Open window) \u00b7 as of 2026-09-28 (observed)\n\u2022 Round: closing in Q4"
+      example_sector: Logistics
+      example_round: Pre-seed
+      example_stage: New
+      example_source: Event
+      example_created_at: "Wednesday, 2026-09-08 10:00:00"
+  - entry_id: entry-008
+    parent_record:
+      object_slug: companies
+      object_id: obj-companies
+      record_id: rec-008
+    attributes:
+      example_quality: 70
+      example_thesis_fit: 70
+      example_urgency: 70
+      example_summary: "Out of thesis."
+      example_urgency_evaluation: "Urgency 70/100 (Open window) \u00b7 as of 2026-09-28 (observed)\n\u2022 Round: closing in Q4"
+      example_sector: Forestry
+      example_round: Seed
+      example_stage: Rejected
+      example_source: Event
+      example_created_at: "Wednesday, 2026-09-09 10:00:00"
+  - entry_id: entry-009
+    parent_record:
+      object_slug: companies
+      object_id: obj-companies
+      record_id: rec-009
+    attributes:
+      example_quality: 70
+      example_thesis_fit: 70
+      example_urgency: 70
+      example_summary: "Went with another investor."
+      example_urgency_evaluation: "Urgency 70/100 (Open window) \u00b7 as of 2026-09-28 (observed)\n\u2022 Round: closing in Q4"
+      example_sector: Mobility
+      example_round: Seed
+      example_stage: Lost
+      example_source: Event
+      example_created_at: "Wednesday, 2026-09-10 10:00:00"
+  - entry_id: entry-010
+    parent_record:
+      object_slug: companies
+      object_id: obj-companies
+      record_id: rec-010
+    attributes:
+      example_sector: Infrastructure
+      example_round: Pre-seed
+      example_stage: Screening
+      example_source: Event
+      example_created_at: "Wednesday, 2026-09-11 10:00:00"
+  - entry_id: entry-011
+    parent_record:
+      object_slug: companies
+      object_id: obj-companies
+      record_id: rec-011
+    attributes:
+      example_quality: 70
+      example_thesis_fit: 68
+      example_urgency: 40
+      example_summary: "Rental platform for workshop equipment; the urgency note is old."
+      example_urgency_evaluation: "Urgency 40/100 (Open window) \u00b7 as of 2026-07-01 (observed)\n\u2022 Round: closing in Q4"
+      example_sector: Manufacturing
+      example_round: Seed
+      example_stage: Screening
+      example_source: Event
+      example_created_at: "Wednesday, 2026-09-12 10:00:00"
+  - entry_id: entry-012
+    parent_record:
+      object_slug: companies
+      object_id: obj-companies
+      record_id: rec-012
+    attributes:
+      example_quality: 50
+      example_summary: "Indoor mapping for retail."
+      example_sector: Mapping
+      example_round: Pre-seed
+      example_stage: New
+      example_source: Event
+      example_created_at: "Wednesday, 2026-09-13 10:00:00"
+has_more: false

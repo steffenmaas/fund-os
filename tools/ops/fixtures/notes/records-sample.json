@@ -1,0 +1,26 @@
+[
+  {
+    "recordId": "rec-company-1",
+    "object": "companies",
+    "name": "Quillstone Robotics",
+    "domains": [
+      "quillstone.example"
+    ]
+  },
+  {
+    "recordId": "rec-company-2",
+    "object": "companies",
+    "name": "Fernwood Route Planner",
+    "domains": [
+      "fernwood.example"
+    ]
+  },
+  {
+    "recordId": "rec-person-1",
+    "object": "people",
+    "name": "Ava Example",
+    "emails": [
+      "ava@mail.example"
+    ]
+  }
+]

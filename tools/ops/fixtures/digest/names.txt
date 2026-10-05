@@ -1,0 +1,49 @@
+[12]:
+  - record_id: rec-001
+    attributes:
+      name: Alder Robotics
+      domains[1]: alderrobotics.example
+  - record_id: rec-002
+    attributes:
+      name: Birchwood Health
+      domains[1]: birchwoodhealth.example
+  - record_id: rec-003
+    attributes:
+      name: Cinder Analytics
+      domains[1]: cinderanalytics.example
+  - record_id: rec-004
+    attributes:
+      name: Delta Fern
+      domains[1]: deltafern.example
+  - record_id: rec-005
+    attributes:
+      name: Ember Grid
+      domains[1]: embergrid.example
+  - record_id: rec-006
+    attributes:
+      name: Foxglove AI
+      domains[1]: foxgloveai.example
+  - record_id: rec-007
+    attributes:
+      name: Garnet Freight
+      domains[1]: garnetfreight.example
+  - record_id: rec-008
+    attributes:
+      name: Hollow Pine
+      domains[1]: hollowpine.example
+  - record_id: rec-009
+    attributes:
+      name: Iris Fleet
+      domains[1]: irisfleet.example
+  - record_id: rec-010
+    attributes:
+      name: Juniper Cloud
+      domains[1]: junipercloud.example
+  - record_id: rec-011
+    attributes:
+      name: Kestrel Works
+      domains[1]: kestrelworks.example
+  - record_id: rec-012
+    attributes:
+      name: Lumen Atlas
+      domains[1]: lumenatlas.example

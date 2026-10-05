@@ -7,12 +7,23 @@
  * --config <path> or the FUND_OS_CONFIG environment variable): the autopilot.* keys named in
  * plugins/fund-os/skills/ops-<module>/SKILL.md, plus masterData.fundName and crmFields.*.
  *
- *   prompt        --deal <deal.json> --docs <dir> [--at <iso>]
- *   assemble      --deal <deal.json> --docs <dir> --model-output <json> [--at <iso>] [--cap <n>] --out <dir>
+ *   prompt        --deal <deal.json> --docs <dir> [--at <iso>] [--deck <deck.txt>]
+ *   assemble      --deal <deal.json> --docs <dir> --model-output <json> [--at <iso>] [--cap <n>] [--deck <deck.txt>] --out <dir>
  *                 writes entry_values.json ({crmFields slug: value}; a slug left empty disables that write),
- *                 scorecard.txt and result.json
+ *                 scorecard.txt and result.json.
+ *                 "Pitch deck screening" is accepted only with --deck (the flag the prompt carried); without it the depth
+ *                 is downgraded to "First screening" and result.json says so (deckRead false, screeningDepthNote)
  *   reply-prompt  --deal <deal.json> --result <result.json> --purpose <p> --tone <tone-guide.md>
- *                 [--config <path>] [--founder-text <file>] [--to <address>] [--at <iso>]
+ *                 [--config <path>] [--founder-text <file>] [--to <address>] [--at <iso>] [--deck <deck.txt>]
+ *   extract-deck  --raw <gmail get_message RAW json> --out <dir>
+ *                 decodes the base64url `raw` field (the file the harness wrote for an oversized result), walks the MIME
+ *                 parts and writes every application/pdf or PPTX part of at least 50 kB to <dir> (file names sanitised
+ *                 to [A-Za-z0-9._-]); prints [{file, mimeType, bytes}]. Inline images are ignored. Malformed base64url:
+ *                 exit 1, nothing written. Nothing is executed.
+ *   deck-text     --file <deck.pdf> --out <deck.txt>
+ *                 `pdftotext -layout` (execFile, no shell), cap 60 000 characters; writes <deck.txt> and <deck.txt>.meta.json
+ *                 {file, pages, chars, imageOnly} and prints {pages, chars, imageOnly, cut}. Exit 1 with a reason when
+ *                 pdftotext is missing, the file is no PDF, or the PDF has no text at all; imageOnly (< 200 characters) exits 0.
  *   check-mail    --mail <mail.json> --purpose-list <module> --recent <recent.json> [--config <path>]
  *                 [--now <iso>] [--expect-to <address>] [--source from-header|form-subject]
  *                 [--mode off|review-first|on] [--result <result.json from assemble>]
@@ -46,6 +57,10 @@
  *                 nothing into a committed stage or status; the passive status is an approval only.
  *                 --kind score --stage <the entry's current stage>: scores only on entries still in stages.new
  *                 or stages.screening.
+ *   store-url     --module <m> [--config <path>]
+ *                 prints the URL of the Inbox store that holds that module's switch, approvals, audit, runs and intake:
+ *                 autopilot.stores.<m>, else autopilot.inboxStore (the older name autopilot.inboxStoreUrl is still read).
+ *                 Exit 1 when neither is set.
  *
  * <dir> holds <key>.md (investment-thesis, evaluation-criteria, startup-scoring-matrix) plus an optional
  * <key>.meta.json ({source: "fund"|"bundled"|"missing", title, modifiedTime}).
@@ -54,15 +69,17 @@
 
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  CAPS, CLEAN_ADDRESS, DAY_MS, WRITE_TEXT_MAX, ap, addressOf, allowedHosts, capDocs, clip, configPath, dateArg, die, domainOf, entryValues,
+  CAPS, CLEAN_ADDRESS, DAY_MS, PROMPT_MAX_BYTES, WRITE_TEXT_MAX, byteLength, ap, addressOf, allowedHosts, capDocs, clip, configPath, dateArg, die, domainOf, entryValues,
   fitPrompt, fundName, loadConfig, loadDocs, need, onOwnDomain, ownDomains, parseArgs, provenanceDocs, readJson, strings, urlProblems,
 } from "./lib/common.mjs";
 import * as scoring from "./lib/scoring.mjs";
 import { knowledgeBlock, preamble, provenanceLine } from "./lib/knowledge.mjs";
+import { DECK_MAX_CHARS, deckBlock, deckFileName, deckParts, pdfText, readDeck } from "./lib/deck.mjs";
+import { MODULE_NAME_RE, storeUrl } from "./lib/store.mjs";
 
 const SKILL_VERSION = "deal-startup-score@ops-cli-1.0";
 const KEYS = ["investment-thesis", "evaluation-criteria", "startup-scoring-matrix"];
@@ -141,7 +158,7 @@ function answerShape() {
   ].join("\n");
 }
 
-function buildPrompt(cfg, deal, docs, at) {
+function buildPrompt(cfg, deal, docs, at, deck) {
   return [
     system(docs, cfg),
     "",
@@ -166,6 +183,7 @@ function buildPrompt(cfg, deal, docs, at) {
     dealBriefText(deal).split(FENCE_CLOSE).join("=== end of data (quoted) ==="),
     FENCE_CLOSE,
     "",
+    ...(deck ? [...deckBlock(deck), 'A deck is part of the evidence: set "screeningDepth" to "Pitch deck screening" and let the deck, where it speaks, outweigh the mail text.', ""] : []),
     "## Answer",
     "",
     "Reply with only this JSON object, nothing before or after it (the angle brackets describe the value, do not copy them):",
@@ -179,7 +197,10 @@ function cmdPrompt(args) {
   const deal = readJson(need(args, "deal"), "deal");
   const docs = loadDocs(resolve(need(args, "docs")), KEYS);
   const at = dateArg(args, "at");
-  process.stdout.write(fitPrompt((cap) => buildPrompt(cfg, deal, capDocs(docs, cap), at)));
+  const deck = readDeck(args);
+  // The deck has its own cap (60 000 characters); the 60 000-byte fit is for everything else.
+  const budget = PROMPT_MAX_BYTES + (deck ? byteLength(deck.text) : 0);
+  process.stdout.write(fitPrompt((cap) => buildPrompt(cfg, deal, capDocs(docs, cap), at, deck), budget));
 }
 
 // ── assemble ──────────────────────────────────────────────────────────────────
@@ -294,6 +315,14 @@ function cmdAssemble(args) {
   if (cap !== null && !CAPS.includes(cap)) die(`--cap must be one of ${CAPS.join(", ")}`);
 
   const norm = normaliseOutput(raw);
+  // "Pitch deck screening" is only true when the prompt carried the deck.
+  const deck = readDeck(args);
+  let depthNote = null;
+  if (norm.screeningDepth === "Pitch deck screening" && !deck) {
+    norm.screeningDepth = "First screening";
+    depthNote = 'downgraded "Pitch deck screening" to "First screening": the prompt was built without --deck';
+  }
+  if (deck) norm.companySummary = `${norm.companySummary} (deck: ${deck.file}, ${deck.pages} pages)`;
   const counts = [["quality", norm.quality.dimensions.length, scoring.QUALITY_DIMENSIONS.length], ["thesis", norm.thesis.dimensions.length, scoring.THESIS_DIMENSIONS.length], ["urgency", norm.urgency.dimensions.length, scoring.URGENCY_DIMENSIONS.length]];
   const wrong = counts.filter(([, got, want]) => got !== want);
   if (wrong.length) die(`FAIL: the model output has the wrong number of dimensions (${wrong.map(([k, got, want]) => `${k} ${got}, need ${want}`).join("; ")}); nothing is assembled`);
@@ -321,13 +350,15 @@ function cmdAssemble(args) {
     // For reply-prompt: what the mail may speak to (never the numbers).
     asOf: result.asOf, screeningDepth: result.screeningDepth, companySummary: result.companySummary,
     thesisWhy: norm.thesis.why, openQuestions: result.openQuestions,
+    deckRead: Boolean(deck), ...(deck ? { deck: { file: deck.file, pages: deck.pages } } : {}),
+    ...(depthNote ? { screeningDepthNote: depthNote } : {}),
   };
 
   mkdirSync(outDir, { recursive: true });
   writeFileSync(resolve(outDir, "entry_values.json"), `${JSON.stringify(values, null, 2)}\n`);
   writeFileSync(resolve(outDir, "scorecard.txt"), `${result.scorecard}\n`);
   writeFileSync(resolve(outDir, "result.json"), `${JSON.stringify(summary, null, 2)}\n`);
-  process.stdout.write(`${name}: Quality ${result.quality} (${result.qualityBand}) · Thesis Fit ${result.thesisFit} (${result.thesisBand}) · Urgency ${result.urgency} (${result.urgencyBand}, ${result.urgencyBasis}) · action ${result.action} · next step by ${result.nextStepBy}\n`);
+  process.stdout.write(`${name}: Quality ${result.quality} (${result.qualityBand}) · Thesis Fit ${result.thesisFit} (${result.thesisBand}) · Urgency ${result.urgency} (${result.urgencyBand}, ${result.urgencyBasis}) · action ${result.action} · next step by ${result.nextStepBy}${depthNote ? ` · NOTE: ${depthNote}` : ""}\n`);
 }
 
 // ── reply-prompt ──────────────────────────────────────────────────────────────
@@ -351,6 +382,7 @@ function cmdReplyPrompt(args) {
   if (!PURPOSE_BRIEF[purpose] || !allowed.includes(purpose)) die(`purpose "${purpose}" is not one of the dealflow purposes: ${allowed.join(", ")}`);
   const tone = readFileSync(resolve(need(args, "tone")), "utf8").trim();
   const at = dateArg(args, "at");
+  const deck = readDeck(args);
   const founderText = typeof args["founder-text"] === "string" ? readFileSync(resolve(args["founder-text"]), "utf8").trim() : "";
   const sender = a.fund?.senderName, booking = a.fund?.bookingLink, fund = fundName(cfg);
   if (!sender) die("config: autopilot.fund.senderName is missing");
@@ -403,6 +435,7 @@ function cmdReplyPrompt(args) {
     (founderText || "(no founder text provided)").split(MAIL_FENCE_CLOSE).join("=== end of founder text (quoted) ==="),
     MAIL_FENCE_CLOSE,
     "",
+    ...(deck ? deckBlock(deck) : []),
     "## Answer",
     "",
     "Reply with only this JSON object, nothing before or after it:",
@@ -418,7 +451,7 @@ const BOUND_MODULES = ["dealflow", "investors"]; // modules whose mails go to ex
 const SOURCES = ["from-header", "form-subject"];
 const SCORE_PATTERN = /\/\s*100\b|\bout of 100\b|\bvon 100\b|\bPunkte\b/i;
 
-const AP_MODULES = ["dealflow", "investors", "newsletter"];
+const AP_MODULES = ["dealflow", "investors", "newsletter", "notes"];
 const AP_MODES = ["off", "review-first", "on"];
 /** Defaults as the runbook states them: an unknown mode is off, a missing module is off, a missing cap is the configured default. */
 export function effectiveSwitch(doc, moduleName, defaultCap = 20) {
@@ -755,10 +788,46 @@ function cmdCheckWrite(args) {
   process.stdout.write("OK\n");
 }
 
+// ── extract-deck, deck-text, store-url ────────────────────────────────────────
+function cmdExtractDeck(args) {
+  const rawJson = readJson(need(args, "raw"), "RAW message");
+  const out = resolve(need(args, "out"));
+  const found = deckParts(rawJson);
+  if (found.error) die(found.error);
+  if (found.parts.length) mkdirSync(out, { recursive: true });
+  const used = new Set(), written = [];
+  found.parts.forEach((part, i) => {
+    const file = resolve(out, deckFileName(part, i, used));
+    writeFileSync(file, part.data);
+    written.push({ file, mimeType: part.mimeType, bytes: part.data.length });
+  });
+  process.stdout.write(`${JSON.stringify(written)}\n`);
+}
+
+function cmdDeckText(args) {
+  const file = resolve(need(args, "file")), out = resolve(need(args, "out"));
+  if (!existsSync(file)) die(`cannot read ${args.file}`);
+  const { text, nonWs, cut, meta } = pdfText(file);
+  if (nonWs === 0) { process.stdout.write(`${JSON.stringify({ ...meta, cut: false })}\n`); die(`${meta.file} has no text layer (image-only deck); no OCR`); }
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, `${cut ? `${text.slice(0, DECK_MAX_CHARS)}\n[… cut at ${DECK_MAX_CHARS} characters]` : text}\n`);
+  writeFileSync(`${out}.meta.json`, `${JSON.stringify(meta)}\n`);
+  process.stdout.write(`${JSON.stringify({ pages: meta.pages, chars: meta.chars, imageOnly: meta.imageOnly, cut })}\n`);
+}
+
+function cmdStoreUrl(args) {
+  const moduleName = need(args, "module");
+  if (!MODULE_NAME_RE.test(moduleName)) die(`FAIL: --module "${moduleName.slice(0, 40)}" is not a module name`);
+  const url = storeUrl(loadConfig(args), moduleName);
+  if (!url) die(`FAIL: no store for ${moduleName}: neither autopilot.stores.${moduleName} nor autopilot.inboxStore is set in ${configPath(args)}`);
+  process.stdout.write(`${url}\n`);
+}
+
 // ── Dispatch ──────────────────────────────────────────────────────────────────
 const COMMANDS = {
   prompt: cmdPrompt, assemble: cmdAssemble, "reply-prompt": cmdReplyPrompt, "check-mail": cmdCheckMail,
-  "extract-recipient": cmdExtractRecipient, switch: cmdSwitch, gate: cmdGate, "check-write": cmdCheckWrite,
+  "extract-recipient": cmdExtractRecipient, "extract-deck": cmdExtractDeck, "deck-text": cmdDeckText,
+  switch: cmdSwitch, gate: cmdGate, "check-write": cmdCheckWrite, "store-url": cmdStoreUrl,
 };
 
 // Run as a command, not when another CLI imports mailProblems().

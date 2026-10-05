@@ -167,8 +167,8 @@ export function provenanceDocs(docs, cap) {
   return out;
 }
 
-/** The prompt, first line `# cap=<n> bytes=<total>`, at the largest cap whose total fits PROMPT_MAX_BYTES. */
-export function fitPrompt(build) {
+/** The prompt, first line `# cap=<n> bytes=<total>`, at the largest cap whose total fits the budget (default PROMPT_MAX_BYTES). */
+export function fitPrompt(build, budget = PROMPT_MAX_BYTES) {
   let last = null;
   for (const cap of CAPS) {
     const body = build(cap);
@@ -176,8 +176,8 @@ export function fitPrompt(build) {
     let bytes = byteLength(body);
     for (let i = 0; i < 3; i++) bytes = byteLength(`# cap=${cap} bytes=${bytes}\n${body}`);
     last = { text: `# cap=${cap} bytes=${bytes}\n${body}`, bytes };
-    if (bytes <= PROMPT_MAX_BYTES) break;
+    if (bytes <= budget) break;
   }
-  if (last.bytes > PROMPT_MAX_BYTES) die(`the prompt is ${last.bytes} bytes at the smallest cap (${CAPS.at(-1)}); the CRM record is too long`);
+  if (last.bytes > budget) die(`the prompt is ${last.bytes} bytes at the smallest cap (${CAPS.at(-1)}); the CRM record is too long`);
   return last.text;
 }

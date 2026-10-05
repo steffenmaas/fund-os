@@ -16,7 +16,7 @@ away from the people who own it. It rests on three ideas:
   undo an act, follow up by hand, or move the switch. Only a person changes a switch; a module
   never changes its own mode, and never moves a record into a committed stage.
 
-The four graphics below are explanatory. Each one animates a single item along the module's path;
+The graphics below are explanatory. Each one animates a single item along the module's path;
 with `prefers-reduced-motion` set, the still frame shows the same information. They name generic
 categories (CRM, mailbox, knowledge folder, document store, calendar, data providers, newsletter
 service); nothing in them is specific to one fund.
@@ -90,18 +90,56 @@ guardrails allow it. Nothing is sent to an audience the campaign was not declare
 - **Modes:** `off` — issue queued for a person · `review-first` — campaign drafted in the service · `on` — campaign sent after the checks pass.
 - **Guardrails:** declared purposes and audience only; daily cap on sends; no repeat recipient within 7 days; one reply per thread per 24 hours for any answers it triggers; no move into committed stages; the switch is changed only by a person.
 
+## Meeting Notes Autopilot
+
+![Meeting Notes Autopilot: read the meeting, match the CRM record, draft and check the note, file note and tasks per the switch, propose a stage move as an approval, audit feed](./meeting-notes-autopilot.svg)
+
+After a meeting, the module reads the summary from the meeting-notes tool and matches it to a company
+or person record in the CRM: first by the attendees' mail domain, then by a calendar attendee or a
+person record, last by the name in the meeting title. It drafts a short note in the fund's tone and
+checks it: no transcript, no address, no phone number, no link. Whether the note and its follow-up
+tasks are filed or queued depends on the switch **and** on how sure the match is: a note is filed
+directly only for a domain match with someone of the fund in the room; every other match is an
+approval. A stage or status move the meeting decided is only ever proposed as an approval, and the
+switch is read a second time right before every write, so a switch moved during the run takes effect
+at once. The module never sends a mail or an invite.
+
+- **Trigger:** weekday run over the last day's meetings.
+- **Connectors:** meeting-notes tool, CRM, calendar (attendees), document store (tone), the Inbox store.
+- **Skills composed:** none of the interactive ones; the scheduled counterpart of taking notes by hand. Runbook: `ops-meeting-notes`.
+- **Modes:** `off` — note, tasks and moves queued for a person · `review-first` — note filed on a sure match, tasks queued · `on` — note and tasks filed on a sure match.
+- **Guardrails:** never a mail or an invite; the switch read again before every write; stage and status moves are approvals only, never into a committed stage; no transcript, address, phone number or link in a note; the switch is changed only by a person.
+
+## Weekly Digest Autopilot
+
+![Weekly Digest Autopilot: read the deal list, rank it as the cockpit does, draft three variants, check the text, queue one approval, a partner sends it](./weekly-digest.svg)
+
+Every Monday the module reads the deal list, ranks it exactly as the Deal Cockpit does (score times
+urgency, passes out, the deals that need attention first), and drafts the week's top deals in three
+variants: an internal digest for the partners, a version for co-investors without scores, stage names
+or valuations, and a LinkedIn draft that names no company in a late stage. A check holds those rules
+before anything is queued. The result is one approval; a partner approves it and sends it from their
+own mailbox. The module has no switch: it is always an approval, and it never sends, drafts a mail or
+posts by itself.
+
+- **Trigger:** weekly run, Monday morning.
+- **Connectors:** CRM (the deal list), document store (thesis, criteria, tone), the Inbox store.
+- **Skills composed:** none of the interactive ones; the scheduled counterpart of curating the watchlist and drafting content by hand. Runbook: `ops-weekly-digest`.
+- **Modes:** none; the digest behaves as `off` in every mode — one approval, nothing sent.
+- **Guardrails:** an approval in every mode; at most seven picks, each a ranked name; no e-mail address or foreign link; no CRM write of any kind; a text that fails the check twice is not queued.
+
 ## Autopilot Switch & Feed
 
 ![Autopilot Switch and Feed: a module proposes an act, guardrails check it, the switch decides, the audit feed is written first, the act runs or waits, undo or follow up](./autopilot-switch-and-feed.svg)
 
-This is the layer the other three modules share. Every act follows the same path: the module
+This is the layer the other modules share. Every act follows the same path: the module
 proposes it, the guardrails check it, the module's switch decides whether it is queued, drafted or
 sent, and the audit feed is written *before* the act runs. Afterwards a person can undo it or follow
 up by hand. The feed shows the mode in force at the time of each act, so a change of the switch
-is itself an entry. The three switches are independent: one module can be `on` while another is `off`.
+is itself an entry. The switches are independent: one module can be `on` while another is `off`.
 
 - **Trigger:** no schedule of its own. It is evaluated on every act of every module; a weekly read of the feed by a person is the suggested rhythm.
 - **Connectors:** whichever store holds the feed (a CRM note stream, a document in the document store, or a table); the switch itself needs no connector.
-- **Skills composed:** none directly; it wraps the skills of the other three modules.
+- **Skills composed:** none directly; it wraps the skills of the other modules.
 - **Modes:** `off` · `review-first` · `on`, per module; outcomes queued · drafted · sent.
 - **Guardrails:** one reply per thread per 24 hours; no repeat recipient within 7 days; declared purposes only; daily cap; no move into committed stages; the switch is changed only by a person.

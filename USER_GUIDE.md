@@ -258,6 +258,8 @@ The one exception is opt-in and per module: the Phase 09 autopilot skills run on
 | Inbound founder mails, scheduled | `ops-dealflow-inbound` | fired by a Routine; by hand: "Run the inbound autopilot" |
 | Investor first touches and follow-ups, scheduled | `ops-investor-outreach` | fired by a Routine; by hand: "Run the investor autopilot" |
 | Weekly newsletter draft, scheduled | `ops-newsletter` | fired by a Routine; by hand: "Run the newsletter autopilot" |
+| Meeting notes filed in the CRM, scheduled | `ops-meeting-notes` | fired by a Routine; by hand: "Run the meeting-notes autopilot" |
+| Monday deal digest as an approval, scheduled | `ops-weekly-digest` | fired by a Routine; by hand: "Run the weekly digest" |
 
 The module skills call the fund's scoring CLIs, which are published separately and ship in a later release.
 

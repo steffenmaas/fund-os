@@ -1,0 +1,30 @@
+{
+  "_note": "The session's JSON reading of one Granola get_meetings answer (invented).",
+  "id": "meeting-0001",
+  "title": "Quillstone Robotics | Investor Intro",
+  "date": "2026-10-02T08:00:00.000Z",
+  "url": "https://notes.granola.ai/d/meeting-0001",
+  "participants": [
+    {
+      "name": "Partner",
+      "email": "partner@example.org",
+      "company": "Example Fund",
+      "creator": true
+    },
+    {
+      "name": "Associate",
+      "email": "associate@example.org",
+      "company": "Example Fund"
+    },
+    {
+      "name": "Founder",
+      "email": "founder@quillstone.example",
+      "company": "Quillstone Robotics"
+    }
+  ],
+  "calendarAttendees": [
+    "partner@example.org",
+    "founder@quillstone.example"
+  ],
+  "summary": "### Company\n\n- Warehouse picking arms sold as a monthly service; 14 arms deployed at two customers\n- Pre-seed, raising 600k, 40% soft-circled\n\n### Discussion\n\n- Unit economics per arm, payback for the customer under 18 months\n- Partner asked for the customer pipeline and the supplier agreement\n\n### Next Steps\n\n- **Send the data room**\n\n  Founder shares the data room by the end of next week.\n\n- **Intro to a logistics operator**\n\n  Partner introduces one operator from the portfolio."
+}

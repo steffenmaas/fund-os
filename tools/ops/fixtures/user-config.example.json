@@ -28,7 +28,10 @@
     ]
   },
   "autopilot": {
-    "inboxStoreUrl": "https://store.example.org/inbox",
+    "inboxStore": "https://store.example.org/inbox",
+    "stores": {
+      "dealflow": "https://store.example.org/cockpit"
+    },
     "defaultCap": 20,
     "noRepeatDays": 7,
     "purposes": {
@@ -96,7 +99,27 @@
           "Commitment",
           "Closed"
         ]
-      }
+      },
+      "stageList": [
+        "New",
+        "Screening",
+        "Initial contact",
+        "In diligence",
+        "Term sheet",
+        "Invested",
+        "Watchlist",
+        "Rejected",
+        "Lost"
+      ],
+      "statusList": [
+        "Target",
+        "Outreach",
+        "Call booked",
+        "In diligence",
+        "Passive",
+        "Commitment",
+        "Closed"
+      ]
     },
     "investors": {
       "fitThreshold": 60,
@@ -153,6 +176,42 @@
       "crustdata": {
         "enabled": false,
         "maxCreditsPerRun": 0
+      }
+    },
+    "notes": {
+      "lookbackDays": 1,
+      "skipTitles": [
+        "standup",
+        "1:1",
+        "lunch"
+      ],
+      "internalDomains": [
+        "example.org"
+      ],
+      "taskAssignee": "sam@example.org",
+      "timezone": "Europe/Berlin"
+    },
+    "digest": {
+      "maxPicks": 7,
+      "language": "English",
+      "partnersTo": [
+        "partner@example.org"
+      ],
+      "ignoreStages": [],
+      "liveStages": [
+        "In diligence",
+        "Term sheet"
+      ],
+      "passedStages": [
+        "Rejected",
+        "Lost"
+      ],
+      "rejectedStage": "Rejected",
+      "fields": {
+        "sector": "example_sector",
+        "round": "example_round",
+        "raise": "example_raise",
+        "createdAt": "example_created_at"
       }
     }
   }

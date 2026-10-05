@@ -5,6 +5,8 @@
 #   3. `const CONFIG = {` is present exactly once per page
 #   4. the scoring mirror in deal-cockpit.html gives the same bands, actions, pin and clock as
 #      tools/ops/lib/scoring.mjs on the inline cases of tools/check-ops-tools.sh (tools/check-scoring-mirror.mjs)
+#   5. the rank region of deal-cockpit.html (// region:rank) is byte-identical to the one in tools/ops/digest-cli.mjs,
+#      and both rank the digest fixtures the same way (tools/check-digest-mirror.mjs)
 #
 #   bash tools/check-screen-templates.sh
 
@@ -64,6 +66,13 @@ if out=$(node "$ROOT/tools/check-scoring-mirror.mjs" 2>&1); then
   echo "  $out"
 else
   fail "scoring mirror in deal-cockpit.html differs from tools/ops/lib/scoring.mjs"; echo "$out" | head -12 | sed 's/^/      /'
+fi
+
+# 5. the rank region must not drift from tools/ops/digest-cli.mjs
+if out=$(node "$ROOT/tools/check-digest-mirror.mjs" 2>&1); then
+  echo "  $(echo "$out" | tail -1)"
+else
+  fail "rank region in deal-cockpit.html differs from tools/ops/digest-cli.mjs"; echo "$out" | head -12 | sed 's/^/      /'
 fi
 
 # a page nobody listed must not slip in unchecked

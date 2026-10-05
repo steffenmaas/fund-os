@@ -1,6 +1,6 @@
 # Fund OS
 
-**47 Claude Skills for VC fund operations**, from first sourcing signal to wind-down, across ten
+**49 Claude Skills for VC fund operations**, from first sourcing signal to wind-down, across ten
 lifecycle phases. Built on the open [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md)
 community convention. Fund-side scope only — founder coaching is a separate bundle.
 
@@ -168,12 +168,14 @@ Model exit scenarios and scan the secondary market.
 
 ### Phase 09 — Autopilot (human on the loop)
 
-Scheduled, switch-governed modules for inbound dealflow, investor outreach and the newsletter, and the runbook that governs them. Optional; see [Autopilot modules](#autopilot-modules). The module skills call the autopilot CLIs in [`tools/ops/`](./tools/ops/README.md) (scoring arithmetic, mail and invite checks, the switch and gate, the newsletter layout), which read your `~/.fund-os/user-config.json` and are not part of the plugin bundle: clone the repository and set `OPS_CLI` to that directory.
+Scheduled, switch-governed modules for inbound dealflow, investor outreach, the newsletter, meeting notes and the Monday digest, and the runbook that governs them. Optional; see [Autopilot modules](#autopilot-modules). The module skills call the autopilot CLIs in [`tools/ops/`](./tools/ops/README.md) (scoring arithmetic and the deck, mail and invite checks, the switch and gate, the newsletter layout, meeting-note matching and checks, the digest ranking), which read your `~/.fund-os/user-config.json` and are not part of the plugin bundle: clone the repository and set `OPS_CLI` to that directory.
 
 - [`ops-autopilot-runbook`](./plugins/fund-os/skills/ops-autopilot-runbook/SKILL.md) — Autopilot Runbook
 - [`ops-dealflow-inbound`](./plugins/fund-os/skills/ops-dealflow-inbound/SKILL.md) — Inbound Dealflow Run
 - [`ops-investor-outreach`](./plugins/fund-os/skills/ops-investor-outreach/SKILL.md) — Investor Outreach Run
+- [`ops-meeting-notes`](./plugins/fund-os/skills/ops-meeting-notes/SKILL.md) — Meeting Notes Run
 - [`ops-newsletter`](./plugins/fund-os/skills/ops-newsletter/SKILL.md) — Newsletter Run
+- [`ops-weekly-digest`](./plugins/fund-os/skills/ops-weekly-digest/SKILL.md) — Weekly Digest Run
 
 ---
 
@@ -204,7 +206,7 @@ The skills compose into 18 cross-skill workflows you can wire up (cron / Agent S
 
 ## Autopilot modules
 
-Four explanatory graphics for the optional autopilot layer — switch per module, audit feed, human on the loop: [`docs/modules/README.md`](./docs/modules/README.md). The runbooks that implement it are the four Phase 09 skills above; start with `ops-autopilot-runbook`.
+Six explanatory graphics for the optional autopilot layer — switch per module, audit feed, human on the loop: [`docs/modules/README.md`](./docs/modules/README.md). The runbooks that implement it are the six Phase 09 skills above; start with `ops-autopilot-runbook`.
 
 The partners' screens for it (deal cockpit, investor relations, inbox with approvals and the audit feed, knowledge, profile) ship as fund-neutral templates in [`plugins/fund-os/templates/screens/`](./plugins/fund-os/templates/screens/README.md); the executable guardrails the skills call are in [`tools/ops/`](./tools/ops/README.md).
 
