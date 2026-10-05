@@ -1,5 +1,86 @@
 # Changelog
 
+## 0.13.0 - 2026-10-05
+
+**A Start page, an investor board, one place for what every agent did, content published to channels,
+and the fund's own values kept in the Drive folder instead of a repository.** The seventh screen, the
+rework of five others, and the tools and skills behind them. No skill is added (49), no module starts on
+by default, and nothing in it names a fund.
+
+**`plugins/fund-os/templates/screens/`**
+
+- **`start.html` (new): Start.** The entry page: one tile per screen and, beside them, the signed-in
+  partner's own open CRM tasks sorted by urgency (overdue, today, this week, later, no due date) with filter
+  chips, a link to the record, "Erledigt" and a one-step undo. Opens at once from a browser copy
+  (`region:localcache`, the third copy). It writes nothing but the completion of a task. The **Start entry is
+  the first item of every side menu**, and `CONFIG.links` has a seventh URL, `start`.
+- **Investor Relations: Board tab.** One column per status (`CONFIG.boardColumns`), one compact card per
+  investor (LP fit chip, ticket, days since the last contact), moved by drag and drop (mouse, a short hold on
+  touch, or the menu on the card) with an optimistic move, a toast with undo, a failed write moving the card
+  back, and an inline confirmation before a move into the hard or closed status; `applyMoves` keeps a move
+  in flight across a reload. Every column and every KPI tile shows the **sum of the tickets**
+  (`CONFIG.fields.ticket`, an average ticket size, never a commitment). Contact older than **14 days** is
+  red inside the running pipeline, never for the passive status. The tab choice is remembered in the browser.
+- **Investor Relations: Inbox and Autopilot tabs** on its own store, as the Deal Cockpit has them
+  (`// ==== store-tabs:begin`, byte-identical in both pages; the guards, autopilot and context regions are
+  now held in three pages). Its `CONFIG` gains `dealList`, `companiesObjectId`, `dealStageField`, `stages`,
+  `forbiddenStages` and `forbiddenStatuses` for that guard. The Deals tab of the Deal Cockpit shows the
+  size of the running pipeline (`CONFIG.pipelineStages`).
+- **`inbox.html` is the Agent Workbench.** A new first tab **Aktivität**: every run and every action of all
+  five modules, newest first, day separators, chips per module and kind (Läufe, Aktionen, Fehler), a drawer
+  with the stored fields; the Intl formatters are built once, the tab draws only while shown and keeps the
+  focus. Freigaben, Eingang, Autopilot and Protokoll keep working; the dealflow and investors switches moved
+  to their own pages and show a pointer card. The dealflow and investors entries mirrored into this store
+  are a read-only log (no Rückgängig or Nachfassen, not counted in the badge); every snapshot mapping keeps
+  the document id.
+- **`newsletter.html` is Content** (Newsletter, Artikel, Template): articles and whitepaper drafts as files in
+  the knowledge folder, one shared list (`pr-index.json`) with merge of concurrent writers, the templates of the
+  folder with an editor that saves a new file, and **Veröffentlichen** for every item: a proposed text per
+  channel, then the channel's own share dialog (LinkedIn, WhatsApp), a Gmail draft, a copied text with the stored
+  link, or a website request. Nothing is sent or posted by the page. Header: Drive `create_file` and
+  `update_file` join the capabilities, and `sample` is declared.
+- **`profile.html`: Content-Kanäle.** The channels (LinkedIn, website, WhatsApp, newsletter, link) are created,
+  changed and switched off, never deleted, in a Drive file named by `CONFIG.channelsFile`
+  (`// ==== channels:begin`, byte-identical with Content; unknown rows and fields survive a rewrite). The
+  neutral seed channels apply while the file is missing. `CONFIG.routines` (routine ids) is gone;
+  `CONFIG.routineSchedule` shows when each routine fires, as free text.
+- **`region:permhelp`** (byte-identical in all seven pages): when a view has no connectors the page reads the
+  `permissions` capability, names the case (declined, not yet asked, not offered to a guest) and offers
+  "Connectoren anfragen" or "Berechtigungen öffnen"; it never asks on its own.
+- `README.md` of the folder: seven screens, capability headers per screen (Investor Relations with `db`, Gmail
+  and Drive `search_files`), the new `CONFIG` keys, the publish order with Start, and the regions that must not
+  drift.
+
+**`tools/ops/`**
+
+- `deal-score-cli.mjs fund-settings`: overlays the allowed keys of `fund-settings.json` (the Drive knowledge
+  folder, decoded by `drive-text`) on the configuration of one run and writes the merged file. Allowed keys
+  only: `notes.taskAssignee` (a plain address), `investors.deckLink` (an https link), `fund.bookingLink` (an
+  https link without credentials, port, query or fragment, on a host the configuration lists in
+  `autopilot.fund.bookingHosts`). Everything else, a placeholder, a value over 500 characters or with a control
+  character is refused with a named `REFUSED` line and the configuration's own value stays; no values are
+  shipped.
+- `deal-score-cli.mjs store-url --module workbench` is the Agent Workbench's store (`autopilot.inboxStore`);
+  `mirror-plan --module <m>` prints `[]` or `["<Workbench store>"]`.
+- `content-cli.mjs website-requests` / `website-entry`: the open website requests of the content list, and the
+  TypeScript literal of one requested item (title, body and author are data, nothing is evaluated).
+- `bash tools/check-ops-tools.sh` covers each of them (290 checks) with invented fixtures
+  (`fixtures/content/`, a booking host in the example configuration).
+
+**Skills.** `ops-dealflow-inbound`, `ops-investor-outreach` and `ops-meeting-notes` read `fund-settings.json`
+and run on the merged configuration (a fallback is named in the run summary); `ops-dealflow-inbound` and
+`ops-investor-outreach` mirror every `runs/` and `audit/` write to the Agent Workbench store; the Inbox is
+called Agent Workbench in all ops skills and the runbook.
+
+**The guards.** `bash tools/check-screen-templates.sh` now holds eight regions between pages (guards,
+autopilot but for its `MODULES` line, context, store-tabs, tasks, localcache in three pages, permhelp in seven,
+channels) and the Start entry, each with a negative control, over seven pages. The no-hit status of a local
+denylist no longer makes the fund-neutral self-tests fail.
+
+**Versions.** Plugin manifest and marketplace 0.12.0 -> 0.13.0.
+
+---
+
 ## 0.12.0 - 2026-10-05
 
 **The partner's screens show what a proposal was drawn from and open at once; the notes tool

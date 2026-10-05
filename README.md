@@ -208,7 +208,7 @@ The skills compose into 18 cross-skill workflows you can wire up (cron / Agent S
 
 Six explanatory graphics for the optional autopilot layer — switch per module, audit feed, human on the loop: [`docs/modules/README.md`](./docs/modules/README.md). The runbooks that implement it are the six Phase 09 skills above; start with `ops-autopilot-runbook`.
 
-The partners' six screens for it (deal cockpit with its tasks, in-page inbox and autopilot tabs; investor relations; inbox with approvals, the context under each proposal and the audit feed; knowledge; profile with the tools per module; newsletter; the lists open at once from a copy kept in the browser) ship as fund-neutral templates in [`plugins/fund-os/templates/screens/`](./plugins/fund-os/templates/screens/README.md); the executable guardrails the skills call are in [`tools/ops/`](./tools/ops/README.md).
+The partners' seven screens for it (Start with their own CRM tasks; deal cockpit with its tasks and in-page inbox and autopilot tabs; investor relations with a drag-and-drop board and the same tabs; the Agent Workbench with every agent's activity, the approvals with the context under each proposal and the audit feed; knowledge; profile with the tools per module and the content channels; Content with newsletter, articles and publishing; the lists open at once from a copy kept in the browser) ship as fund-neutral templates in [`plugins/fund-os/templates/screens/`](./plugins/fund-os/templates/screens/README.md); the executable guardrails the skills call are in [`tools/ops/`](./tools/ops/README.md).
 
 ---
 
@@ -255,7 +255,7 @@ python3 tools/validate.py          # the plugin: paths, front matter, dashboard,
 python3 tools/check-knowledge.py   # your knowledge folder: manifest, placeholders, contradictions
 python3 tools/knowledge-map.py     # regenerate the index of which document each skill uses
 bash tools/check-ops-tools.sh      # the autopilot CLIs in tools/ops/: syntax, every subcommand against the fixtures
-bash tools/check-screen-templates.sh  # the six Operations screens: parse, fund-neutral, mirrors against the CLIs and between pages (guards, tasks, context, local cache)
+bash tools/check-screen-templates.sh  # the seven Operations screens: parse, fund-neutral, mirrors against the CLIs and between pages (guards, autopilot, context, store tabs, tasks, local cache, permhelp, channels, the Start entry)
 ```
 
 `knowledge-map.py` writes `_KNOWLEDGE-MAP.md` into the knowledge folder: document → skills,
