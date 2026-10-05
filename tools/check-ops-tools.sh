@@ -295,12 +295,12 @@ has "parse-granola: an attribute that carries id= skips that meeting and names t
 jsq "parse-granola: a bad attribute skips that meeting only, the others stay, no forgery flag" "$WORK/granola-attr.json" 'd.skipped === 1 && d.meetings.length >= 1 && d.skippedReasons.length === 1 && d.suspicious === undefined'
 $NT parse-granola --text $NF/granola-mixed.txt > "$WORK/granola-mixed.json" 2>/dev/null
 jsq "parse-granola: one bad block among good ones: the good ones stay, skipped 1, the reason names the position and not the title" "$WORK/granola-mixed.json" 'd.meetings.map((m) => m.id.slice(-2)).join() === "a1,a3" && d.skipped === 1 && d.skippedReasons.length === 1 && d.skippedReasons[0].startsWith("meeting 2:") && !JSON.stringify(d.skippedReasons).includes("Sales") && d.suspicious === undefined'
-$NT parse-granola --text $NF/granola-mixed.txt --ids 00000000-0000-4000-8000-0000000000a1 > "$WORK/granola-mixed-ids.json" 2>/dev/null
+$NT parse-granola --text $NF/granola-mixed.txt --ids meeting-00a1 > "$WORK/granola-mixed-ids.json" 2>/dev/null
 jsq "parse-granola: --ids still drops the meetings not asked for, on top of the bad block" "$WORK/granola-mixed-ids.json" 'd.meetings.length === 1 && d.skipped === 2 && d.skippedReasons.length === 2'
 sed 's#count="3"#count="2"#' $NF/granola-mixed.txt > "$WORK/granola-mixed-count.txt"
 $NT parse-granola --text "$WORK/granola-mixed-count.txt" > "$WORK/granola-mixed-count.json" 2>/dev/null
 jsq "parse-granola: the count guard still fails closed when the blocks (the bad one included) exceed the declared count" "$WORK/granola-mixed-count.json" 'd.meetings.length === 0 && typeof d.suspicious === "string"'
-sed 's#0000000000a3#0000000000a1#g' $NF/granola-mixed.txt > "$WORK/granola-mixed-dup.txt"
+sed 's#meeting-00a3#meeting-00a1#g' $NF/granola-mixed.txt > "$WORK/granola-mixed-dup.txt"
 $NT parse-granola --text "$WORK/granola-mixed-dup.txt" > "$WORK/granola-mixed-dup.json" 2>/dev/null
 jsq "parse-granola: a duplicate id next to a bad block still fails closed" "$WORK/granola-mixed-dup.json" 'd.meetings.length === 0 && typeof d.suspicious === "string"'
 says "match: a domain match, with someone of the fund in the room" '"confidence":"domain"' $NT match --meeting $NF/meeting-sample.json --records $NF/records-sample.json
@@ -349,12 +349,18 @@ refusedSays "tasks: a record that is no uuid" "lower-case uuid" $NT tasks --note
 refusedSays "tasks: an assignee that is an address" "workspace_member_id" $NT tasks --note $NF/note-ok.json --now $NOW --assignee sam@example.org --record $REC --object companies
 refusedSays "tasks: an object that is neither companies nor people" "companies or people" $NT tasks --note $NF/note-ok.json --now $NOW --assignee $UU --record $REC --object deals
 # Task routing: the named owner, else the fund people in the call, else the fallback (invented members, see fixtures/notes/members.txt).
-MEM=$NF/members.txt
-ALEX=2b3a7ab0-5efb-4f94-8c92-d4781ec6bab5
-SAM=05cef27f-cda4-4569-9cb7-9b9dbee34b7c
-ALEXO=88fc7629-1a55-42c1-ac97-0b994588d8ba
-JOERG=679ac1da-6c50-4b32-96ac-ad7490295c15
-FB=86029277-db4b-4bf9-a62d-017a5a65bfc4
+# The member ids are uuids (the CRM's); none is written into the repository, the five are made up here and the
+# members file is written in both shapes the CLI reads (the text table, a JSON array).
+mkid() { node -e 'const h=process.argv[1]; console.log([h.repeat(8), h.repeat(4), "4"+h.repeat(3), "8"+h.repeat(3), h.repeat(12)].join("-"))' "$1"; }
+ALEX=$(mkid a); SAM=$(mkid 5); ALEXO=$(mkid c); JOERG=$(mkid d); FB=$(mkid e)
+node -e '
+const [alex, sam, alexo, joerg, fb] = process.argv.slice(1, 6), out = process.argv[6];
+const m = [[alex, "Alex Example", "alex.example@example.com", "admin"], [sam, "Sam Sample", "sam.sample@example.com", "admin"], [alexo, "Alex Other", "alex.other@example.com", "member"], [joerg, "J\u00f6rg Beispiel", "joerg.beispiel@example.com", "member"], [fb, "Fallback, Pat", "fallback@example.com", "member"]];
+const fs = require("fs");
+fs.writeFileSync(out + "/members.txt", "[5]{workspace_membership_id,name,email,access_level}:\n" + m.map(([i, n, e, a]) => `  ${i},${n.includes(",") ? `"${n}"` : n},${e},${a}`).join("\n") + "\n");
+fs.writeFileSync(out + "/members.json", JSON.stringify(m.map(([i, n, e, a]) => ({ workspace_membership_id: i, name: n, email: e, access_level: a }))));
+' "$ALEX" "$SAM" "$ALEXO" "$JOERG" "$FB" "$WORK"
+MEM=$WORK/members.txt
 FUNDMEET=$NF/meeting-fund-people.json
 EXTMEET=$NF/meeting-external-only.json
 node -e 'const fs=require("fs"); const mk=(v)=>({autopilot:{notes:{taskAssignee:v}}}); fs.writeFileSync(process.argv[1], JSON.stringify(mk("fallback@example.com"))); fs.writeFileSync(process.argv[2], JSON.stringify(mk("<placeholder: member address>")))' "$WORK/cfg-fallback.json" "$WORK/cfg-placeholder.json"
@@ -405,7 +411,7 @@ refusedSays "tasks: prose as the members file fails closed" "no workspace member
 refusedSays "tasks: a missing members file fails closed" "cannot read members" $NT tasks --note "$WORK/route-note.json" --now $NOW --members "$WORK/nope.txt" --record $REC --object companies
 refusedSays "tasks: neither --assignee nor --members is refused and names --members" "--members" $NT tasks --note $NF/note-ok.json --now $NOW --record $REC --object companies
 $NT members --members $MEM > "$WORK/members-text.json" 2>/dev/null
-$NT members --members $NF/members.json > "$WORK/members-json.json" 2>/dev/null
+$NT members --members $WORK/members.json > "$WORK/members-json.json" 2>/dev/null
 runs=$((runs + 1)); if cmp -s "$WORK/members-text.json" "$WORK/members-json.json"; then echo "  ok    members: the JSON array reads the same members as the text table"; else fails=$((fails + 1)); echo "  FAIL  members: text table and JSON array differ"; fi
 jsq "members: five members, lower-case addresses, a quoted name keeps its comma" "$WORK/members-text.json" 'd.length === 5 && d[0].email === "alex.example@example.com" && d[4].name === "Fallback, Pat"'
 printf '%s\n' "[5]{workspace_membership_id,name,email,access_level}:" "  ${ALEX^^},Alex Example,Alex.Example@Example.com,admin" "  $ALEX,Alex Again,again@example.com,admin" "  not-a-uuid,Broken Id,broken@example.com,admin" "  $SAM,No Address,,member" "" "  $JOERG,After Blank,after.blank@example.com,member" > "$WORK/members-dirty.txt"
