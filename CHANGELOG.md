@@ -13,14 +13,15 @@ added (49), nothing in it names a fund.
   command passes `--config "$CONFIG"`. The CLI lists name `mirror-plan` and `fund-settings`.
 - **`fund-settings` (behaviour).** `investors.deckLink` is no longer taken from any https host: like the
   booking link it needs a host in `autopilot.investors.deckHosts` (new) or `autopilot.allowedUrlHosts`, and
-  the same plain shape (no credentials, port, query, fragment, backslash, double slash or dot segment).
-  Empty lists refuse the key and the configuration's own value stays. **If you keep the deck link in
-  `fund-settings.json`, add its host to `autopilot.investors.deckHosts` and drop any query string.**
+  the same plain path (no credentials, port, backslash, double slash or dot segment); a query and a
+  fragment stay allowed for the deck link (share links end in `?usp=sharing`), the booking link takes
+  neither. Empty lists refuse the key and the configuration's own value stays. **If you keep the deck link in
+  `fund-settings.json`, add its host to `autopilot.investors.deckHosts`.**
 - **Checks.** `tools/validate.py` fails a skill that has the fund-settings step and passes the raw
   user-config path to a CLI after it (with a negative control). `tools/check-screen-templates.sh` fails when
   `FUND_OS_DENYLIST` names a file that does not exist and warns when there is no local denylist at all
   (self-tested). `tools/check-ops-tools.sh` covers the deck-link host rules with the bypass shapes of the
-  booking link (userinfo, backslash, port, double slash, trailing dot, unlisted host, query, fragment).
+  booking link (userinfo, backslash, port, double slash, trailing dot, unlisted host) and the query rules.
 - **Documentation.** The stale "Inbox" naming is "Agent Workbench" in the user guide, the ops README and the
   module docs; the screens README lists `statusRoles`, `activeStatuses`, `quietStatuses`, `fitThreshold`,
   `fund.nextFundName` and `rejectedStage`; the runbook's configuration block lists `deckHosts` and

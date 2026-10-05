@@ -86,8 +86,9 @@
  *                 free-text keys _about, updatedAt and updatedBy, which are ignored. Allowed keys only, written to
  *                 autopilot.<group>.<key> of the configuration:
  *                   notes.taskAssignee   a plain address (the workspace member who gets a next step nobody owns)
- *                   investors.deckLink   an https link, same shape rules as the booking link, on a host the repository configuration
- *                                        lists in autopilot.investors.deckHosts or autopilot.allowedUrlHosts (both empty: refused)
+ *                   investors.deckLink   an https link on a host the repository configuration lists in autopilot.investors.deckHosts or
+ *                                        autopilot.allowedUrlHosts (both empty: refused); same shape rules as the booking link, but a
+ *                                        query and a fragment are allowed (share links end in ?usp=sharing)
  *                   fund.bookingLink     an https link without credentials, port, query or fragment, on a host the repository
  *                                        configuration lists in autopilot.fund.bookingHosts (empty list: the key is refused)
  *                 Anything else (an unknown key, a wrong type, a placeholder starting with "<", a value over 500 characters or with
@@ -936,12 +937,16 @@ function settingProblem(key, v, hostLists) {
   if (key === "fund.bookingLink" || key === "investors.deckLink") {
     const hosts = hostLists[key], listName = LINK_HOST_LISTS[key];
     if (!hosts.length) return `is refused: ${listName} in the configuration lists no host`;
-    // the raw text too: the URL parser would fold /../ and a trailing dot away
-    const segments = raw.replace(/^https:\/\/[^/]+/i, "").split("/").slice(1);
+    // the raw text too: the URL parser would fold /../ and a trailing dot away. The deck link may carry a query and a fragment
+    // (share links end in ?usp=sharing and the like); the path before them is held to the same plain shape as the booking link's.
+    const isDeck = key === "investors.deckLink";
+    const cut = raw.search(/[?#]/), base = isDeck && cut >= 0 ? raw.slice(0, cut) : raw, tail = isDeck && cut >= 0 ? raw.slice(cut) : "";
+    const segments = base.replace(/^https:\/\/[^/]+/i, "").split("/").slice(1);
+    const tailOk = isDeck ? /^(\?[^\s"'`<>\\#]*)?(#[^\s"'`<>\\]*)?$/.test(tail) : !u.search && !u.hash && !raw.includes("?") && !raw.includes("#");
     const clean = !/[\\@\s]/.test(raw) && u.protocol === "https:" && hosts.includes(u.hostname) && !u.port && !u.username && !u.password
-      && !u.search && !u.hash && !raw.includes("?") && !raw.includes("#") && /^(\/[A-Za-z0-9_.-]+)+\/?$/.test(u.pathname)
-      && segments.every((x) => x !== "." && x !== "..") && new RegExp(`^https://${u.hostname.replace(/[.]/g, "\\.")}(/[A-Za-z0-9_.-]+)+/?$`, "i").test(raw);
-    return clean ? null : `is not an https link on a host of ${listName} (plain path, no port, query or fragment)`;
+      && tailOk && /^(\/[A-Za-z0-9_.-]+)+\/?$/.test(u.pathname)
+      && segments.every((x) => x !== "." && x !== "..") && new RegExp(`^https://${u.hostname.replace(/[.]/g, "\\.")}(/[A-Za-z0-9_.-]+)+/?$`, "i").test(base);
+    return clean ? null : `is not an https link on a host of ${listName} (plain path, no port${isDeck ? "" : ", query or fragment"})`;
   }
   return u.protocol === "https:" && !/[\s"<>\\]/.test(raw) && !u.username && !u.password && u.hostname.includes(".") ? null : "is not an https link";
 }
