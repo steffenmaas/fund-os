@@ -329,7 +329,7 @@ def check_fund_neutral() -> None:
     ]
     bad = []
     n = 0
-    for f in walk(".md", ".json", ".template", ".html", ".example", ".yml", ".py", ".sh"):
+    for f in walk(".md", ".json", ".template", ".html", ".example", ".yml", ".py", ".sh", ".mjs"):
         r = rel(f)
         if r == "tools/validate.py":
             continue        # this file carries the patterns by definition

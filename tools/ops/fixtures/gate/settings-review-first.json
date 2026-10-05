@@ -1,0 +1,9 @@
+{
+  "modules": {
+    "dealflow": {
+      "mode": "review-first",
+      "maxOutboundPerDay": 20
+    }
+  },
+  "version": 1
+}

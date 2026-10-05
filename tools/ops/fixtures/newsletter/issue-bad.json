@@ -1,0 +1,18 @@
+{
+  "issueTitle": "Too thin",
+  "issueDate": "2026-10-05",
+  "editorial": "One item only.",
+  "items": [
+    {
+      "title": "Example item one",
+      "summary": "A short summary of the first collected item.",
+      "sourceName": "Example News",
+      "url": "https://news.example.net/one",
+      "date": "2026-10-03"
+    }
+  ],
+  "cta": {
+    "text": "More",
+    "url": "http://example.org/about"
+  }
+}

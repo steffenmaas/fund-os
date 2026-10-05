@@ -168,7 +168,7 @@ Model exit scenarios and scan the secondary market.
 
 ### Phase 09 — Autopilot (human on the loop)
 
-Scheduled, switch-governed modules for inbound dealflow, investor outreach and the newsletter, and the runbook that governs them. Optional; see [Autopilot modules](#autopilot-modules). The module skills call the fund's scoring CLIs, which are published separately (intended home `tools/ops/`) and ship in a later release.
+Scheduled, switch-governed modules for inbound dealflow, investor outreach and the newsletter, and the runbook that governs them. Optional; see [Autopilot modules](#autopilot-modules). The module skills call the autopilot CLIs in [`tools/ops/`](./tools/ops/README.md) (scoring arithmetic, mail and invite checks, the switch and gate, the newsletter layout), which read your `~/.fund-os/user-config.json` and are not part of the plugin bundle: clone the repository and set `OPS_CLI` to that directory.
 
 - [`ops-autopilot-runbook`](./plugins/fund-os/skills/ops-autopilot-runbook/SKILL.md) — Autopilot Runbook
 - [`ops-dealflow-inbound`](./plugins/fund-os/skills/ops-dealflow-inbound/SKILL.md) — Inbound Dealflow Run
@@ -250,6 +250,7 @@ Your configuration is never affected — it lives in `~/.fund-os/` and the knowl
 python3 tools/validate.py          # the plugin: paths, front matter, dashboard, secrets, neutrality
 python3 tools/check-knowledge.py   # your knowledge folder: manifest, placeholders, contradictions
 python3 tools/knowledge-map.py     # regenerate the index of which document each skill uses
+bash tools/check-ops-tools.sh      # the autopilot CLIs in tools/ops/: syntax, every subcommand against the fixtures
 ```
 
 `knowledge-map.py` writes `_KNOWLEDGE-MAP.md` into the knowledge folder: document → skills,
@@ -280,7 +281,7 @@ running version once drifted nine weeks ahead of git.
 |---|---|
 | `.claude-plugin/marketplace.json` | marketplace definition — name must match the repository |
 | `plugins/fund-os/` | the plugin: skills, knowledge templates, dashboard |
-| `tools/` | `validate.py`, `check-knowledge.py`, `build-plugin.sh`, `hooks/pre-commit` |
+| `tools/` | `validate.py`, `check-knowledge.py`, `check-ops-tools.sh`, `build-plugin.sh`, `ops/` (autopilot CLIs), `hooks/pre-commit` |
 | `USER_GUIDE.md` | end-user guide — day-to-day usage, skill reference, troubleshooting |
 
 ### Before your first commit

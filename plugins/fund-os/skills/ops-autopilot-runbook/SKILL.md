@@ -9,7 +9,7 @@ This skill is part of the **Fund OS** plugin, Phase 09 — Autopilot (human on t
 
 The idea in one line: each module (inbound dealflow, investor outreach, newsletter) can run end to end without a person in the loop when its autopilot is switched on; the person sits **on** the loop, reads what the agent did in the Inbox, and corrects where needed.
 
-The CLIs the module skills call (the fund's scoring CLIs) are published separately: their intended home is `tools/ops/` of the Fund OS repository, and they ship in a later release. The interactive skills (`fund-os:deal-flow-triage`, `fund-os:deal-startup-score`, `fund-os:lp-outreach-draft`, `fund-os:lp-investor-scoring`, `fund-os:outreach-newsletter-draft`) work without them and without any switch.
+The CLIs the module skills call (the fund's scoring and guardrail CLIs) live in `tools/ops/` of the Fund OS repository; clone it and point `OPS_CLI` at that directory (`tools/ops/README.md` lists every subcommand and exit code, `bash tools/check-ops-tools.sh` proves them). The interactive skills (`fund-os:deal-flow-triage`, `fund-os:deal-startup-score`, `fund-os:lp-outreach-draft`, `fund-os:lp-investor-scoring`, `fund-os:outreach-newsletter-draft`) work without them and without any switch.
 
 ## 0. Load configuration
 

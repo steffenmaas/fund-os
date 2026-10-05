@@ -1,0 +1,23 @@
+{
+  "id": "thr-0001",
+  "messages": [
+    {
+      "id": "msg-0001",
+      "threadId": "thr-0001",
+      "date": "2026-10-04T08:00:00Z",
+      "internalDate": "1790841600000",
+      "sender": "Alex Founder <founder@example.com>",
+      "subject": "Pre-seed round: widget software",
+      "plaintextBody": "Hello, we build widget software and are raising a pre-seed round."
+    },
+    {
+      "id": "msg-0002",
+      "threadId": "thr-0001",
+      "date": "2026-10-04T09:00:00Z",
+      "internalDate": "1790845200000",
+      "sender": "Sam Partner <sam@example.org>",
+      "subject": "Re: Pre-seed round: widget software",
+      "plaintextBody": "Thanks."
+    }
+  ]
+}

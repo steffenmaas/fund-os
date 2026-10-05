@@ -1,0 +1,159 @@
+{
+  "_note": "Invented values for the tools/ops checks. Copy the autopilot section into ~/.fund-os/user-config.json and replace every value; nothing here belongs to a real fund.",
+  "masterData": {
+    "fundName": "Example Fund",
+    "stageFocus": "pre-seed and seed",
+    "sectors": [
+      "example sector"
+    ]
+  },
+  "crmFields": {
+    "dealList": "example_deal_list",
+    "dealStage": "example_stage",
+    "dealSource": "example_source",
+    "startupScore": "example_quality",
+    "startupSummary": "example_summary",
+    "thesisFit": "example_thesis_fit",
+    "thesisFitEvaluation": "example_thesis_evaluation",
+    "urgency": "example_urgency",
+    "urgencyEvaluation": "example_urgency_evaluation",
+    "urgencyAsOf": "example_urgency_as_of",
+    "investorList": "example_investor_list",
+    "investorStatus": "example_investor_status",
+    "investorStatusNotes": "example_investor_notes",
+    "investorFit": "example_investor_fit",
+    "investorFitEvaluation": "example_investor_fit_evaluation",
+    "archivedSlugs": [
+      "example_archived_slug"
+    ]
+  },
+  "autopilot": {
+    "inboxStoreUrl": "https://store.example.org/inbox",
+    "defaultCap": 20,
+    "noRepeatDays": 7,
+    "purposes": {
+      "dealflow": [
+        "acknowledge",
+        "request-deck",
+        "schedule-call",
+        "pass"
+      ],
+      "investors": [
+        "lp-first-touch",
+        "lp-follow-up",
+        "schedule-call"
+      ],
+      "newsletter": [
+        "newsletter"
+      ]
+    },
+    "allowedUrlHosts": [
+      "example.org",
+      "calendar.example.org"
+    ],
+    "onRequiresPinnedSha": false,
+    "fund": {
+      "senderName": "Sam Partner, Example Fund",
+      "signature": [
+        "Sam Partner, Example Fund",
+        "Example Fund · example.org"
+      ],
+      "bookingLink": "https://calendar.example.org/book/sam"
+    },
+    "inbound": {
+      "gmailQueries": [
+        "newer_than:2d in:inbox -from:me"
+      ],
+      "ownDomains": [
+        "example.org"
+      ],
+      "formSender": "forms.example.net",
+      "formSubjectPrefix": "New Pitch Deck Lead:",
+      "slaHours": 24
+    },
+    "crm": {
+      "companiesObjectId": "example-companies-object",
+      "dealSourceInbound": "Inbound",
+      "stages": {
+        "new": "New",
+        "screening": "Screening",
+        "committed": [
+          "Term sheet",
+          "Invested"
+        ]
+      },
+      "statuses": {
+        "target": "Target",
+        "outreach": "Outreach",
+        "callBooked": "Call booked",
+        "active": [
+          "Outreach",
+          "Call booked",
+          "In diligence"
+        ],
+        "passive": "Passive",
+        "committed": [
+          "Commitment",
+          "Closed"
+        ]
+      }
+    },
+    "investors": {
+      "fitThreshold": 60,
+      "quietDays": 10,
+      "maxFollowUps": 3,
+      "deckLink": "https://example.org/decks/lp-deck",
+      "thesisParagraph": "Example Fund is a pre-seed and seed fund for the example sector. We back founders early and work hands-on with them.",
+      "geographies": {
+        "core": [
+          "DE",
+          "AT",
+          "CH"
+        ],
+        "adjacent": [
+          "EU",
+          "UK"
+        ]
+      },
+      "searchQueries": [
+        "example family office Europe"
+      ],
+      "crmTextFields": [
+        "example_focus",
+        "example_thesis"
+      ],
+      "signalKeywords": {
+        "example-sector": [
+          "example sector",
+          "widgets"
+        ]
+      }
+    },
+    "newsletter": {
+      "themes": [
+        "Example theme one",
+        "Example theme two"
+      ],
+      "windowDays": 10,
+      "language": "en",
+      "template": "tools/ops/fixtures/newsletter/template.html",
+      "sources": {
+        "webSearchQueries": [
+          "example theme news"
+        ],
+        "pressPages": [],
+        "linkedinKeywords": [
+          "example theme"
+        ]
+      },
+      "service": "none",
+      "partnersTo": [
+        "partner@example.org"
+      ],
+      "crustdata": {
+        "enabled": false,
+        "maxCreditsPerRun": 0
+      }
+    }
+  }
+}

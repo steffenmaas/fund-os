@@ -21,6 +21,8 @@ All keys live in `~/.fund-os/user-config.json`. The `autopilot` section is new; 
 | `autopilot.defaultCap` | daily outbound cap when the switch has none (default `20`) |
 | `autopilot.noRepeatDays` | days before the same recipient may be mailed again (default `7`) |
 | `autopilot.purposes.dealflow` | default purposes: `acknowledge`, `request-deck`, `schedule-call`, `pass` |
+| `autopilot.allowedUrlHosts` | list of hosts a mail may link to (the booking-link host is added automatically); `check-mail` refuses any other host |
+| `autopilot.onRequiresPinnedSha` | optional; `true` makes `switch --require-pinned` refuse mode `on` on a branch checkout (default `false`) |
 | `autopilot.fund.senderName` | the real person the mail is signed with, exactly |
 | `autopilot.fund.signature` | list of signature lines; the first line is the sender name |
 | `autopilot.fund.bookingLink` | the link a call is booked through |
@@ -46,7 +48,7 @@ Scores and fit fields are written under the slugs of `crmFields` (`startupScore`
 
 Required connectors: the CRM, Gmail and Google Drive, and the `ArtifactData` tool (the Inbox store). Connector tool names below are the products' own.
 
-The fund's scoring CLI: `node "$OPS_CLI/deal-score-cli.mjs" <prompt|assemble|reply-prompt|check-mail>`, where `$OPS_CLI` is the directory that holds the CLIs. The CLIs are published separately: their intended home is `tools/ops/` of the Fund OS repository, and they ship in a later release. The subcommand names and flags below are the contract. The session is the model: the CLI builds prompts and holds the arithmetic and the rules, you answer the prompts. If the CLI is not installed, steps 5 and 6 cannot run: that is an unrecoverable error (`failed`); never reproduce the arithmetic from memory.
+The fund's scoring CLI: `node "$OPS_CLI/deal-score-cli.mjs" <prompt|assemble|reply-prompt|check-mail>`, where `$OPS_CLI` is the `tools/ops/` directory of the Fund OS repository checkout (for example `export OPS_CLI=~/src/fund-os/tools/ops`; the plugin bundle does not carry it, so the checkout is the install; see `tools/ops/README.md` there). They read the configuration from `~/.fund-os/user-config.json`, or the path in `FUND_OS_CONFIG`. The subcommand names and flags below are the contract. The session is the model: the CLI builds prompts and holds the arithmetic and the rules, you answer the prompts. If the CLI is not installed, steps 5 and 6 cannot run: that is an unrecoverable error (`failed`); never reproduce the arithmetic from memory.
 
 Scratch files go under one temp directory `$WORK`, never into a repository; every command runs with `--config ~/.fund-os/user-config.json` where the CLI takes one.
 
@@ -100,7 +102,7 @@ Build `$WORK/<n>/deal.json` from the record and entry: name, domain, sector, sta
 Purpose from `result.json`: action Pass with failed hard filters: `pass`. Pursue, Exception review, Watchlist or Monitor without a deck in the thread: `request-deck`. Pursue with a deck: `schedule-call` (booking link `autopilot.fund.bookingLink`, which the CLI puts into the prompt). Anything else: `acknowledge`. The purpose must be in the switch's `purposes`, else no mail for this thread.
 1. `node "$OPS_CLI/deal-score-cli.mjs" reply-prompt --deal $WORK/<n>/deal.json --result $WORK/<n>/result.json --purpose <purpose> --tone $WORK/docs/tone-guide.md --config ~/.fund-os/user-config.json --founder-text $WORK/<n>/thread.txt --to <address> --at <iso>` (`thread.txt` = the founder's plain text; `--to` = the sender, or the lead's address for a website form). Answer it yourself as the JSON mail `{to, subject, body, purpose}`. The mail signs with `autopilot.fund.senderName` (the sign-off line, exactly) and ends with the lines of `autopilot.fund.signature`, whose first line is that name; save as `$WORK/<n>/mail.json`.
 2. `ArtifactData query` on `audit` where `act.kind == "mail-sent"`, last `autopilot.noRepeatDays` days; write `$WORK/<n>/recent.json` as `[{"to": <act.target.to>, "sentAt": <timestampUtc>, "answered": <true when that recipient wrote back in the thread since>}]`.
-3. `node "$OPS_CLI/deal-score-cli.mjs" check-mail --mail $WORK/<n>/mail.json --purpose-list dealflow --config ~/.fund-os/user-config.json --recent $WORK/<n>/recent.json` prints `OK` (exit 0) or one `FAIL: <reason>` per line (exit 1). Failed: do not send; queue an approval (shape below) with the reasons in `rationale`, count it, go to step 8.
+3. `node "$OPS_CLI/deal-score-cli.mjs" check-mail --mail $WORK/<n>/mail.json --purpose-list dealflow --config ~/.fund-os/user-config.json --recent $WORK/<n>/recent.json --expect-to <address>` (the address given as `--to` above) prints `OK` (exit 0) or one `FAIL: <reason>` per line (exit 1). Failed: do not send; queue an approval (shape below) with the reasons in `rationale`, count it, go to step 8.
 
 ## 7. Act per mode
 

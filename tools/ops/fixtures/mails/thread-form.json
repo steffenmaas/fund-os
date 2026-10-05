@@ -1,0 +1,14 @@
+{
+  "id": "thr-0002",
+  "messages": [
+    {
+      "id": "msg-0003",
+      "threadId": "thr-0002",
+      "date": "2026-10-04T10:00:00Z",
+      "internalDate": "1790848800000",
+      "sender": "Forms <notify@forms.example.net>",
+      "subject": "New Pitch Deck Lead: lead@example.com",
+      "plaintextBody": "A lead filled in the form."
+    }
+  ]
+}

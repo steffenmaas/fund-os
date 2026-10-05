@@ -17,6 +17,9 @@ jobs:
       - name: Plugin self-check
         run: python3 tools/validate.py
 
+      - name: Autopilot CLIs (tools/ops)
+        run: bash tools/check-ops-tools.sh
+
       - name: Dashboard script parses
         run: |
           python3 - <<'PY'

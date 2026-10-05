@@ -1,0 +1,32 @@
+{
+  "issueTitle": "Example theme news worth reading this week",
+  "issueDate": "2026-10-05",
+  "editorial": "A quiet week with three items worth a look.\n\nOne point of view up front, then the items.",
+  "items": [
+    {
+      "title": "Example item one",
+      "summary": "A short summary of the first collected item.",
+      "sourceName": "Example News",
+      "url": "https://news.example.net/one",
+      "date": "2026-10-03"
+    },
+    {
+      "title": "Example item two",
+      "summary": "A short summary of the second collected item.",
+      "sourceName": "Example Journal",
+      "url": "https://news.example.net/two",
+      "date": "2026-10-01"
+    },
+    {
+      "title": "Example item three",
+      "summary": "A short summary of the third collected item.",
+      "sourceName": "Example Review",
+      "url": "https://news.example.net/three",
+      "date": "2026-09-30"
+    }
+  ],
+  "cta": {
+    "text": "Read more about the fund",
+    "url": "https://example.org/about"
+  }
+}

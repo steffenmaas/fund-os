@@ -1,0 +1,26 @@
+[
+  {
+    "timestampUtc": "2026-10-01T09:00:00Z",
+    "module": "dealflow",
+    "act": {
+      "kind": "mail-sent",
+      "target": {
+        "to": "someone-else@example.com",
+        "threadId": "thr-old"
+      }
+    },
+    "outputRef": "msg-1"
+  },
+  {
+    "timestampUtc": "2026-10-05T07:00:00Z",
+    "module": "dealflow",
+    "act": {
+      "kind": "mail-sent",
+      "target": {
+        "to": "another@example.com",
+        "threadId": "thr-today"
+      }
+    },
+    "outputRef": "msg-2"
+  }
+]
