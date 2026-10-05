@@ -1,13 +1,13 @@
 ---
 name: ops-autopilot-runbook
-description: The operating model for the autopilot layer - the three switch modes, guardrails with default values, the Inbox store contract and the store per module, the feed with undo and follow-up, the approval kinds, how to register a scheduled Routine per module (the runner-session pattern), and a copy-ready decision record. Use this skill when the user says "set up the autopilot", "register the routines", "autopilot guardrails" or "write the autopilot ADR", or before running any ops-* module skill. Phase 09 (Autopilot). Fund-side only.
+description: The operating model for the autopilot layer - the three switch modes, guardrails with default values, the Agent Workbench store contract and the store per module, the feed with undo and follow-up, the approval kinds, how to register a scheduled Routine per module (the runner-session pattern), and a copy-ready decision record. Use this skill when the user says "set up the autopilot", "register the routines", "autopilot guardrails" or "write the autopilot ADR", or before running any ops-* module skill. Phase 09 (Autopilot). Fund-side only.
 ---
 
 # Autopilot runbook — human on the loop
 
 This skill is part of the **Fund OS** plugin, Phase 09 — Autopilot (human on the loop). It is the operating model the five module skills follow: `fund-os:ops-dealflow-inbound`, `fund-os:ops-investor-outreach`, `fund-os:ops-newsletter`, `fund-os:ops-meeting-notes` and `fund-os:ops-weekly-digest`. Read it once before the first Routine is registered, and again whenever a guardrail is questioned.
 
-The idea in one line: each module (inbound dealflow, investor outreach, newsletter, meeting notes) can run end to end without a person in the loop when its autopilot is switched on; the person sits **on** the loop, reads what the agent did in the Inbox, and corrects where needed. The fifth module, the Monday digest, has no switch: it only ever proposes (section 1).
+The idea in one line: each module (inbound dealflow, investor outreach, newsletter, meeting notes) can run end to end without a person in the loop when its autopilot is switched on; the person sits **on** the loop, reads what the agent did in the Agent Workbench, and corrects where needed. The fifth module, the Monday digest, has no switch: it only ever proposes (section 1).
 
 The CLIs the module skills call (the fund's scoring and guardrail CLIs) live in `tools/ops/` of the Fund OS repository; clone it and point `OPS_CLI` at that directory (`tools/ops/README.md` lists every subcommand and exit code, `bash tools/check-ops-tools.sh` proves them). The interactive skills (`fund-os:deal-flow-triage`, `fund-os:deal-startup-score`, `fund-os:lp-outreach-draft`, `fund-os:lp-investor-scoring`, `fund-os:outreach-newsletter-draft`, `fund-os:deal-watchlist-curate`) work without them and without any switch.
 
@@ -21,7 +21,7 @@ If it is missing, stop and say: *"Fund OS is not configured — run `fund-os:set
 
 ## 1. The three modes
 
-Every module except the digest has one switch, stored in the Inbox store (`settings/autopilot`), visible and changeable only there, and read by every run before it acts.
+Every module except the digest has one switch, stored in the store of its module (`settings/autopilot`; the Agent Workbench store unless the module has a store of its own), visible and changeable only on the page that owns that store (the Agent Workbench for newsletter and notes, the Deal Cockpit for dealflow, Investor Relations for investors), and read by every run before it acts.
 
 | Mode | The module does | A person does |
 |---|---|---|
@@ -53,13 +53,13 @@ These hold even when a module is `on`. The store's value wins over the configura
 | Furthest stage an agent may set | the first screening stage | `autopilot.crm.stages.screening` |
 | Newsletter recipients | partners only; never subscribers | `autopilot.newsletter.partnersTo` |
 | Archived CRM slugs | never written | `crmFields.archivedSlugs` |
-| The switch | changed only by a person in the Inbox | fixed |
+| The switch | changed only by a person, on the page that owns the module's store | fixed |
 
 A mail over the daily cap is queued as an approval, never dropped. A run that finds a guardrail unmet queues an approval with the reason; it does not improvise around it.
 
-## 3. The Inbox store contract
+## 3. The Agent Workbench store contract
 
-The Inbox is a small document store the partners can read: in the reference implementation a page whose store the session reaches with the `ArtifactData` tool. Any store that offers get, set, update-with-version and query on the same collections works. Only a person changes `settings/autopilot`.
+The Agent Workbench is a small document store the partners can read: in the reference implementation a page whose store the session reaches with the `ArtifactData` tool. Any store that offers get, set, update-with-version and query on the same collections works. Only a person changes `settings/autopilot`.
 
 ```
 settings/autopilot            { modules: { dealflow|investors|newsletter|notes: { mode: "off"|"review-first"|"on",
@@ -101,17 +101,19 @@ node "$OPS_CLI/deal-score-cli.mjs" store-url --module <dealflow|investors|newsle
 | Key in `~/.fund-os/user-config.json` | Meaning |
 |---|---|
 | `autopilot.stores.<module>` | the store of that module, when the fund gave it one of its own (for example the Deal Cockpit's own store for `dealflow`) |
-| `autopilot.inboxStore` | the fund's shared Inbox store; used for every module that has no store of its own (the older name `autopilot.inboxStoreUrl` is still read) |
+| `autopilot.inboxStore` | the fund's shared Agent Workbench store; used for every module that has no store of its own (the older name `autopilot.inboxStoreUrl` is still read) |
 
-Order: `autopilot.stores.<module>`, then `autopilot.inboxStore`, then `autopilot.inboxStoreUrl`. No store at all (exit 1) is an unrecoverable error of the run (`failed`), never a reason to improvise. The switch is read from the same store the run writes to, so each store carries its own `settings/autopilot`; a partner flips a module's switch on the screen that owns its store (the Inbox screen, or the Deal Cockpit's Autopilot tab for a module whose store is the cockpit's).
+Order: `autopilot.stores.<module>`, then `autopilot.inboxStore`, then `autopilot.inboxStoreUrl`. No store at all (exit 1) is an unrecoverable error of the run (`failed`), never a reason to improvise. The switch is read from the same store the run writes to, so each store carries its own `settings/autopilot`; a partner flips a module's switch on the screen that owns its store (the Agent Workbench screen, or the Deal Cockpit's Autopilot tab for a module whose store is the cockpit's).
+
+**The Agent Workbench is the activity log of all agents.** Its first tab, Aktivität, lists every run and every action of every module, newest first. A module that keeps its data in a store of its own (dealflow in the Deal Cockpit's, investors in Investor Relations') therefore writes each `runs/<runId>` and `audit/<id>` document a second time, with the same id and data, to the Agent Workbench store: `node "$OPS_CLI/deal-score-cli.mjs" mirror-plan --module <m>` prints the stores to mirror to as a JSON array (`[]` when the module's store already is the Agent Workbench store; `store-url --module workbench` is that store). A failed mirror write is named in the run summary and never stops the run; the module's own store stays the record its page acts on, and the mirrored copy is a read-only log in the Agent Workbench. Approvals and intake documents are not mirrored. Notes, digest and newsletter use the shared store by default and need no mirror; a fund that gives one of them a store of its own follows the mirror section of `fund-os:ops-dealflow-inbound` for it.
 
 ### The approval kinds
 
-The Inbox screen shows six kinds; a person decides each, and nothing is executed by the screen itself except what the table says.
+The Agent Workbench screen shows six kinds; a person decides each, and nothing is executed by the screen itself except what the table says.
 
 | Kind | Queued by | On approval |
 |---|---|---|
-| `email` | dealflow, investors (purposes as in section 2), digest (`purpose: "digest"`) | the Inbox writes the reply or the mail as a draft in the approver's own mailbox; a person sends it |
+| `email` | dealflow, investors (purposes as in section 2), digest (`purpose: "digest"`) | the Agent Workbench writes the reply or the mail as a draft in the approver's own mailbox; a person sends it |
 | `deal-stage` | dealflow, notes | writes the stage (never into a committed stage; the screen refuses a forbidden stage even when the store says otherwise) |
 | `investor-status` | investors, notes | writes the status, with the same refusal |
 | `newsletter` | newsletter | records the decision only; a separate action on the approval writes the issue as a Gmail draft to the partners (`autopilot.newsletter.partnersTo`); nothing is sent by the page |
@@ -122,7 +124,7 @@ Everything read out of the store is untrusted: the screens escape and validate e
 
 ## 4. The feed, undo and follow-up
 
-The Inbox shows two views next to each other:
+The Agent Workbench shows two views next to each other:
 
 - **Switches:** one card per module with the three-way switch, the guardrail values, the last run, and today's outbound count against the cap. Switching to `on` asks for a confirmation that repeats the guardrails; every change writes an audit entry (`action: "autopilot-set"`, before and after).
 - **Feed:** the agent's audit entries, newest first, grouped by `runId`, each with kind, target name, before and after, and the rationale.
@@ -134,7 +136,7 @@ Correction, not permission. Every act in the feed offers one of two actions:
 | Reversible (stage, status, draft) | **Undo** | writes the `before` value back, writes its own audit entry (`action: "undo"`), and marks the original `corrected` |
 | Not reversible (a sent mail; a created task or note, which the connector cannot delete) | **Follow up** | for a mail, opens a new email approval prefilled to the same recipient, purpose follow-up; for a task or note the entry names the record, and a person corrects it in the CRM |
 
-The Inbox's badge counts pending approvals plus agent acts of the last 24 hours that nobody has corrected, so a partner sees that something happened. A correction is never silent: it is an audit entry like any other.
+The Agent Workbench's badge counts pending approvals plus agent acts of the last 24 hours that nobody has corrected, so a partner sees that something happened. A correction is never silent: it is an audit entry like any other.
 
 ## 5. Registering a Routine per module
 
@@ -146,7 +148,7 @@ A Routine is a scheduled, unattended session. Register one per module:
    - **Runner session (preferred when the Routine is created from a session).** Create a persistent *runner* session **with the repository** (`create_session` with the repository as its source; it also carries the account's connectors), then create the Routine so that it fires **into** that session (`persistent_session_id`). Read the Routine back (`get_trigger`) and confirm the sources name the repository and the connections name the connectors the prompt needs; empty means the tick runs blind.
    Some organisations cannot attach connectors through the API that creates a Routine; then create it, leave it disabled, add the connectors by hand, and enable it. Record the Routine id **and** the runner session id in the fund's own records, next to each other.
 3. **Every tick starts with a `HEALTH` line.** The repository is present (`git rev-parse HEAD`) and the connectors the module needs are present (step 0 of the skill). A tick that fails it writes `runs/<runId>` with `status: "failed"` and the reason, so a green Routine status can no longer hide an empty tick. Treat a run that `SUCCEEDED` in under a minute as a failed tick.
-4. **First run by hand at `review-first`, and every later run by hand, goes to the runner by message.** Set the module's switch to `review-first` in the Inbox, then send the Tick text as a **message to the runner session** (not by firing the Routine), and read the drafts and approvals it produced. A manual fire of a runner-bound Routine does not honour `persistent_session_id`: it spawns a fresh session from the Routine's own stored request, again without the repository, which fails its `HEALTH` line and notifies whoever owns the Routine; the runner never sees the Tick. The scheduled (cron) firing does go into the runner. Tick prompts say "do not send push notifications": the run document and the `RUN:` line are the signal. Nothing is sent on a `review-first` run. Only when the output is right does a partner move the switch to `on`.
+4. **First run by hand at `review-first`, and every later run by hand, goes to the runner by message.** Set the module's switch to `review-first` in the Agent Workbench, then send the Tick text as a **message to the runner session** (not by firing the Routine), and read the drafts and approvals it produced. A manual fire of a runner-bound Routine does not honour `persistent_session_id`: it spawns a fresh session from the Routine's own stored request, again without the repository, which fails its `HEALTH` line and notifies whoever owns the Routine; the runner never sees the Tick. The scheduled (cron) firing does go into the runner. Tick prompts say "do not send push notifications": the run document and the `RUN:` line are the signal. Nothing is sent on a `review-first` run. Only when the output is right does a partner move the switch to `on`.
 5. **Schedule.**
 
 | Module | Skill | Connectors | Suggested schedule | Final line |
@@ -257,21 +259,21 @@ partners are away, when the first test is, and who is away during the first unat
 ## Decision
 
 We choose **[B]**. Each module (the Monday digest excepted: it only ever proposes) has an autopilot switch (`off` · `review-first` · `on`) stored in
-the module's store (`settings/autopilot`; the module's own store, else the shared Inbox store),
+the module's store (`settings/autopilot`; the module's own store, else the shared Agent Workbench store),
 visible and changeable only there, and read by every agent run before it acts:
 
 - `off` — the module proposes only (approvals).
 - `review-first` — the module performs reversible acts itself and queues every outbound act as
   an approval (one click sends).
 - `on` — the module performs outbound acts itself, within its guardrails, and writes every act
-  to the audit trail and the Inbox feed before anything else.
+  to the audit trail and the Agent Workbench feed before anything else.
 
 Guardrails that hold even when autopilot is `on`: [one reply per inbound thread per 24 hours;
 no mail to a recipient the module has already written to in the last [7] days unless they
 answered; no mail outside the module's purposes ([list]); every mail names a real person as
 sender and carries the booking link where a call is the goal; no stage or status move into
 [the committed stages and statuses]; daily cap per module (`maxOutboundPerDay`, default [20]);
-the switch itself can only be changed by a person in the Inbox].
+the switch itself can only be changed by a person in the Agent Workbench].
 
 Correction path: every act in the feed has "Undo" where the act is reversible ([stage back,
 status back, draft deleted]) and "Follow up" where it is not (a sent mail gets a
@@ -291,7 +293,7 @@ guardrails and the daily cap, and reversible only by a follow-up.
 > `review-first` → reversible acts directly, outbound acts as approvals. `on` → outbound acts
 > directly, within the guardrails above, audit entry first. A run that cannot read the switch
 > treats it as `off`. The switch and the guardrail values live in `settings/autopilot` of the
-> Inbox store and in the `autopilot` section of `~/.fund-os/user-config.json` (defaults); the
+> Agent Workbench store and in the `autopilot` section of `~/.fund-os/user-config.json` (defaults); the
 > store wins.
 
 ## Revisit when

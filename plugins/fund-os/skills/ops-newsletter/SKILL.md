@@ -18,7 +18,7 @@ All keys live in `~/.fund-os/user-config.json`. The `autopilot` section is new; 
 | Key | Meaning |
 |---|---|
 | `autopilot.stores.newsletter` | optional: URL of the store of this module |
-| `autopilot.inboxStore` | URL of the fund's shared Inbox store; used when the module has none of its own (the older name `autopilot.inboxStoreUrl` is still read) |
+| `autopilot.inboxStore` | URL of the fund's shared Agent Workbench store; used when the module has none of its own (the older name `autopilot.inboxStoreUrl` is still read) |
 | `autopilot.purposes.newsletter` | default purposes: `newsletter` |
 | `autopilot.allowedUrlHosts` | list of hosts the issue's call to action may point to; `check-issue --config` refuses any other host |
 | `autopilot.newsletter.themes` | list of themes the issue covers |
@@ -37,11 +37,11 @@ All keys live in `~/.fund-os/user-config.json`. The `autopilot` section is new; 
 
 ## Tools and CLI
 
-Required tools: the session's built-in `WebSearch` and `WebFetch`, the Google Drive and Gmail connectors, and the `ArtifactData` tool (the Inbox store). When `autopilot.newsletter.service` names a service other than `none`, that service's connector is required too. The Crustdata connector (`crustdata_credits_check_v2`, `crustdata_social_post_search`) is optional: without it, or with `autopilot.newsletter.crustdata.enabled` false, step 2(c) is skipped. While the service reads `none` the interim path holds (Gmail draft to the partners).
+Required tools: the session's built-in `WebSearch` and `WebFetch`, the Google Drive and Gmail connectors, and the `ArtifactData` tool (the Agent Workbench store). When `autopilot.newsletter.service` names a service other than `none`, that service's connector is required too. The Crustdata connector (`crustdata_credits_check_v2`, `crustdata_social_post_search`) is optional: without it, or with `autopilot.newsletter.crustdata.enabled` false, step 2(c) is skipped. While the service reads `none` the interim path holds (Gmail draft to the partners).
 
 The fund's scoring CLI: `node "$OPS_CLI/newsletter-cli.mjs" <collect-prompt|check-issue|render>`, where `$OPS_CLI` is the `tools/ops/` directory of the Fund OS repository checkout (for example `export OPS_CLI=~/src/fund-os/tools/ops`; the plugin bundle does not carry it, so the checkout is the install; see `tools/ops/README.md` there). They read the configuration from `~/.fund-os/user-config.json`, or the path in `FUND_OS_CONFIG`. The subcommand names and flags below are the contract (`--allow-thin` is a switch without a value). The session is the model: the CLI builds the drafting prompt and holds the layout rules, you answer the prompt. If the CLI is not installed, steps 4 to 5 cannot run: that is an unrecoverable error (`failed`). Scratch files go under one temp directory `$WORK`, never into a repository. Pass each search term, keyword and URL in the argument the tool's own schema names for it (read the schema in the tool list before the first call); never invent a field name.
 
-## Inbox store
+## Agent Workbench store
 
 Every read and write of this module's data (`settings/autopilot`, `approvals/`, `audit/`, `runs/`) is the `ArtifactData` tool with `url` = the output of `node "$OPS_CLI/deal-score-cli.mjs" store-url --module newsletter`: `autopilot.stores.newsletter` when the fund gave this module a store of its own, else `autopilot.inboxStore`. Exit 1 (no store) is an unrecoverable error. The URL is never typed into a prompt or a file by hand.
 
@@ -93,7 +93,7 @@ Audit entry FIRST in every branch: no approval, no draft and no campaign before 
 
 Binding for this module, and they hold even when the switch is `on` (values are defaults; the store's value wins):
 
-> Guardrails that hold even when autopilot is `on`: one reply per inbound thread per 24 hours; no mail to a recipient the module has already written to in the last 7 days unless they answered; no mail outside the module's purposes; every mail names a real person as sender and carries the booking link where a call is the goal; no stage or status move into a committed stage; daily cap per module (`maxOutboundPerDay`, default 20); the switch itself can only be changed by a person in the Inbox.
+> Guardrails that hold even when autopilot is `on`: one reply per inbound thread per 24 hours; no mail to a recipient the module has already written to in the last 7 days unless they answered; no mail outside the module's purposes; every mail names a real person as sender and carries the booking link where a call is the goal; no stage or status move into a committed stage; daily cap per module (`maxOutboundPerDay`, default 20); the switch itself can only be changed by a person in the Agent Workbench.
 
 > No agent run acts without first reading the module's switch. `off` → propose only. `review-first` → reversible acts directly, outbound acts as approvals. `on` → outbound acts directly, within the guardrails above, audit entry first. A run that cannot read the switch treats it as `off`.
 
@@ -106,7 +106,7 @@ For this module the only purpose is newsletter. In addition, for every mode:
 
 ## Store contract
 
-The Inbox store (target: `store-url --module newsletter`) holds these collections; the runbook `fund-os:ops-autopilot-runbook` documents them in full.
+The Agent Workbench store (target: `store-url --module newsletter`) holds these collections; the runbook `fund-os:ops-autopilot-runbook` documents them in full.
 
 ```
 settings/autopilot            { modules: { dealflow|investors|newsletter: { mode: "off"|"review-first"|"on",
