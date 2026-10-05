@@ -143,6 +143,46 @@ def check_skills_have_anchor() -> None:
     report("Skills anchor their paths", bad, len(files))
 
 
+# ------------------------------------------------- config after fund-settings --
+RAW_CONFIG_ARG = re.compile(r"--config\s+[\"']?\S*user-config\.json")
+
+
+def raw_config_after_fund_settings(text: str) -> list[int]:
+    """Line numbers after the 'Fund settings' paragraph that still pass the raw user-config path to a CLI.
+
+    The 0.13.0 defect: the step said every later CLI gets the merged config, while later lines spelled
+    the raw path, so a session followed whichever it read last and silently dropped the fund's settings.
+    The paragraph itself is exempt (the fund-settings command reads the raw file by definition).
+    """
+    lines = text.splitlines()
+    start = next((i for i, l in enumerate(lines) if l.startswith("**Fund settings.**")), None)
+    if start is None:
+        return []
+    return [i + 1 for i in range(start + 1, len(lines)) if RAW_CONFIG_ARG.search(lines[i])]
+
+
+def check_config_after_fund_settings() -> None:
+    bad = []
+    files = sorted(SKILLS.glob("*/SKILL.md"))
+    n = 0
+    for f in files:
+        t = f.read_text(encoding="utf-8")
+        if "**Fund settings.**" not in t:
+            continue
+        n += 1
+        for ln in raw_config_after_fund_settings(t):
+            bad.append(f'{rel(f)}:{ln}: passes the raw user-config path after the fund-settings step; use --config "$CONFIG"')
+    # negative control: a planted raw path after the step must be found, the merged form must not
+    head = "**Fund settings.** x --config ~/.fund-os/user-config.json y\n"
+    if raw_config_after_fund_settings(head + 'node cli --config ~/.fund-os/user-config.json\n') != [2]:
+        bad.append("negative control failed: a raw ~/.fund-os/user-config.json after the step was not caught")
+    if raw_config_after_fund_settings(head + 'node cli --config "/home/x/.fund-os/user-config.json"\n') != [2]:
+        bad.append("negative control failed: a quoted absolute user-config path after the step was not caught")
+    if raw_config_after_fund_settings(head + 'node cli --config "$CONFIG"\n') != []:
+        bad.append("negative control failed: --config \"$CONFIG\" was flagged")
+    report("Skills with a fund-settings step use $CONFIG afterwards", bad, n)
+
+
 # ------------------------------------------------------- cross-references -----
 def check_skill_crossrefs() -> None:
     """A reference to a sibling skill must name a skill that exists."""
@@ -520,6 +560,7 @@ def main() -> int:
     check_plugin_root_refs()
     check_skills_have_anchor()
     check_skill_crossrefs()
+    check_config_after_fund_settings()
     check_fund_neutral()
     check_no_investor_scores()
     check_dashboard()
