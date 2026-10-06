@@ -921,7 +921,7 @@ function cmdDriveText(args) {
 }
 
 // ── fund-settings ─────────────────────────────────────────────────────────────
-// The fund's own values live in the Knowledge folder (fund-settings.json), not in the repository: this overlays the allowed
+// The fund's own values live in the Knowledge folder (fund-settings.md; the older fund-settings.json is still read), not in the repository: this overlays the allowed
 // ones on the configuration of one run. The repository configuration keeps placeholders for all of them.
 const SETTINGS_META = new Set(["_about", "updatedAt", "updatedBy"]);
 const SETTINGS_ALLOWED = { notes: ["taskAssignee"], investors: ["deckLink"], fund: ["bookingLink"] };
