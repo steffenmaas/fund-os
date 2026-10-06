@@ -5,15 +5,15 @@
     "url": "https://github.com/steffenmaas"
   },
   "metadata": {
-    "description": "Fund OS — 49 Claude Skills for VC fund operations, sourcing to wind-down.",
-    "version": "0.13.1"
+    "description": "Fund OS — 50 Claude Skills for VC fund operations, sourcing to wind-down.",
+    "version": "0.14.0"
   },
   "plugins": [
     {
       "name": "fund-os",
       "source": "./plugins/fund-os",
-      "description": "49 Claude Skills for VC fund operations - sourcing to wind-down.",
-      "version": "0.13.1",
+      "description": "50 Claude Skills for VC fund operations - sourcing to wind-down.",
+      "version": "0.14.0",
       "category": "fund-operations",
       "license": "PolyForm-Noncommercial-1.0.0",
       "keywords": [

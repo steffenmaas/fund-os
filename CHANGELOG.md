@@ -1,5 +1,112 @@
 # Changelog
 
+## 0.14.0 - 2026-10-06
+
+**Contact sourcing, two playbooks, a Timing score for investors, and the cost of every run.** One skill is
+added (50), no module starts on by default, and nothing in it names a fund. The screen templates are not
+changed in this release (see "Not in this release").
+
+- **Contact sourcing (`ops-contact-sourcing`, `tools/ops/contacts-cli.mjs`).** A sixth scheduled module turns
+  the people the partners meet into CRM records: meetings from the meeting-notes tool, mail threads with
+  people the fund wrote to, and the participant lists (xlsx, csv, a Google Sheet exported as csv) in an events
+  folder of the document store (`autopilot.contactSourcing.eventsFolderId`, no default). `event-rows` reads a
+  list with a zip reader that verifies every CRC-32 (a damaged file is reported, never guessed) and header
+  names in English and German; `candidates` merges the three sources (own domains, the note creator, bulk
+  senders and promotion threads dropped, already-handled sources dropped through the audit, a long event list
+  worked off over several runs); `dedupe` links by address, then company domain or exact name, never by a name
+  alone, and only flags a similar company name; `classify-prompt` / `check-classify` fence every free text as
+  untrusted data (no address in a prompt) and refuse an address, URL, phone number or markup in the answer;
+  `plan` turns mode, cap (`autopilot.contactSourcing.maxNewPerRun`, 1 to 100, default 15) and confidence into acts: low
+  confidence and class "other" create nothing, new entries only at `autopilot.crm.stages.new` or
+  `autopilot.crm.statuses.target`, a follow-up draft is an approval in every mode and **nothing is ever sent**.
+  `plan`, `source-note` and `followup-prompt` check the classifier's answer again as `check-classify` does
+  (any problem exits 1 with `FAIL: classification:` lines); `candidates` and `plan` exit 1 (`FAIL: no own
+  domains`) when `autopilot.notes.internalDomains` and `autopilot.inbound.ownDomains` are both empty or
+  missing (one of them is required). The xlsx reader finds its elements with `indexOf` only (linear in the
+  size of the sheet, whatever it holds), refuses an element with more than 4096 characters of attributes and
+  a workbook that inflates to more than 32 MB in the parts it opens. Mail address lists are split on commas
+  and semicolons outside quotes and angle brackets. `source-note`, `followup-prompt` and the note of
+  `approved-acts` write their dates in `--tz`, else `autopilot.notes.timezone`, else UTC (an invalid zone is a
+  `FAIL:` line). `plan` marks every skip `final` or not (only a decision is recorded as
+  handled; a failed CRM search, `dedupe --failed`, comes again), never links or writes a person only named in a
+  meeting without an approval, and makes no task approval while the record it would link does not exist yet.
+  `approved-acts` re-checks every approved `contact-record` approval (act kinds, payload keys, texts, the only
+  two list targets, no similar company) before the next run executes exactly those acts and sets
+  `executedAt`. `source-note`, `followup-prompt` (the answer shape is exactly `{subject, body}`),
+  `followup-mail` (the recipient is the candidate's address, never the draft's) and `recent` complete it. `deal-score-cli.mjs` knows the module `contacts` (switch, store,
+  recipient binding of `check-mail`). New config keys: `autopilot.contactSourcing.*` (the mailbox
+  search is `newer_than:<lookbackDays>d` plus `gmailQueryExtra`) and `autopilot.purposes.contacts`. `docs/modules/README.md` has the module entry (no graphic).
+- **Two playbooks (templates).** `lp-fundraising-playbook.md` (next to the LP matrix) and
+  `content-playbook.md` (next to the writing style guide) are the one file the partners keep for investors and
+  for content; both are fund-neutral templates with placeholders only. Their parsers
+  (`tools/ops/lib/lp-playbook.mjs`, `strategy.mjs`) never throw, never read text as an instruction and report
+  unknown headings and stray lines. `lp-playbook.mjs` treats a `<placeholder>` list item in Search profiles,
+  Regions and the like as no entry; `strategy.mjs` and the content template use `[square brackets]` and treat
+  an entry or value that is only `[...]` as no entry (the unmodified content template adds no theme, audience,
+  principle or format to a prompt). The content playbook's own "Newsletter" part (search terms, press sources,
+  settings) is **not read by Fund OS yet**: only its headings are checked.
+- **Investors: Fit over seven dimensions, a Timing score, evidence.** The LP matrix is v2 and Fit is seven
+  dimensions with raw maximum 113 (`round(raw / 113 x 100)`): "Activity Signal" moved out of Fit. Timing is a
+  second reading, "is this investor deploying now": four dimensions summing to 100, five bands (Deploying now to
+  Closed), valid 60 days, its evaluation starting `as of <date>`. `investor-cli.mjs lp-prompt` takes
+  `--playbook` (its Fit and Timing sections are the rubric and replace the matrix file; the rest is a capped
+  brief fenced as data) and `--evidence <dir>` (CRM notes, mail threads and documents, dated, newest first,
+  each fenced and capped); `lp-assemble` computes both scores in code, writes `timing-evaluation.txt` and, with
+  `--timing-fields`, the two slugs `crmFields.investorTiming` and `crmFields.investorTimingEvaluation`;
+  `classify --playbook` takes the playbook's regions. `next-step` now lets the fit threshold gate only a
+  Target's first touch: a quiet investor in an active status is followed up (`lp-follow-up`) whatever its fit
+  and when it is not scored yet; do-not-contact, a declining reply and the closing statuses still win.
+  **Evaluations written under the older matrix (raw 120) are on another scale; score them again before
+  comparing.**
+- **Content playbook in the writing prompts.** `newsletter-cli.mjs collect-prompt --playbook` and
+  `digest-cli.mjs digest-prompt` (a `content-playbook.md` in the knowledge directory) carry the strategy's
+  goal, audiences, principles and the newsletter or LinkedIn formats; the playbook's own newsletter sections
+  (below `# Newsletter`) are never part of that brief, and its content pillars stand in as the newsletter
+  themes when `autopilot.newsletter.themes` is empty (a template placeholder is no pillar).
+- **Run cost.** `deal-score-cli.mjs run-cost` reads a saved `list_events` answer and prints the largest
+  cumulative `total_cost_usd` of the session's result events; the runbook has a "Run cost" section (the next run
+  of a module measures the previous one; a failure never fails a run) and every ops skill records `sessionId`
+  and the measured `cost` on its run document.
+- **Fund settings as Markdown.** `deal-score-cli.mjs fund-settings` reads `fund-settings.md` (`## Fund`,
+  `## Investors`, `## Meeting notes` with `- Booking link:`, `- Deck link:`, `- Task fallback:`; German names
+  work; an unknown heading or key is refused by name, `__proto__` included) and still reads the JSON form. The
+  skills name `fund-settings.md`.
+- **Knowledge source label.** A knowledge file with `meta.json` source `drive` counts as the fund's own
+  document, like `fund`.
+- **Checks.** `tools/check-ops-tools.sh` (384 checks) runs the new `tools/check-contacts-cli.mjs` (382
+  checks; the spreadsheet is built at run time, hostile workbooks must return within 3 s, the CRM record ids
+  of the fixtures are made into uuids at run time, nothing id-shaped is committed, the free-mail fixture
+  address is a reserved `.example` name) and covers both playbook parsers and templates, Fit and Timing
+  arithmetic, evidence fencing, `--timing-fields`, the content playbook in both prompts, `run-cost` and the
+  Markdown fund settings. `tools/validate.py` holds the playbook template's Fit caps to 113 and Timing to 100.
+
+**Migration.** Four things to do in a fund's own copy:
+- **`lp-scoring-matrix.md`.** If the fund keeps its own `lp-scoring-matrix.md` (the overlay in
+  `~/.fund-os/knowledge/` or the copy in the Drive knowledge folder) from before 0.14.0, update it from the
+  new template (seven Fit dimensions, caps 20+20+20+15+8+15+15 = 113, no "Activity Signal") or delete it and
+  use the `lp-fundraising-playbook.md`. `investor-cli.mjs lp-prompt` and `lp-assemble` now refuse (exit 1,
+  `FAIL: lp-scoring-matrix: …`) a matrix whose `Dimension N (0-X pts)` headings are not seven with caps
+  summing to 113; the matrix of 0.13.1 and earlier has eight and raw 120.
+- **`fund-settings`.** Rename `fund-settings.json` in the knowledge folder to `fund-settings.md` (the format
+  is documented in `tools/ops/README.md`); the CLI still reads the JSON form, the skills now name the
+  Markdown file.
+- **Own domains.** Set `autopilot.notes.internalDomains` or `autopilot.inbound.ownDomains` (at least one)
+  before switching `contacts` on: with both empty or missing `candidates` and `plan` stop.
+- **Content playbook.** A fund that copied `content-playbook.md` keeps working; a `[Topic 1]`-style line it
+  forgot to replace is now ignored instead of becoming a newsletter theme.
+
+**Not in this release.** The seven screen templates are unchanged: the Agent Workbench template has no switch
+card, activity chip or approval view for `contacts` yet, and the Content and Investor Relations templates do not
+show the content playbook or Timing. `investor-cli.mjs` has no `search-plan` or `rescore-plan` (the playbook's
+search profiles and the pipeline re-scoring are not ported), and its `classify` returns `lpType`, `country`,
+`geographyFit` and `signals` only: no `domain`, `keep` or `dropReason`, and no `--search-type`. `newsletter-cli.mjs`
+has no `settings` command (a Fund OS newsletter takes its themes from the configuration, and the content
+playbook's newsletter part is not read).
+
+**Versions.** Plugin manifest and marketplace 0.13.1 -> 0.14.0; skills 49 -> 50.
+
+---
+
 ## 0.13.1 - 2026-10-05
 
 **Follow-up to 0.13.0: one name for the configuration after the fund-settings step, and the deck link
