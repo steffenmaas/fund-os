@@ -1,0 +1,9 @@
+entries[1]:
+  - entry_id: @@en-fernlea@@
+    parent_record:
+      object_slug: companies
+      object_id: @@obj-companies@@
+      record_id: @@co-fernlea@@
+    attributes:
+      example_stage: Screening
+has_more: false

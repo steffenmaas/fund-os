@@ -1,0 +1,65 @@
+{
+  "threads": [
+    {
+      "id": "thread-0001",
+      "messageCount": 2,
+      "messages": [
+        {
+          "id": "msg-0001a", "threadId": "thread-0001", "date": "2026-10-03T10:00:00Z", "labelIds": ["SENT"],
+          "sender": "partner@example.org",
+          "toRecipients": ["Emil Fjord <emil.fjord@lakeside-capital.example.net>"],
+          "ccRecipients": ["associate@example.org"],
+          "subject": "Intro: Lakeside Capital and Example Fund", "snippet": "Thanks for the coffee"
+        },
+        {
+          "id": "msg-0001b", "threadId": "thread-0001", "date": "2026-10-04T08:12:00Z", "labelIds": ["INBOX"],
+          "sender": "Emil Fjord <emil.fjord@lakeside-capital.example.net>",
+          "toRecipients": ["partner@example.org"],
+          "subject": "Re: Intro: Lakeside Capital and Example Fund", "snippet": "Happy to continue"
+        }
+      ]
+    },
+    {
+      "id": "thread-0002",
+      "messageCount": 1,
+      "messages": [
+        {
+          "id": "msg-0002a", "threadId": "thread-0002", "date": "2026-10-04T05:00:00Z", "labelIds": ["INBOX", "CATEGORY_PROMOTIONS"],
+          "sender": "Weekly Deals <deals.weekly@promo.example.com>",
+          "toRecipients": ["partner@example.org"],
+          "subject": "This week: 40% off everything", "snippet": "Offer ends soon"
+        }
+      ]
+    },
+    {
+      "id": "thread-0003",
+      "messageCount": 2,
+      "messages": [
+        {
+          "id": "msg-0003a", "threadId": "thread-0003", "date": "2026-10-04T11:00:00Z", "labelIds": ["SENT"],
+          "sender": "partner@example.org",
+          "toRecipients": ["Lotte Quist <lotte.quist.fixture@gmail.example>", "info@depots.example.net"],
+          "subject": "Quillstone Partners: next steps", "snippet": "Following up on Thursday"
+        },
+        {
+          "id": "msg-0003b", "threadId": "thread-0003", "date": "2026-10-04T12:00:00Z", "labelIds": ["INBOX"],
+          "sender": "No Reply <noreply@billing.example.com>",
+          "toRecipients": ["partner@example.org"],
+          "subject": "Your invoice", "snippet": "Invoice attached"
+        }
+      ]
+    },
+    {
+      "id": "thread-0004",
+      "messageCount": 1,
+      "messages": [
+        {
+          "id": "msg-0004a", "threadId": "thread-0004", "date": "2026-10-04T13:00:00Z", "labelIds": ["SENT"],
+          "sender": "partner@example.org",
+          "toRecipients": ["Team <team@mail.example.org>"],
+          "subject": "Internal note", "snippet": "For the team"
+        }
+      ]
+    }
+  ]
+}

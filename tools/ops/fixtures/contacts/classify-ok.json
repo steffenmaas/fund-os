@@ -1,0 +1,12 @@
+{
+  "_note": "A valid classifier answer for the candidates the check builds from this directory. The first contact uses the ref the prompt shows (e:#<hash>), the others the canonical key.",
+  "contacts": [
+    { "key": "e:#91941801fd", "class": "startup", "confidence": "high", "company": "Fernlea Robotics", "role": "Founder", "reason": "Founder of an electric drive retrofit company for delivery fleets, which the thesis covers; met in the intro call." },
+    { "key": "e:lotte.quist.fixture@gmail.example", "class": "lp", "confidence": "medium", "company": "Quillstone Partners", "role": "Investor Relations", "reason": "Investor relations at a fund; the mail thread is about next steps, but the fund type is not stated." },
+    { "key": "e:k.lindgren@eastwind.example.net", "class": "co-investor", "confidence": "high", "company": "Eastwind Capital", "role": "Partner", "reason": "Partner at a venture fund, listed at the event with a question about the fund start." },
+    { "key": "c:quillstone partners", "class": "lp", "confidence": "medium", "reason": "Listed as an organisation at the event; Lotte Quist of the same name works there." }
+  ],
+  "mentioned": [
+    { "name": "Pavel Orlov", "company": "Orlov Logistics Services", "role": "Operator", "meetingId": "meeting-a1", "class": "strategic-partner", "confidence": "medium", "reason": "Named in the Fernlea call as an operator of three depots who is open to a pilot." }
+  ]
+}

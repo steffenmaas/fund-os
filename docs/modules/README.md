@@ -110,6 +110,28 @@ at once. The module never sends a mail or an invite.
 - **Modes:** `off` — note, tasks and moves queued for a person · `review-first` — note filed on a sure match, tasks queued · `on` — note and tasks filed on a sure match.
 - **Guardrails:** never a mail or an invite; the switch read again before every write; stage and status moves are approvals only, never into a committed stage; no transcript, address, phone number or link in a note; the switch is changed only by a person.
 
+## Contact Sourcing Autopilot
+
+The module turns the people the partners meet into CRM records. It reads three sources: the meeting-notes
+tool (participants of the last days' meetings and people named in their notes), the mailbox (threads with
+people the fund wrote to or answered, not bulk, not the fund's own domains) and the participant lists of
+events in a folder of the document store (spreadsheets, one row per person). Every person is deduplicated
+against the CRM by address, then company domain, then exact name and company; whoever exists is linked,
+never created twice. The new ones are classified with the fund's playbook and thesis as startup, LP,
+co-investor, strategic partner or other, with a confidence: only high and medium create anything, and
+"other" stays out of the CRM. A startup becomes a company, a person and a deal-list entry at the first
+stage with a first screening score; an investor a company, a person and an investor-list entry at the
+target status with Fit and Timing scored from all the evidence at hand. The source is recorded on the
+entry and in a note. For people met in person or by mail the module queues a follow-up mail draft and a
+task as approvals; **it never sends a mail**, and the number of new records per run is capped, so a long
+event list is worked off over several runs.
+
+- **Trigger:** weekday run in the evening, after the meeting-notes run.
+- **Connectors:** meeting-notes tool, mailbox, document store (event lists, playbook, thesis, tone), CRM, the Agent Workbench store; a data provider for free company lookups only (never a paid search).
+- **Skills composed:** none of the interactive ones; it files what `deal-startup-score` and `lp-investor-scoring` score and what `lp-outreach-draft` would draft. Runbook: `ops-contact-sourcing`.
+- **Modes:** `off` — only proposals, no CRM write at all · `review-first` — records, entries, scores and notes written, drafts and tasks queued · `on` — tasks written as well, drafts still queued.
+- **Guardrails:** never a mail sent; new entries only at the first stage or the target status, never a committed one; at most the configured number of new records per run; low confidence and "other" create nothing; free lookups only; the switch is read again before every write; the switch is changed only by a person.
+
 ## Weekly Digest Autopilot
 
 ![Weekly Digest Autopilot: read the deal list, rank it as the cockpit does, draft three variants, check the text, queue one approval, a partner sends it](./weekly-digest.svg)

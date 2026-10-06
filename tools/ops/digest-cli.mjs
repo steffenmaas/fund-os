@@ -159,6 +159,9 @@ function cockpitMirror(CONFIG) {
 }
 
 
+/** The CRM connector's compact text (and JSON) answers read the way the cockpit reads them; contacts-cli reads its record lists with it. */
+export const parseAttioText = (text) => cockpitMirror({ fields: {}, liveStages: [], passedStages: [], rejectedStage: "" }).parseAttioText(text);
+
 const OUTCOME = ["Act now", "Answer fast", "Track", "Pass with care"];
 
 /** The answer of a connector call: JSON (object or array) or the CRM's compact text. */

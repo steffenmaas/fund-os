@@ -5,9 +5,9 @@ description: The operating model for the autopilot layer - the three switch mode
 
 # Autopilot runbook — human on the loop
 
-This skill is part of the **Fund OS** plugin, Phase 09 — Autopilot (human on the loop). It is the operating model the five module skills follow: `fund-os:ops-dealflow-inbound`, `fund-os:ops-investor-outreach`, `fund-os:ops-newsletter`, `fund-os:ops-meeting-notes` and `fund-os:ops-weekly-digest`. Read it once before the first Routine is registered, and again whenever a guardrail is questioned.
+This skill is part of the **Fund OS** plugin, Phase 09 — Autopilot (human on the loop). It is the operating model the six module skills follow: `fund-os:ops-dealflow-inbound`, `fund-os:ops-investor-outreach`, `fund-os:ops-newsletter`, `fund-os:ops-meeting-notes`, `fund-os:ops-contact-sourcing` and `fund-os:ops-weekly-digest`. Read it once before the first Routine is registered, and again whenever a guardrail is questioned.
 
-The idea in one line: each module (inbound dealflow, investor outreach, newsletter, meeting notes) can run end to end without a person in the loop when its autopilot is switched on; the person sits **on** the loop, reads what the agent did in the Agent Workbench, and corrects where needed. The fifth module, the Monday digest, has no switch: it only ever proposes (section 1).
+The idea in one line: each module (inbound dealflow, investor outreach, newsletter, meeting notes, contact sourcing) can run end to end without a person in the loop when its autopilot is switched on; the person sits **on** the loop, reads what the agent did in the Agent Workbench, and corrects where needed. The sixth module, the Monday digest, has no switch: it only ever proposes (section 1).
 
 The CLIs the module skills call (the fund's scoring and guardrail CLIs) live in `tools/ops/` of the Fund OS repository; clone it and point `OPS_CLI` at that directory (`tools/ops/README.md` lists every subcommand and exit code, `bash tools/check-ops-tools.sh` proves them). The interactive skills (`fund-os:deal-flow-triage`, `fund-os:deal-startup-score`, `fund-os:lp-outreach-draft`, `fund-os:lp-investor-scoring`, `fund-os:outreach-newsletter-draft`, `fund-os:deal-watchlist-curate`) work without them and without any switch.
 
@@ -46,7 +46,7 @@ These hold even when a module is `on`. The store's value wins over the configura
 | Replies per inbound thread | one per 24 hours | fixed |
 | Repeat recipient | none within 7 days unless they answered | `autopilot.noRepeatDays` |
 | Daily outbound cap per module | 20 | `autopilot.defaultCap`, or `maxOutboundPerDay` in the store |
-| Purposes | only those declared for the module | `autopilot.purposes.dealflow` (acknowledge, request-deck, schedule-call, pass), `.investors` (lp-first-touch, lp-follow-up, schedule-call), `.newsletter` (newsletter), `.notes` (note, task, status-proposal; no outbound act) |
+| Purposes | only those declared for the module | `autopilot.purposes.dealflow` (acknowledge, request-deck, schedule-call, pass), `.investors` (lp-first-touch, lp-follow-up, schedule-call), `.newsletter` (newsletter), `.notes` (note, task, status-proposal; no outbound act), `.contacts` (contact-follow-up, task, record; no outbound act) |
 | Sender | a real, named person | `autopilot.fund.senderName`, `autopilot.fund.signature` |
 | Booking link | in every mail whose goal is a call | `autopilot.fund.bookingLink` |
 | Committed stages and statuses | never moved into by an agent | `autopilot.crm.stages.committed`, `autopilot.crm.statuses.committed` |
@@ -62,7 +62,7 @@ A mail over the daily cap is queued as an approval, never dropped. A run that fi
 The Agent Workbench is a small document store the partners can read: in the reference implementation a page whose store the session reaches with the `ArtifactData` tool. Any store that offers get, set, update-with-version and query on the same collections works. Only a person changes `settings/autopilot`.
 
 ```
-settings/autopilot            { modules: { dealflow|investors|newsletter|notes: { mode: "off"|"review-first"|"on",
+settings/autopilot            { modules: { dealflow|investors|newsletter|notes|contacts: { mode: "off"|"review-first"|"on",
                                  maxOutboundPerDay: 20, purposes: [..], updatedAt, updatedBy } }, version: 1 }
 runs/<runId>                  { module, startedAt, finishedAt|null, mode, acts: n, outbound: n, cost: {usd?, basis?, promptTokens?, note?},
                                  summary: "<one line>", status: "running"|"done"|"failed", error?: string, sessionId?: string }
@@ -80,7 +80,7 @@ approvals/<auto>              kind, title, status, rationale, createdAt, created
 intake/<threadId>             { status: "taken"|"skipped", by, at, recordId, entryId, approvalId?, receivedAt, answeredAt?, slaMet }
 ```
 
-Defaults when `settings/autopilot` is missing: every module `off` (the four that have a switch), cap `autopilot.defaultCap`, purposes per module as in section 2. A missing or unreadable switch is `off`.
+Defaults when `settings/autopilot` is missing: every module `off` (the five that have a switch), cap `autopilot.defaultCap`, purposes per module as in section 2. A missing or unreadable switch is `off`.
 
 Rules every run follows:
 
@@ -95,7 +95,7 @@ Rules every run follows:
 Every module reads and writes **its own** store, resolved by the CLI and never typed by hand:
 
 ```bash
-node "$OPS_CLI/deal-score-cli.mjs" store-url --module <dealflow|investors|newsletter|notes|digest>
+node "$OPS_CLI/deal-score-cli.mjs" store-url --module <dealflow|investors|newsletter|notes|contacts|digest>
 ```
 
 | Key in `~/.fund-os/user-config.json` | Meaning |
@@ -117,7 +117,9 @@ The Agent Workbench screen shows six kinds; a person decides each, and nothing i
 | `deal-stage` | dealflow, notes | writes the stage (never into a committed stage; the screen refuses a forbidden stage even when the store says otherwise) |
 | `investor-status` | investors, notes | writes the status, with the same refusal |
 | `newsletter` | newsletter | records the decision only; a separate action on the approval writes the issue as a Gmail draft to the partners (`autopilot.newsletter.partnersTo`); nothing is sent by the page |
-| `task` | notes | creates the CRM task (parent record, text, optional deadline and assignee) |
+| `task` | notes, contacts | creates the CRM task (parent record, text, optional deadline and assignee) |
+| `contact-record` | contacts | the records, list entry, score and note a run proposed for one new contact (`acts` carry the CLI plan's payloads); decided by a person; the next contacts run executes an approved one (`contacts-cli.mjs approved-acts` re-checks every act first) and sets `executedAt` |
+| `follow-up-draft` | contacts | a follow-up mail draft already created in the mailbox (`draft.draftId`), never sent by the run; a person reads it and sends it |
 | `note` | notes | creates the CRM note on the parent record |
 
 Everything read out of the store is untrusted: the screens escape and validate every value before showing it or writing it onward, and a forbidden target is refused on approve and on undo.
@@ -167,11 +169,12 @@ A Routine is a scheduled, unattended session. Register one per module:
 | investor outreach | `fund-os:ops-investor-outreach` | CRM, Gmail, Google Calendar, Google Drive, optional data providers | daily | `RUN: investors <mode> acts=<n> outbound=<n> firstTouch=<n> followUps=<n> newTargets=<n>` |
 | newsletter | `fund-os:ops-newsletter` | Google Drive, Gmail, optional data provider, the newsletter service once chosen | weekly | `RUN: newsletter <mode> acts=<n> outbound=0 items=<n>` |
 | meeting notes (`notes`) | `fund-os:ops-meeting-notes` | the meeting-notes tool (Granola), CRM, optional Google Calendar | weekdays, evening | `RUN: notes <mode> acts=<n> notes=<n> tasks=<n> statusProposals=<n>` |
+| contact sourcing (`contacts`) | `fund-os:ops-contact-sourcing` | the meeting-notes tool, the mailbox, the document store (events folder), CRM | weekdays, evening, after the notes run | `RUN: contacts <mode> acts=<n> candidates=<n> created=<n> proposed=<n> drafts=<n> tasks=<n>` |
 | Monday digest (`digest`) | `fund-os:ops-weekly-digest` | CRM, optional Google Drive | weekly, Monday morning | `RUN: digest acts=<n> picks=<n>` |
 
-All five also need the `ArtifactData` tool for the module's store (section 3). The digest is approval-only in every mode, so its first run by hand is the same as every other; there is no switch to move afterwards.
+All six also need the `ArtifactData` tool for the module's store (section 3). The digest is approval-only in every mode, so its first run by hand is the same as every other; there is no switch to move afterwards.
 
-6. **Prompt.** One shape for all five; fill in the bracketed parts:
+6. **Prompt.** One shape for all six; fill in the bracketed parts:
 
 ```
 You are the [module] autopilot. Orient: read the fund-os skill [skill name] and
@@ -197,14 +200,15 @@ Copy this block into `~/.fund-os/user-config.json` and fill it in. Empty strings
 {
   "autopilot": {
     "inboxStore": "",
-    "stores": { "dealflow": "", "investors": "", "newsletter": "", "notes": "", "digest": "" },
+    "stores": { "dealflow": "", "investors": "", "newsletter": "", "notes": "", "contacts": "", "digest": "" },
     "defaultCap": 20,
     "noRepeatDays": 7,
     "purposes": {
       "dealflow": ["acknowledge", "request-deck", "schedule-call", "pass"],
       "investors": ["lp-first-touch", "lp-follow-up", "schedule-call"],
       "newsletter": ["newsletter"],
-      "notes": ["note", "task", "status-proposal"]
+      "notes": ["note", "task", "status-proposal"],
+      "contacts": ["contact-follow-up", "task", "record"]
     },
     "allowedUrlHosts": [],
     "onRequiresPinnedSha": false,
@@ -230,6 +234,7 @@ Copy this block into `~/.fund-os/user-config.json` and fill it in. Empty strings
       "crustdata": { "enabled": false, "maxCreditsPerRun": 0 }
     },
     "notes": { "lookbackDays": 1, "skipTitles": [], "internalDomains": [], "taskAssignee": "", "timezone": "UTC" },
+    "contactSourcing": { "eventsFolderId": "", "eventsLookbackDays": 14, "lookbackDays": 2, "maxNewPerRun": 15, "partnersToInvestorsList": false, "gmailQueryExtra": "in:sent -category:promotions -category:social" },
     "digest": {
       "maxPicks": 7, "language": "English", "partnersTo": [], "ignoreStages": [],
       "liveStages": [], "passedStages": [], "rejectedStage": "",
@@ -256,7 +261,7 @@ Keep the fund's own decision to run an autopilot in a decision record. Copy this
 
 ## Context
 
-[Why the fund wants its modules (inbound dealflow, investor outreach, newsletter, meeting notes) to run
+[Why the fund wants its modules (inbound dealflow, investor outreach, newsletter, meeting notes, contact sourcing) to run
 without a person in the loop: which work is routine, which service levels break while the
 partners are away, when the first test is, and who is away during the first unattended run.]
 

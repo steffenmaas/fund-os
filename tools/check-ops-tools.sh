@@ -862,6 +862,14 @@ runs=$((runs + 1)); if grep -q "OK 0 keys" "$WORK/out" && grep -q "REFUSED fund.
 printf '## Fonds\n- Buchungslink: https://calendar.example.org/book/example\n' > "$WORK/fund-settings-de.md"
 says "fund-settings: German names read as well" "OK 1 keys" $D fund-settings --config $FS/placeholder-config.json --settings "$WORK/fund-settings-de.md" --out "$WORK/fs-de.json"
 
+echo "contacts-cli.mjs (tools/check-contacts-cli.mjs)"
+runs=$((runs + 1))
+if node --check tools/check-contacts-cli.mjs && node tools/check-contacts-cli.mjs > "$WORK/contacts.out" 2>&1; then
+  echo "  ok    $(tail -1 "$WORK/contacts.out" | sed 's/^ *//')"
+else
+  fails=$((fails + 1)); echo "  FAIL  tools/check-contacts-cli.mjs"; head -20 "$WORK/contacts.out"
+fi
+
 echo "Config handling"
 refused "missing configuration is refused" env FUND_OS_CONFIG="$WORK/does-not-exist.json" $D check-write --kind stage --from New --to Screening
 

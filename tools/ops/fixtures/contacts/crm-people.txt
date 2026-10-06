@@ -1,0 +1,17 @@
+results[3]:
+  - record_id: @@pe-emil@@
+    attributes:
+      name: Emil Fjord
+      email_addresses[1]: emil.fjord@lakeside-capital.example.net
+      company[1]{object_slug,object_id,record_id}:
+        companies,@@obj-companies@@,@@co-lakeside@@
+  - record_id: @@pe-greta@@
+    attributes:
+      name: Greta Weiss
+      email_addresses[0]:
+      company: Weiss Family Office
+  - record_id: @@pe-kai@@
+    attributes:
+      name: Kai Lindgren
+      email_addresses[1]: kai.lindgren@southgate.example.net
+      company: Southgate Fund

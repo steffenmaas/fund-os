@@ -50,6 +50,11 @@
       ],
       "newsletter": [
         "newsletter"
+      ],
+      "contacts": [
+        "contact-follow-up",
+        "task",
+        "record"
       ]
     },
     "allowedUrlHosts": [
@@ -221,6 +226,14 @@
         "raise": "example_raise",
         "createdAt": "example_created_at"
       }
+    },
+    "contactSourcing": {
+      "eventsFolderId": "example-events-folder",
+      "eventsLookbackDays": 14,
+      "lookbackDays": 2,
+      "maxNewPerRun": 15,
+      "partnersToInvestorsList": false,
+      "gmailQueryExtra": "in:sent -category:promotions -category:social"
     }
   }
 }

@@ -30,7 +30,7 @@
  *                 exit 0 + "OK", or exit 1 + one "FAIL:" reason per line.
  *                 --result is required for a `pass` mail: a pass on a record that was only first-screened, with no
  *                 hard filter failed, rests on no evidence and is refused ("pass without evidence").
- *                 --expect-to is required for dealflow and investors: the mail goes to that one address, with no
+ *                 --expect-to is required for dealflow, investors and contacts: the mail goes to that one address, with no
  *                 cc/bcc key; every URL in the body must have a host in autopilot.allowedUrlHosts (plus the hosts
  *                 of autopilot.fund.bookingLink and autopilot.investors.deckLink); a form lead (--source
  *                 form-subject) is draft only: --mode on fails. --mode on needs --source.
@@ -489,11 +489,11 @@ function cmdReplyPrompt(args) {
 
 // ── Shared: the switch, the mail guardrails ───────────────────────────────────
 const MAIL_BODY_MIN = 120, MAIL_BODY_MAX = 4000;
-const BOUND_MODULES = ["dealflow", "investors"]; // modules whose mails go to exactly one expected person
+const BOUND_MODULES = ["dealflow", "investors", "contacts"]; // modules whose mails go to exactly one expected person
 const SOURCES = ["from-header", "form-subject"];
 const SCORE_PATTERN = /\/\s*100\b|\bout of 100\b|\bvon 100\b|\bPunkte\b/i;
 
-const AP_MODULES = ["dealflow", "investors", "newsletter", "notes"];
+const AP_MODULES = ["dealflow", "investors", "newsletter", "notes", "contacts"];
 const AP_MODES = ["off", "review-first", "on"];
 /** Defaults as the runbook states them: an unknown mode is off, a missing module is off, a missing cap is the configured default. */
 export function effectiveSwitch(doc, moduleName, defaultCap = 20) {
