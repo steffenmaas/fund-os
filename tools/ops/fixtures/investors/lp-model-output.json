@@ -1,0 +1,71 @@
+{
+  "type": "family office",
+  "relationshipType": "LP",
+  "relationshipReason": null,
+  "nonInvestor": false,
+  "nonInvestorReason": null,
+  "overrideApplied": false,
+  "overrideReason": null,
+  "dimensions": [
+    {
+      "name": "Fund of Funds Fit",
+      "points": 17,
+      "reason": "Fixture signal"
+    },
+    {
+      "name": "Emerging Manager Fit",
+      "points": 15,
+      "reason": "Fixture signal"
+    },
+    {
+      "name": "Thesis Fit",
+      "points": 14,
+      "reason": "Fixture signal"
+    },
+    {
+      "name": "Geography",
+      "points": 13,
+      "reason": "Fixture signal"
+    },
+    {
+      "name": "AuM / Ticket Size",
+      "points": 6,
+      "reason": "Fixture signal"
+    },
+    {
+      "name": "Investor Strength",
+      "points": 10,
+      "reason": "Fixture signal"
+    },
+    {
+      "name": "Network Proximity",
+      "points": 5,
+      "reason": "Fixture signal"
+    }
+  ],
+  "why": "Backs first-time managers and has written two fund commitments this year. The one fact that would move the score is a confirmed warm introduction.",
+  "geographyFit": "Germany, a core market",
+  "timingDimensions": [
+    {
+      "name": "Current commitments",
+      "points": 20,
+      "reason": "Two open commitments this year, room for one more"
+    },
+    {
+      "name": "Allocation window / fund cycle",
+      "points": 18,
+      "reason": "Allocation set in November"
+    },
+    {
+      "name": "Signals from conversations and meetings",
+      "points": 15,
+      "reason": "Deck requested on 2026-09-10"
+    },
+    {
+      "name": "Constraints",
+      "points": 9,
+      "reason": "Small, solvable obstacle (ticket size)"
+    }
+  ],
+  "timingEvaluation": "The investor asked for the deck on 2026-09-10 and decides on new fund proposals in November. Two commitments from this year are open, so a third is unlikely before then."
+}

@@ -1,0 +1,8 @@
+{
+  "to": [
+    "investor@example.com"
+  ],
+  "subject": "A first-time fund for the example sector",
+  "purpose": "lp-first-touch",
+  "body": "Hello,\n\nYour family office backs first-time managers, which is why I am writing. Example Fund is a pre-seed and seed fund for the example sector; the deck is here: https://example.org/decks/lp-deck\n\nIf a short call makes sense, you can book one here: https://calendar.example.org/book/sam\n\nDoes a first-time fund fit your allocation this year?\n\nBest,\nSam Partner, Example Fund"
+}

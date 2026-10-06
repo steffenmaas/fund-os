@@ -1,0 +1,10 @@
+Northwind Labs - Seed deck
+Modular battery packs for light electric vehicles
+Founded 2025, prototype in field trials with two fleet operators
+Team: CEO (power electronics), CTO (embedded software)
+
+The raise
+Raising EUR 2.0m seed to fund pilot production in 2027
+Runway today: 9 months at the current burn of EUR 45k per month
+Traction: two supplier letters of intent, no revenue yet
+Use of funds: 55 percent hardware, 30 percent team, 15 percent certification

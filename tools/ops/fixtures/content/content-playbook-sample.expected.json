@@ -1,0 +1,68 @@
+{
+  "goal": "The example fund becomes the first address for software in the example industry.\n\nSecond paragraph of the goal.",
+  "audiences": [
+    {
+      "name": "Operators",
+      "need": "want to know which software improves their workflows"
+    },
+    {
+      "name": "Founders",
+      "need": "look for capital and customers"
+    },
+    {
+      "name": "Investors",
+      "need": ""
+    }
+  ],
+  "pillars": [
+    "Software and data",
+    "Funding rounds",
+    "Market figures <img src=x onerror=alert(1)>"
+  ],
+  "formats": [
+    {
+      "name": "Newsletter",
+      "frequency": "every two weeks, Thursday",
+      "channels": [
+        "Newsletter",
+        "LinkedIn company page"
+      ],
+      "audiences": [
+        "all"
+      ],
+      "goal": "the most important news with context",
+      "scope": "editorial and 4 to 5 items",
+      "extra": []
+    },
+    {
+      "name": "Market update",
+      "frequency": "weekly",
+      "channels": [
+        "LinkedIn personal",
+        "Unknown channel"
+      ],
+      "audiences": [
+        "Investors"
+      ],
+      "goal": "",
+      "scope": "",
+      "extra": [
+        {
+          "key": "Tonality",
+          "value": "sober"
+        }
+      ]
+    }
+  ],
+  "principles": [
+    "Every number with a source and a date."
+  ],
+  "kpis": [
+    "Newsletter: open rate"
+  ],
+  "unknown": [
+    "Notes",
+    "Draft"
+  ],
+  "stray": 1
+}

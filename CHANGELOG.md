@@ -1,5 +1,430 @@
 # Changelog
 
+## 0.14.0 - 2026-10-06
+
+**Contact sourcing, two playbooks, a Timing score for investors, and the cost of every run.** One skill is
+added (50), no module starts on by default, and nothing in it names a fund. The screen templates are not
+changed in this release (see "Not in this release").
+
+- **Contact sourcing (`ops-contact-sourcing`, `tools/ops/contacts-cli.mjs`).** A sixth scheduled module turns
+  the people the partners meet into CRM records: meetings from the meeting-notes tool, mail threads with
+  people the fund wrote to, and the participant lists (xlsx, csv, a Google Sheet exported as csv) in an events
+  folder of the document store (`autopilot.contactSourcing.eventsFolderId`, no default). `event-rows` reads a
+  list with a zip reader that verifies every CRC-32 (a damaged file is reported, never guessed) and header
+  names in English and German; `candidates` merges the three sources (own domains, the note creator, bulk
+  senders and promotion threads dropped, already-handled sources dropped through the audit, a long event list
+  worked off over several runs); `dedupe` links by address, then company domain or exact name, never by a name
+  alone, and only flags a similar company name; `classify-prompt` / `check-classify` fence every free text as
+  untrusted data (no address in a prompt) and refuse an address, URL, phone number or markup in the answer;
+  `plan` turns mode, cap (`autopilot.contactSourcing.maxNewPerRun`, 1 to 100, default 15) and confidence into acts: low
+  confidence and class "other" create nothing, new entries only at `autopilot.crm.stages.new` or
+  `autopilot.crm.statuses.target`, a follow-up draft is an approval in every mode and **nothing is ever sent**.
+  `plan`, `source-note` and `followup-prompt` check the classifier's answer again as `check-classify` does
+  (any problem exits 1 with `FAIL: classification:` lines); `candidates` and `plan` exit 1 (`FAIL: no own
+  domains`) when `autopilot.notes.internalDomains` and `autopilot.inbound.ownDomains` are both empty or
+  missing (one of them is required). The xlsx reader finds its elements with `indexOf` only (linear in the
+  size of the sheet, whatever it holds), refuses an element with more than 4096 characters of attributes and
+  a workbook that inflates to more than 32 MB in the parts it opens. Mail address lists are split on commas
+  and semicolons outside quotes and angle brackets. `source-note`, `followup-prompt` and the note of
+  `approved-acts` write their dates in `--tz`, else `autopilot.notes.timezone`, else UTC (an invalid zone is a
+  `FAIL:` line). `plan` marks every skip `final` or not (only a decision is recorded as
+  handled; a failed CRM search, `dedupe --failed`, comes again), never links or writes a person only named in a
+  meeting without an approval, and makes no task approval while the record it would link does not exist yet.
+  `approved-acts` re-checks every approved `contact-record` approval (act kinds, payload keys, texts, the only
+  two list targets, no similar company) before the next run executes exactly those acts and sets
+  `executedAt`. `source-note`, `followup-prompt` (the answer shape is exactly `{subject, body}`),
+  `followup-mail` (the recipient is the candidate's address, never the draft's) and `recent` complete it. `deal-score-cli.mjs` knows the module `contacts` (switch, store,
+  recipient binding of `check-mail`). New config keys: `autopilot.contactSourcing.*` (the mailbox
+  search is `newer_than:<lookbackDays>d` plus `gmailQueryExtra`) and `autopilot.purposes.contacts`. `docs/modules/README.md` has the module entry (no graphic).
+- **Two playbooks (templates).** `lp-fundraising-playbook.md` (next to the LP matrix) and
+  `content-playbook.md` (next to the writing style guide) are the one file the partners keep for investors and
+  for content; both are fund-neutral templates with placeholders only. Their parsers
+  (`tools/ops/lib/lp-playbook.mjs`, `strategy.mjs`) never throw, never read text as an instruction and report
+  unknown headings and stray lines. `lp-playbook.mjs` treats a `<placeholder>` list item in Search profiles,
+  Regions and the like as no entry; `strategy.mjs` and the content template use `[square brackets]` and treat
+  an entry or value that is only `[...]` as no entry (the unmodified content template adds no theme, audience,
+  principle or format to a prompt). The content playbook's own "Newsletter" part (search terms, press sources,
+  settings) is **not read by Fund OS yet**: only its headings are checked.
+- **Investors: Fit over seven dimensions, a Timing score, evidence.** The LP matrix is v2 and Fit is seven
+  dimensions with raw maximum 113 (`round(raw / 113 x 100)`): "Activity Signal" moved out of Fit. Timing is a
+  second reading, "is this investor deploying now": four dimensions summing to 100, five bands (Deploying now to
+  Closed), valid 60 days, its evaluation starting `as of <date>`. `investor-cli.mjs lp-prompt` takes
+  `--playbook` (its Fit and Timing sections are the rubric and replace the matrix file; the rest is a capped
+  brief fenced as data) and `--evidence <dir>` (CRM notes, mail threads and documents, dated, newest first,
+  each fenced and capped); `lp-assemble` computes both scores in code, writes `timing-evaluation.txt` and, with
+  `--timing-fields`, the two slugs `crmFields.investorTiming` and `crmFields.investorTimingEvaluation`;
+  `classify --playbook` takes the playbook's regions. `next-step` now lets the fit threshold gate only a
+  Target's first touch: a quiet investor in an active status is followed up (`lp-follow-up`) whatever its fit
+  and when it is not scored yet; do-not-contact, a declining reply and the closing statuses still win.
+  **Evaluations written under the older matrix (raw 120) are on another scale; score them again before
+  comparing.**
+- **Content playbook in the writing prompts.** `newsletter-cli.mjs collect-prompt --playbook` and
+  `digest-cli.mjs digest-prompt` (a `content-playbook.md` in the knowledge directory) carry the strategy's
+  goal, audiences, principles and the newsletter or LinkedIn formats; the playbook's own newsletter sections
+  (below `# Newsletter`) are never part of that brief, and its content pillars stand in as the newsletter
+  themes when `autopilot.newsletter.themes` is empty (a template placeholder is no pillar).
+- **Run cost.** `deal-score-cli.mjs run-cost` reads a saved `list_events` answer and prints the largest
+  cumulative `total_cost_usd` of the session's result events; the runbook has a "Run cost" section (the next run
+  of a module measures the previous one; a failure never fails a run) and every ops skill records `sessionId`
+  and the measured `cost` on its run document.
+- **Fund settings as Markdown.** `deal-score-cli.mjs fund-settings` reads `fund-settings.md` (`## Fund`,
+  `## Investors`, `## Meeting notes` with `- Booking link:`, `- Deck link:`, `- Task fallback:`; German names
+  work; an unknown heading or key is refused by name, `__proto__` included) and still reads the JSON form. The
+  skills name `fund-settings.md`.
+- **Knowledge source label.** A knowledge file with `meta.json` source `drive` counts as the fund's own
+  document, like `fund`.
+- **Checks.** `tools/check-ops-tools.sh` (384 checks) runs the new `tools/check-contacts-cli.mjs` (382
+  checks; the spreadsheet is built at run time, hostile workbooks must return within 3 s, the CRM record ids
+  of the fixtures are made into uuids at run time, nothing id-shaped is committed, the free-mail fixture
+  address is a reserved `.example` name) and covers both playbook parsers and templates, Fit and Timing
+  arithmetic, evidence fencing, `--timing-fields`, the content playbook in both prompts, `run-cost` and the
+  Markdown fund settings. `tools/validate.py` holds the playbook template's Fit caps to 113 and Timing to 100.
+
+**Migration.** Four things to do in a fund's own copy:
+- **`lp-scoring-matrix.md`.** If the fund keeps its own `lp-scoring-matrix.md` (the overlay in
+  `~/.fund-os/knowledge/` or the copy in the Drive knowledge folder) from before 0.14.0, update it from the
+  new template (seven Fit dimensions, caps 20+20+20+15+8+15+15 = 113, no "Activity Signal") or delete it and
+  use the `lp-fundraising-playbook.md`. `investor-cli.mjs lp-prompt` and `lp-assemble` now refuse (exit 1,
+  `FAIL: lp-scoring-matrix: …`) a matrix whose `Dimension N (0-X pts)` headings are not seven with caps
+  summing to 113; the matrix of 0.13.1 and earlier has eight and raw 120.
+- **`fund-settings`.** Rename `fund-settings.json` in the knowledge folder to `fund-settings.md` (the format
+  is documented in `tools/ops/README.md`); the CLI still reads the JSON form, the skills now name the
+  Markdown file.
+- **Own domains.** Set `autopilot.notes.internalDomains` or `autopilot.inbound.ownDomains` (at least one)
+  before switching `contacts` on: with both empty or missing `candidates` and `plan` stop.
+- **Content playbook.** A fund that copied `content-playbook.md` keeps working; a `[Topic 1]`-style line it
+  forgot to replace is now ignored instead of becoming a newsletter theme.
+
+**Not in this release.** The seven screen templates are unchanged: the Agent Workbench template has no switch
+card, activity chip or approval view for `contacts` yet, and the Content and Investor Relations templates do not
+show the content playbook or Timing. `investor-cli.mjs` has no `search-plan` or `rescore-plan` (the playbook's
+search profiles and the pipeline re-scoring are not ported), and its `classify` returns `lpType`, `country`,
+`geographyFit` and `signals` only: no `domain`, `keep` or `dropReason`, and no `--search-type`. `newsletter-cli.mjs`
+has no `settings` command (a Fund OS newsletter takes its themes from the configuration, and the content
+playbook's newsletter part is not read).
+
+**Versions.** Plugin manifest and marketplace 0.13.1 -> 0.14.0; skills 49 -> 50.
+
+---
+
+## 0.13.1 - 2026-10-05
+
+**Follow-up to 0.13.0: one name for the configuration after the fund-settings step, and the deck link
+restricted like the booking link.** Two behaviour changes, otherwise documentation and checks. No skill is
+added (49), nothing in it names a fund.
+
+- **Skills (behaviour).** `ops-dealflow-inbound`, `ops-investor-outreach` and `ops-meeting-notes` said that
+  every later CLI gets the merged `$WORK/config.json` but spelled the raw `~/.fund-os/user-config.json` in
+  their later commands, so a session could drop the fund's settings. `$CONFIG` is now defined once in the
+  "Fund settings" step (the merged file, or the original path when the overlay fell back) and every later
+  command passes `--config "$CONFIG"`. The CLI lists name `mirror-plan` and `fund-settings`.
+- **`fund-settings` (behaviour).** `investors.deckLink` is no longer taken from any https host: like the
+  booking link it needs a host in `autopilot.investors.deckHosts` (new) or `autopilot.allowedUrlHosts`, and
+  the same plain path (no credentials, port, backslash, double slash or dot segment); a query and a
+  fragment stay allowed for the deck link (share links end in `?usp=sharing`), the booking link takes
+  neither. Empty lists refuse the key and the configuration's own value stays. **If you keep the deck link in
+  `fund-settings.json`, add its host to `autopilot.investors.deckHosts`.**
+- **Checks.** `tools/validate.py` fails a skill that has the fund-settings step and passes the raw
+  user-config path to a CLI after it (with a negative control). `tools/check-screen-templates.sh` fails when
+  `FUND_OS_DENYLIST` names a file that does not exist and warns when there is no local denylist at all
+  (self-tested). `tools/check-ops-tools.sh` covers the deck-link host rules with the bypass shapes of the
+  booking link (userinfo, backslash, port, double slash, trailing dot, unlisted host) and the query rules.
+- **Documentation.** The stale "Inbox" naming is "Agent Workbench" in the user guide, the ops README and the
+  module docs; the screens README lists `statusRoles`, `activeStatuses`, `quietStatuses`, `fitThreshold`,
+  `fund.nextFundName` and `rejectedStage`; the runbook's configuration block lists `deckHosts` and
+  `bookingHosts`; the `store-tabs` region comment is neutral (identical in both pages); the Content CLI
+  header names the fixed file `pr-index.json`.
+
+## 0.13.0 - 2026-10-05
+
+**A Start page, an investor board, one place for what every agent did, content published to channels,
+and the fund's own values kept in the Drive folder instead of a repository.** The seventh screen, the
+rework of five others, and the tools and skills behind them. No skill is added (49), no module starts on
+by default, and nothing in it names a fund.
+
+**`plugins/fund-os/templates/screens/`**
+
+- **`start.html` (new): Start.** The entry page: one tile per screen and, beside them, the signed-in
+  partner's own open CRM tasks sorted by urgency (overdue, today, this week, later, no due date) with filter
+  chips, a link to the record, "Erledigt" and a one-step undo. Opens at once from a browser copy
+  (`region:localcache`, the third copy). It writes nothing but the completion of a task. The **Start entry is
+  the first item of every side menu**, and `CONFIG.links` has a seventh URL, `start`.
+- **Investor Relations: Board tab.** One column per status (`CONFIG.boardColumns`), one compact card per
+  investor (LP fit chip, ticket, days since the last contact), moved by drag and drop (mouse, a short hold on
+  touch, or the menu on the card) with an optimistic move, a toast with undo, a failed write moving the card
+  back, and an inline confirmation before a move into the hard or closed status; `applyMoves` keeps a move
+  in flight across a reload. Every column and every KPI tile shows the **sum of the tickets**
+  (`CONFIG.fields.ticket`, an average ticket size, never a commitment). Contact older than **14 days** is
+  red inside the running pipeline, never for the passive status. The tab choice is remembered in the browser.
+- **Investor Relations: Inbox and Autopilot tabs** on its own store, as the Deal Cockpit has them
+  (`// ==== store-tabs:begin`, byte-identical in both pages; the guards, autopilot and context regions are
+  now held in three pages). Its `CONFIG` gains `dealList`, `companiesObjectId`, `dealStageField`, `stages`,
+  `forbiddenStages` and `forbiddenStatuses` for that guard. The Deals tab of the Deal Cockpit shows the
+  size of the running pipeline (`CONFIG.pipelineStages`).
+- **`inbox.html` is the Agent Workbench.** A new first tab **Aktivität**: every run and every action of all
+  five modules, newest first, day separators, chips per module and kind (Läufe, Aktionen, Fehler), a drawer
+  with the stored fields; the Intl formatters are built once, the tab draws only while shown and keeps the
+  focus. Freigaben, Eingang, Autopilot and Protokoll keep working; the dealflow and investors switches moved
+  to their own pages and show a pointer card. The dealflow and investors entries mirrored into this store
+  are a read-only log (no Rückgängig or Nachfassen, not counted in the badge); every snapshot mapping keeps
+  the document id.
+- **`newsletter.html` is Content** (Newsletter, Artikel, Template): articles and whitepaper drafts as files in
+  the knowledge folder, one shared list (`pr-index.json`) with merge of concurrent writers, the templates of the
+  folder with an editor that saves a new file, and **Veröffentlichen** for every item: a proposed text per
+  channel, then the channel's own share dialog (LinkedIn, WhatsApp), a Gmail draft, a copied text with the stored
+  link, or a website request. Nothing is sent or posted by the page. Header: Drive `create_file` and
+  `update_file` join the capabilities, and `sample` is declared.
+- **`profile.html`: Content-Kanäle.** The channels (LinkedIn, website, WhatsApp, newsletter, link) are created,
+  changed and switched off, never deleted, in a Drive file named by `CONFIG.channelsFile`
+  (`// ==== channels:begin`, byte-identical with Content; unknown rows and fields survive a rewrite). The
+  neutral seed channels apply while the file is missing. `CONFIG.routines` (routine ids) is gone;
+  `CONFIG.routineSchedule` shows when each routine fires, as free text.
+- **`region:permhelp`** (byte-identical in all seven pages): when a view has no connectors the page reads the
+  `permissions` capability, names the case (declined, not yet asked, not offered to a guest) and offers
+  "Connectoren anfragen" or "Berechtigungen öffnen"; it never asks on its own.
+- `README.md` of the folder: seven screens, capability headers per screen (Investor Relations with `db`, Gmail
+  and Drive `search_files`), the new `CONFIG` keys, the publish order with Start, and the regions that must not
+  drift.
+
+**`tools/ops/`**
+
+- `deal-score-cli.mjs fund-settings`: overlays the allowed keys of `fund-settings.json` (the Drive knowledge
+  folder, decoded by `drive-text`) on the configuration of one run and writes the merged file. Allowed keys
+  only: `notes.taskAssignee` (a plain address), `investors.deckLink` (an https link), `fund.bookingLink` (an
+  https link without credentials, port, query or fragment, on a host the configuration lists in
+  `autopilot.fund.bookingHosts`). Everything else, a placeholder, a value over 500 characters or with a control
+  character is refused with a named `REFUSED` line and the configuration's own value stays; no values are
+  shipped.
+- `deal-score-cli.mjs store-url --module workbench` is the Agent Workbench's store (`autopilot.inboxStore`);
+  `mirror-plan --module <m>` prints `[]` or `["<Workbench store>"]`.
+- `content-cli.mjs website-requests` / `website-entry`: the open website requests of the content list, and the
+  TypeScript literal of one requested item (title, body and author are data, nothing is evaluated).
+- `bash tools/check-ops-tools.sh` covers each of them (290 checks) with invented fixtures
+  (`fixtures/content/`, a booking host in the example configuration).
+
+**Skills.** `ops-dealflow-inbound`, `ops-investor-outreach` and `ops-meeting-notes` read `fund-settings.json`
+and run on the merged configuration (a fallback is named in the run summary); `ops-dealflow-inbound` and
+`ops-investor-outreach` mirror every `runs/` and `audit/` write to the Agent Workbench store; the Inbox is
+called Agent Workbench in all ops skills and the runbook.
+
+**The guards.** `bash tools/check-screen-templates.sh` now holds eight regions between pages (guards,
+autopilot but for its `MODULES` line, context, store-tabs, tasks, localcache in three pages, permhelp in seven,
+channels) and the Start entry, each with a negative control, over seven pages. The no-hit status of a local
+denylist no longer makes the fund-neutral self-tests fail.
+
+**Versions.** Plugin manifest and marketplace 0.12.0 -> 0.13.0.
+
+---
+
+## 0.12.0 - 2026-10-05
+
+**The partner's screens show what a proposal was drawn from and open at once; the notes tool
+drops one bad meeting instead of the whole day and routes each next step to the person who owns
+it.** No skill is added (49), no module starts on by default, and nothing in it names a fund.
+
+**`plugins/fund-os/templates/screens/`**
+
+- **Kontext block under every proposal** (Inbox and the Deal Cockpit's Inbox tab, `// region:context`,
+  byte-identical in both pages): closed by default, three collapsible sections loaded on first open
+  from the viewer's own connectors and never stored - the mail thread (Gmail `get_thread`, the newest
+  50 messages with "n von m", each expandable to its text, capped and escaped), the Drive documents
+  whose title contains the deal name (Drive `search_files`, a quote in the name is escaped, an empty
+  answer says so), and the CRM record with the meeting-notes source link. A section whose input is
+  missing is not shown. The capability headers gain Drive `search_files` (Inbox) and Gmail
+  `get_thread` (Deal Cockpit); `README.md` of the folder lists them.
+- **Instant open from a browser copy** (Deal Cockpit and Investor Relations, `// region:localcache`,
+  byte-identical in both pages): the last list read from the connector is kept in the browser's
+  local storage of the artifact and shown at once with "Stand von vor n Min - aktualisiere ...", then
+  replaced by the live answer; a cache older than seven days is marked "veraltet". Only connector data
+  is stored, never in the shared store or a repository; every storage access is guarded (private
+  window, full quota, damaged or foreign entry, far-future timestamp, more than 4 MB: the page loads as
+  without a cache); a failed or empty answer keeps the stored list on screen. The diagnostics area
+  offers "Zwischenspeicher leeren", the Profil screen names the behaviour.
+- **A mail approval that already carries a Gmail draft** offers "Entwurf oeffnen" and "Als gesendet
+  markieren" instead of a second "Freigeben".
+
+**`tools/ops/`**
+
+- `notes-cli.mjs parse-granola`: a meeting tag with a duplicate attribute, or `<`, `>` or `id=` in
+  an attribute value, drops **that meeting only** (`skipped`, `skippedReasons`); text between blocks, an
+  unclosed block, a duplicate id and more blocks than the declared count still empty the answer.
+- `notes-cli.mjs check-note`: exit **2** when a reason is about the meeting title (a redraft cannot
+  help), exit 1 for the draft only, 0 for `OK`; every reason is still printed.
+- `notes-cli.mjs tasks --members <file> [--meeting <file>]` and `members`: each next step goes to the
+  member its `owner` names (an address, or a unique first or full name after folding case, diacritics
+  and whitespace), else to the fund people in the meeting (the first is the assignee, the others are
+  named in the task text, at most 120 characters), else to `autopilot.notes.taskAssignee`, else to
+  `--assignee`; a step nobody reaches stays in the note. An empty or unreadable members file fails closed.
+- `deal-score-cli.mjs drive-text`: decodes a saved Drive `download_file_content` answer to UTF-8 by
+  tool and refuses invalid base64 or UTF-8, a binary file, a missing `content` and a different file
+  title; the sessions never retype base64.
+- `bash tools/check-ops-tools.sh` covers each of them (208 checks) with invented fixtures; the member
+  ids are assembled at run time.
+
+**Skills.** `ops-meeting-notes` reads the workspace members once and routes the tasks, branches on the
+`check-note` exit code and reads `skippedReasons`; `ops-meeting-notes`, `ops-weekly-digest`,
+`ops-dealflow-inbound`, `ops-investor-outreach` and `ops-newsletter` decode a Drive download with
+`drive-text` and name a fallback in the run summary.
+
+**The guards.** `bash tools/check-screen-templates.sh` also holds `region:context` (Inbox and Deal
+Cockpit) and `region:localcache` (Deal Cockpit and Investor Relations) identical between pages. Every
+page comparison now has a negative control that goes through the same extraction: a mutated copy of
+the second page must be reported.
+
+**Versions.** Plugin manifest and marketplace 0.11.0 -> 0.12.0.
+
+---
+
+## 0.11.0 - 2026-10-05
+
+**The autopilot layer now covers meetings and the week, and every screen a partner works in ships
+as a template.** Two new skills, the CLIs they call, the pitch deck as evidence in the dealflow
+module, one store per module, and the six Operations screens brought up to date with the pages
+they were lifted from. Nothing changes for a fund that does not run the autopilot, and nothing in
+it is on by default: every module still starts `off`.
+
+**Phase 09 - Autopilot, two more skills** (the plugin now has 49):
+
+- **`ops-meeting-notes`** - take the last day's meetings from the meeting-notes tool (Granola),
+  match each to its company or person in the CRM, write the note, queue the next steps as tasks and
+  any stage or status move as an approval, as far as the module's switch allows. It never sends a
+  mail or an invite. Only a `domain` match with someone of the fund in the room is written
+  directly; every other match is an approval of kind `note`.
+- **`ops-weekly-digest`** - rank the deal list the way the Deal Cockpit ranks it, draft the week's
+  top deals in three variants (internal, co-investor, LinkedIn) and queue **one approval**. It has
+  no switch and behaves as `off` in every mode: it never sends, never posts, never writes to the CRM.
+- **`ops-dealflow-inbound` gains the deck step**: the pitch deck in a founder mail is extracted,
+  read as untrusted text and handed to the scoring and reply prompts as a fenced block of its own.
+- **`ops-autopilot-runbook`** covers the five modules, the store per module
+  (`autopilot.stores.<module>`, else `autopilot.inboxStore`), the six approval kinds (email,
+  deal-stage, investor-status, newsletter, task, note) and the **runner-session pattern**: a Routine
+  created from a session has no repository, so a runner session is created with the repository and
+  the Routine fires into it; a manual run is a message to the runner, never a fire of the Routine.
+
+**`tools/ops/` - the CLIs of the new modules** (Node 18 or later, no dependencies, no network):
+
+- `notes-cli.mjs`: `parse-granola` (a summary that forges markup is refused), `match`, `note-prompt`,
+  `check-note` (no URL, phone number or e-mail address in a note, a status only from the fund's own
+  lists, never a committed one), `note-body`, `note-title`, `tasks`, `recheck`.
+- `digest-cli.mjs`: `rank` (the cockpit's arithmetic, byte for byte), `digest-prompt`, `check-digest`
+  (at most seven picks, no score number or stage name in the co-investor text, no company in a
+  confidential stage in the LinkedIn text, folded for zero-width and fullwidth spellings, hosts from
+  the allowlist only). `check-note` and `check-digest` fail closed: an empty committed or confidential
+  stage list is an error that names the configuration key, not a check that refuses nothing.
+- `deal-score-cli.mjs`: the **deck route** (`extract-deck` reads the PDFs and PPTX files out of a Gmail
+  RAW answer, `deck-text` cuts a PDF to text and says when it is image-only, `--deck` on `prompt`,
+  `assemble` and `reply-prompt`) and **store resolution** (`store-url --module <m>`).
+- `bash tools/check-ops-tools.sh` covers every new subcommand: the happy paths and the runs that
+  must be refused (a forged tag, a URL or phone number in a note, a non-uuid record, eight picks, a
+  company in a confidential stage on LinkedIn, a score number, malformed base64url, a deck without
+  `pdftotext`), against invented fixtures.
+
+**`plugins/fund-os/templates/screens/` - six screens, re-lifted from the current pages.** Each
+keeps one `const CONFIG = {...}` at the top of its script with a comment on every key; nothing below
+it names a fund.
+
+- **Deal Cockpit** with four tabs (Deals, Aufgaben, Inbox, Autopilot): Attio tasks per deal, the deal
+  domain's approvals and autopilot switch in the page itself on its own store, a burger menu on a phone.
+- **Inbox** with a full-screen drawer on the phone, task and note approvals next to mail, stage and
+  status, newsletter approvals with a sandboxed preview, and a record filter (`#record=<id>`).
+- **Investor Relations** with tasks per investor; **Knowledge**; **Profil** with the tool chosen per
+  role and module, its live connection status and the alternatives (the catalogue is a block in the
+  page that reads the Routine ids from `CONFIG`).
+- **Newsletter** is new: the archive of issues, an editor with a live preview, the fund's templates
+  read from the Drive knowledge folder, and the hand-over as a Gmail draft to the partners. Nothing
+  is sent by the page.
+- The side menu has six links, all empty strings in `CONFIG.links`. The pure regions
+  that the checks hold still (the scoring mirror, `region:rank`, the Inbox `guards` region and
+  `region:tasks`) are the source text; the few lines in them that carried a fund value now read
+  `CONFIG`.
+
+**The guards.** `bash tools/check-screen-templates.sh` now checks six pages and holds the copies of
+shared code together: the Inbox `guards` region is byte-identical in `inbox.html` and
+`deal-cockpit.html`, and `region:tasks` in `deal-cockpit.html` and `investors.html`. The existing
+guards still run: the scoring mirror against `tools/ops/lib/scoring.mjs` and the rank region
+against `tools/ops/digest-cli.mjs`, which also ranks the digest fixtures through the page's own
+region. A fund-neutral scan (artifact links, uuids, booking links, Drive ids, real e-mail
+addresses, plus an operator's local denylist of fund names) covers every page.
+
+**`docs/modules/` - two more graphics**: the meeting-notes module and the Monday digest, in the
+style of the first four.
+
+**Counts and versions.** The plugin has 49 skills; the README inventory, the dashboard, the manifest
+and the marketplace listing say so. Versions: plugin manifest and marketplace 0.10.0 -> 0.11.0.
+`USER_GUIDE.md` no longer says the CLIs ship in a later release: they are in `tools/ops/`.
+
+## 0.10.0 - 2026-10-05
+
+**Fund OS can now run the routine part of the work on a schedule, with a person on the loop
+instead of in it.** An optional autopilot layer: four skills that a scheduled session follows, the
+command-line guardrails those skills call, and the five Operations screens where a partner
+approves, undoes and reads the feed. Nothing in it is on by default: every module starts `off`.
+
+The skills already did the work when someone asked. What was missing was the part around them
+that makes it safe to let them run unasked: a switch that is read before every act, a feed that
+is written before the act rather than after, and arithmetic that a prompt cannot talk its way
+around.
+
+**Phase 09 - Autopilot, four skills** (the plugin now has 47):
+
+- **`ops-dealflow-inbound`** - find new founder mails and form submissions, file them in the CRM,
+  score them, and reply as far as the module's switch allows.
+- **`ops-investor-outreach`** - first touch to the best-fit LP targets, follow-ups on quiet
+  conversations, replies to booked calls, new LP candidates scored and filed.
+- **`ops-newsletter`** - screen the public channels for what is new in the fund's themes, draft
+  one issue in the fund's layout, hand it over as an approval and a partner draft.
+- **`ops-autopilot-runbook`** - the operating model: the three switch modes (`off` queues,
+  `review-first` drafts, `on` sends inside the guardrails), the guardrails with default values,
+  the Inbox store contract, the feed with undo and follow-up, how to register a scheduled Routine
+  per module, and a copy-ready decision record.
+
+Every fund value is a key under a new `autopilot` section of `~/.fund-os/user-config.json`; CRM
+slugs reuse `crmFields`. The skills name no sender, list, stage or link host of their own.
+
+**`tools/ops/` - the guardrails as executable, fund-neutral CLIs** (Node 18 or later, no
+dependencies, no network): `deal-score-cli.mjs`, `investor-cli.mjs`, `newsletter-cli.mjs`. They
+hold what must not depend on a model's mood: scoring totals, bands and the Quality x Thesis Fit
+action table, the mail and invite checks (one recipient, no cc/bcc, no repeat inside the
+no-repeat window, allowed link hosts only, no score quoted to a founder), the switch and the
+daily cap, and the stage and status moves an agent may make. Point them at a configuration with
+`--config` or `FUND_OS_CONFIG`. `bash tools/check-ops-tools.sh` runs a happy path per subcommand
+and the runs that must be refused, against invented fixtures; it is a step in the validate workflow.
+
+**`plugins/fund-os/templates/screens/` - the Operations screens as fund-neutral templates.**
+Deal Cockpit, Investor Relations, Inbox, Knowledge and Profil: single-file pages published as
+Claude artifacts that call the viewer's own Attio, Gmail, Drive and Calendar connectors.
+Every fund-specific value (fund name, list and attribute slugs, stage and status names, Drive
+folder, workspace and object ids, the side-menu links) is lifted into one `CONFIG` block at the
+top of each script. The README beside them covers what each screen does, the capabilities to
+declare at publish, how to fill `CONFIG`, and the order to publish in (all five first, then
+paste the five URLs into every page). The Newsletter screen follows in a later release.
+
+- The pure code regions (the Attio text parser, the scoring mirror, the knowledge and scorecard
+  builders, the Inbox guards and autopilot contract, the Profil tools catalogue) are kept as in
+  the source pages; the few lines in them that carried a fund value now read `CONFIG`.
+- **`tools/check-screen-templates.sh`** checks each page: the script parses, `CONFIG` is declared
+  exactly once, and the fund-neutral scan (generic patterns plus the operator's local denylist
+  `tools/.fund-denylist`) is empty and has a planted-value self-test. It also runs `tools/check-scoring-mirror.mjs`, which compares the scoring mirror in the
+  Deal Cockpit with `tools/ops/lib/scoring.mjs` (rubric tables, pin, bands, the Quality x Thesis
+  Fit table, the urgency clock, the line format) and fails on any difference. It is a step in the
+  validate workflow.
+- Investor Relations: quiet statuses are the first four active statuses, configurable
+  (`CONFIG.quietStatuses`; empty means the first four of `CONFIG.activeStatuses`, whatever the fund
+  names them). The deferral for low-fit targets reads `CONFIG.fund.nextFundName`. Profil takes its
+  default language and time zone from `CONFIG.locale`.
+
+**`docs/modules/` - one explanatory graphic per module** (inbound dealflow, investor outreach,
+newsletter, and the switch with the audit feed). Each animates a single item along the module's
+path; with `prefers-reduced-motion` the still frame shows the same information.
+
+**The skill count was wrong in three places, and is now one number.** The README said 47, the
+plugin manifest 47 and the marketplace listing 43, while the skills directory held 47 once the
+autopilot skills landed. All three now say 47, and both now say ten lifecycle phases (00-09)
+where they said nine. Versions: plugin manifest and marketplace 0.9.1 -> 0.10.0.
+
+**`validate.py`:** the fund-neutrality scan now covers `.mjs` files, so the CLIs are held to the
+same rule as the skills.
+
 ## 0.9.1 - 2026-10-01
 
 **A deal now carries three scores instead of one score and a star rating.** Quality, Thesis Fit and

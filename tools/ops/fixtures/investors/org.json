@@ -1,0 +1,17 @@
+{
+  "company_data": {
+    "crustdata_company_id": 1,
+    "basic_info": {
+      "name": "Example Capital Family Office",
+      "description": "A multi family office investing in venture funds and first-time managers.",
+      "company_type": "Privately Held",
+      "industries": [
+        "Investment Management"
+      ],
+      "primary_domain": "capital-fo.example.com"
+    },
+    "locations": {
+      "country": "DEU"
+    }
+  }
+}

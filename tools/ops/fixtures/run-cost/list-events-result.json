@@ -1,0 +1,5 @@
+{"ccr":{"data":[
+  {"created_at":"2026-01-01T07:41:10Z","result":{"internal_anthropic_catchall":{"subtype":"success","num_turns":14,"total_cost_usd":3.25,"duration_ms":412000}}},
+  {"created_at":"2026-01-01T07:58:42Z","result":{"internal_anthropic_catchall":{"subtype":"success","num_turns":31,"total_cost_usd":11.04,"duration_ms":1431000}}},
+  {"created_at":"2026-01-01T07:49:05Z","result":{"internal_anthropic_catchall":{"subtype":"success","num_turns":22,"total_cost_usd":7.5,"duration_ms":901000}}}
+],"has_more":false}}

@@ -1,0 +1,383 @@
+<!--
+  Knowledge · capabilities declared at publish (see README.md in this folder)
+  sample: {}
+  mcp.servers:
+    {server: "Google Drive",  tools: ["search_files", "download_file_content", "read_file_content"]}
+-->
+<title>Knowledge</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: Seitenleiste links, rechts die Dokumentkarten und ein Lesebereich. */
+  :root {
+    --bg: #04121a; --panel: #0a1c26; --panel-2: #0e2431; --line: rgba(255,255,255,0.09);
+    --fg: #f1f6f8; --muted: rgba(241,246,248,0.58); --faint: rgba(241,246,248,0.36);
+    --accent: #4FD1C5; --accent-ink: #04121a; --alert: #E8384F; --warn: #F2A93B; --good: #5FD68A; --calm: #7FA7C9;
+    --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f3f7f8; --panel: #ffffff; --panel-2: #eaf1f3; --line: rgba(4,18,26,0.12);
+      --fg: #0b1f2a; --muted: rgba(11,31,42,0.62); --faint: rgba(11,31,42,0.4);
+      --accent: #0e9c90; --accent-ink: #ffffff; --alert: #c7233a; --warn: #b8780d; --good: #1f8a4c; --calm: #3f6f96;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f3f7f8; --panel: #ffffff; --panel-2: #eaf1f3; --line: rgba(4,18,26,0.12);
+    --fg: #0b1f2a; --muted: rgba(11,31,42,0.62); --faint: rgba(11,31,42,0.4);
+    --accent: #0e9c90; --accent-ink: #ffffff; --alert: #c7233a; --warn: #b8780d; --good: #1f8a4c; --calm: #3f6f96;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 14px; line-height: 1.45; }
+  a { color: var(--accent); text-decoration: none; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  .app { display: flex; min-height: 100dvh; }
+  .rail { width: 216px; flex: none; border-right: 1px solid var(--line); background: var(--panel); padding: 18px 12px; display: flex; flex-direction: column; gap: 6px; position: sticky; top: 0; height: 100dvh; }
+  .rail .brand { display: flex; align-items: center; gap: 8px; padding: 4px 8px 14px; }
+  .rail .brand svg { width: 18px; height: 18px; color: var(--accent); }
+  .rail .brand span { font-family: var(--mono); font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); line-height: 1.3; }
+  .rail .lbl { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); padding: 8px 8px 2px; font-weight: 600; }
+  .rail a.item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 9px; color: var(--muted); font-size: 13px; }
+  .rail a.item svg { width: 15px; height: 15px; flex: none; }
+  .rail a.item:hover { background: var(--panel-2); color: var(--fg); }
+  .rail a.item.on { background: var(--panel-2); color: var(--fg); font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
+  .rail .spacer { flex: 1; }
+  .rail .foot { font-size: 11px; color: var(--faint); padding: 6px 10px; font-family: var(--mono); }
+  .page { flex: 1; min-width: 0; padding: 18px 20px 40px; display: flex; flex-direction: column; gap: 16px; }
+  @media (max-width: 820px) {
+    .app { flex-direction: column; }
+    .page { padding-inline: 16px; }
+  }
+  .head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+  h1 { font-size: 26px; font-weight: 600; margin: 0; line-height: 1.1; }
+  .sub { color: var(--muted); font-size: 13px; margin-top: 4px; max-width: 90ch; }
+  .status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-family: var(--mono); font-size: 11.5px; color: var(--muted); background: var(--panel); white-space: nowrap; }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+  .pill.ok .dot { background: var(--good); } .pill.bad .dot { background: var(--alert); } .pill.wait .dot { background: var(--warn); }
+  .btn { border: 1px solid var(--line); background: var(--panel); border-radius: 9px; padding: 6px 12px; font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .note { border: 1px solid var(--line); border-left: 3px solid var(--calm); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--muted); background: var(--panel); }
+  .note.bad { border-left-color: var(--alert); } .note.warn { border-left-color: var(--warn); } .note.ok { border-left-color: var(--good); }
+  .note b { color: var(--fg); }
+  code { font-family: var(--mono); font-size: 12px; color: var(--fg); }
+  h2 { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; }
+  .doc { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+  .doc.tpl { border-color: color-mix(in srgb, var(--warn) 50%, transparent); }
+  .doc .h { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .doc .k { font-family: var(--mono); font-size: 13px; }
+  .doc .d { font-size: 12px; color: var(--muted); }
+  .doc .s { font-size: 11.5px; color: var(--faint); font-family: var(--mono); }
+  .src { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .src::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .fund { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .tplc { color: var(--warn); background: color-mix(in srgb, var(--warn) 16%, transparent); }
+  .extra { color: var(--calm); background: color-mix(in srgb, var(--calm) 16%, transparent); }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .reader { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .md { font-size: 13.5px; line-height: 1.55; max-width: 80ch; }
+  .md h1, .md h2, .md h3 { font-family: var(--sans); text-transform: none; letter-spacing: 0; color: var(--fg); margin: 14px 0 6px; line-height: 1.2; }
+  .md h1 { font-size: 20px; } .md h2 { font-size: 16px; } .md h3 { font-size: 14px; }
+  .md p { margin: 6px 0; } .md ul, .md ol { margin: 6px 0; padding-left: 20px; }
+  .md table { border-collapse: collapse; font-size: 12.5px; margin: 8px 0; }
+  .md th, .md td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
+  .md blockquote { margin: 6px 0; padding: 4px 12px; border-left: 3px solid var(--calm); color: var(--muted); }
+  .md pre, .md code { font-family: var(--mono); font-size: 12px; }
+  .md pre { background: var(--panel-2); border-radius: 8px; padding: 10px; overflow-x: auto; }
+  .tablewrap { overflow-x: auto; }
+  details.diag { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); font-size: 12.5px; color: var(--muted); }
+  details.diag summary { padding: 8px 12px; cursor: pointer; font-family: var(--mono); font-size: 11.5px; }
+  details.diag pre { margin: 0 12px 12px; white-space: pre-wrap; word-break: break-word; font-family: var(--mono); font-size: 11.5px; background: var(--panel-2); border-radius: 8px; padding: 8px; max-height: 240px; overflow: auto; }
+  .spin { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+  /* F017 · burger + off-canvas rail on a phone. Shared verbatim by investors, knowledge, profile, newsletter; same class names as the cockpit
+     and the inbox (button.burger, .rail.open, .backdrop). Closes the stylesheet on purpose so it wins the cascade over the base rules above. */
+  .burger, .backdrop { display: none; }
+  @media (max-width: 820px) {
+    .burger { display: inline-flex; align-items: center; justify-content: center; position: fixed; top: calc(8px + env(safe-area-inset-top, 0px)); left: 12px; z-index: 30; width: 44px; height: 44px; padding: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--fg); }
+    .burger svg { width: 20px; height: 20px; }
+    .burger:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .rail { position: fixed; top: 0; left: 0; bottom: 0; z-index: 50; width: min(280px, 86vw); height: 100dvh; overflow-y: auto; overscroll-behavior: contain; padding-top: calc(18px + env(safe-area-inset-top, 0px)); padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); visibility: hidden; transform: translateX(-100%); transition: transform .2s ease, visibility 0s linear .2s; }
+    .rail.open { visibility: visible; transform: none; transition: transform .2s ease; box-shadow: 0 0 40px rgba(0, 0, 0, .35); }
+    .rail a.item { min-height: 44px; }
+    .backdrop:not([hidden]) { display: block; position: fixed; inset: 0; z-index: 40; background: rgba(2, 10, 14, .55); }
+    .page { padding-top: calc(8px + env(safe-area-inset-top, 0px)); }
+    .page h1[title] { display: flex; align-items: center; min-height: 44px; padding-left: 56px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .rail { transition: none; } .rail.open { transition: none; } }
+</style>
+
+<div class="app">
+  <button type="button" class="burger" id="burger" aria-label="Menü" aria-expanded="false" aria-controls="rail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <div class="backdrop" id="backdrop" hidden></div>
+  <nav class="rail" aria-label="Bereiche" id="rail"></nav>
+  <div class="page">
+    <div class="head">
+      <div>
+        <h1 title="Die Dokumente, gegen die die Agenten scoren und schreiben. Quelle ist der Drive-Ordner mit den Fund-Dokumenten; ein Dokument dort gewinnt gegen das fundneutrale Template aus Fund OS, sofort, ohne Deploy. Fehlt eins, sagt jede Bewertung das.">Knowledge</h1>
+      </div>
+      <div class="status">
+        <span class="pill" id="conn"><span class="dot"></span><span id="connText">Verbinde mit Google Drive…</span></span>
+        <button class="btn" id="refresh" type="button" disabled>Neu lesen</button>
+        <a class="btn" id="openFolder" href="#" target="_blank" rel="noopener">Ordner im Drive öffnen</a>
+      </div>
+    </div>
+
+    <div id="banner" class="note" hidden></div>
+    <div class="row" id="summary"></div>
+
+    <h2>Schlüssel, nach denen die Agenten fragen</h2>
+    <div class="grid" id="keys"></div>
+
+    <h2>Weitere Dokumente im Ordner</h2>
+    <div class="grid" id="extras"><div class="sub">Noch nichts gelesen.</div></div>
+
+    <section class="reader" id="reader" hidden>
+      <div class="row" style="justify-content:space-between"><div><h2 id="rTitle"></h2><div class="sub" id="rMeta"></div></div><div class="row"><a class="btn" id="rOpen" href="#" target="_blank" rel="noopener">Im Drive öffnen</a><button type="button" class="btn" id="rClose">Schließen</button></div></div>
+      <div class="md" id="rBody"></div>
+    </section>
+
+    <details class="diag" id="diag"><summary>Diagnose · Verbindung, Antworten, Fehler</summary><pre id="diagBody">Noch nichts protokolliert.</pre></details>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  // ══ CONFIG ══ Everything that belongs to one fund. Fill it in before publishing (README.md); nothing below this block names a fund.
+  const CONFIG = {
+    fundName: "",            // shown in the side menu, e.g. "Example Fund"
+    driveFolderId: "",       // Google Drive folder with the fund's own documents (the id at the end of the folder URL)
+    driveFolderName: "Fund OS Knowledge",  // the folder's name, shown in the connection line
+    links: {  // The seven side-menu URLs. Publish all screens first, then paste the seven URLs here in EVERY screen (README.md).
+      deals: "",
+      investors: "",
+      inbox: "",
+      knowledge: "",
+      newsletter: "",
+      profile: "",
+      start: "",
+    },
+  };
+  const LINKS = CONFIG.links;  // the seven side-menu URLs, set in CONFIG.links when publishing
+  const HERE = "knowledge";
+  const ICONS = {
+    deals: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+    investors: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/></svg>',
+    inbox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13l3-8h12l3 8v6H3z M3 13h5l2 3h4l2-3h5"/></svg>',
+    knowledge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 012-2h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2z M8 7h8M8 11h8M8 15h5"/></svg>',
+    newsletter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
+    profile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>',
+    start: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>',
+  };
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  (function rail() {
+    const item = (k, label) => `<a class="item ${k === HERE ? "on" : ""}" href="${LINKS[k].startsWith("http") ? LINKS[k] : "#"}" ${k === HERE ? 'aria-current="page"' : 'target="_blank" rel="noopener"'}>${ICONS[k]}${label}</a>`;
+    $("rail").innerHTML = `<div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 7c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg><span>${String(CONFIG.fundName || "Fund OS").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}<br>Operations</span></div>${item("start", "Start")}<div class="lbl">Domänen</div>${item("deals", "Deal Cockpit")}${item("investors", "Investor Relations")}${item("inbox", "Agent Workbench")}${item("knowledge", "Knowledge")}${item("newsletter", "Content")}<div class="spacer"></div>${item("profile", "Profil")}<div class="foot">Fund OS · Knowledge</div>`;
+  })();
+  // Off-canvas rail on a phone (F017): burger opens it, backdrop click, Escape, a rail link or a switch to a wide screen close it.
+  (function burger() {
+    const b = document.getElementById("burger"), r = document.getElementById("rail"), bd = document.getElementById("backdrop");
+    const set = (open) => { r.classList.toggle("open", open); b.setAttribute("aria-expanded", String(open)); bd.hidden = !open; };
+    b.addEventListener("click", () => set(!r.classList.contains("open")));
+    bd.addEventListener("click", () => set(false));
+    r.addEventListener("click", (e) => { if (e.target.closest("a.item")) set(false); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && r.classList.contains("open")) { set(false); b.focus(); } });
+    window.matchMedia("(min-width: 821px)").addEventListener("change", (e) => { if (e.matches) set(false); });
+  })();
+
+  const SERVER = "Google Drive";
+  const FOLDER_ID = CONFIG.driveFolderId;
+  const FOLDER_NAME = CONFIG.driveFolderName;
+  // Die Schlüssel, nach denen die Agenten fragen, mit dem, was sie darin suchen.
+  const KEYS = [
+    ["investment-thesis", "Thesis, Hard Filters, Ticket und Ownership. Gelesen von deal-score, reply-draft, intake, digest."],
+    ["evaluation-criteria", "Hard Filters, SLA, Triage-Regeln. Gelesen von deal-score, reply-draft, intake."],
+    ["startup-scoring-matrix", "Drei Rubriken, Bänder, Action Table. Gelesen von deal-score."],
+    ["lp-scoring-matrix", "8 LP-Dimensionen, Tiers, Aktionen. Gelesen von lp-score."],
+    ["tone-guide", "Wie der Fund schreibt. Gelesen von reply-draft, lp-outreach."],
+    ["lp-outreach-sequence", "First-touch 130, Follow-up 80, Final bump 80 Wörter. Gelesen von lp-outreach."],
+    ["writing-style-guide", "Öffentliche Texte, LinkedIn, Newsletter. Optional für reply-draft, lp-outreach."],
+  ];
+  const keyOf = (title) => String(title ?? "").replace(/\.(md|markdown|txt)$/i, "").toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "");
+
+  let mcp = null, files = [], loading = false;
+  const diag = [];
+  const log = (t, raw) => { diag.unshift(`${new Date().toLocaleTimeString("de-DE")} ${t}${raw !== undefined ? "\n" + (typeof raw === "string" ? raw : JSON.stringify(raw, null, 1)).slice(0, 900) : ""}`); $("diagBody").textContent = diag.slice(0, 15).join("\n\n"); };
+  function setConn(state, text) { $("conn").className = "pill " + state; $("connText").textContent = text; }
+  function banner(kind, html) { const b = $("banner"); if (!html) { b.hidden = true; return; } b.className = "note " + kind; b.innerHTML = html; b.hidden = false; }
+  function explain(err) { const code = err?.code ?? "upstream_error"; switch (code) {
+    case "needs_reauth": return `<b>Google Drive muss neu verbunden werden.</b> In claude.ai unter Einstellungen → Connectoren.`;
+    case "server_not_connected": case "selection_required": return `<b>Kein Google-Drive-Connector in dieser Ansicht.</b> In claude.ai unter Einstellungen → Connectoren hinzufügen.`;
+    case "not_in_manifest": return `<b>Google Drive ist für diese Seite nicht erlaubt.</b> Erlauben, um den Ordner zu lesen.`;
+    case "server_unavailable": case "rate_limited": return `<b>Drive hat nicht rechtzeitig geantwortet.</b> Gleich noch einmal.`;
+    case "tool_error": return `<b>Drive meldet einen Fehler:</b> ${esc(err.message ?? "")}`;
+    case "not_granted": case "capability_disabled": case "capability_removed": return `<b>Diese Ansicht erreicht keine Connectoren.</b> Im Browser auf claude.ai öffnen, angemeldet.`;
+    default: return `<b>Etwas ist fehlgeschlagen</b> (${esc(code)}). ${esc(err?.message ?? "")}`; } }
+  const payload = (res) => { let p = res?.payload; if (typeof p === "string") { try { p = JSON.parse(p); } catch { /* Text */ } } return p; };
+  async function call(tool, input, opts) { const t0 = Date.now(); try { const res = await mcp.callTool(SERVER, tool, input, opts); const p = payload(res); log(`${tool} ok · ${Date.now() - t0} ms`, typeof p === "string" ? p.slice(0, 300) : (p && p.content ? { ...p, content: `[${String(p.content).length} base64-Zeichen]` } : p)); return p; } catch (e) { log(`${tool} ${e?.code ?? "?"} ${e?.message ?? ""}`, input); throw e; } }
+
+  async function load(force) {
+    if (!mcp || loading) return; loading = true; $("refresh").disabled = true; setConn("wait", "Lese den Ordner…"); banner("", "");
+    const cache = force ? { staleTime: 0, refresh: true } : { staleTime: 300000 };
+    try {
+      let out = []; let pageToken;
+      for (let page = 0; page < 10; page++) {
+        const p = await call("search_files", { query: `parentId = '${FOLDER_ID}'`, pageSize: 50, excludeContentSnippets: true, ...(pageToken ? { pageToken } : {}) }, { cache });
+        const list = Array.isArray(p?.files) ? p.files : [];
+        out = out.concat(list.filter((f) => f.mimeType !== "application/vnd.google-apps.folder"));
+        pageToken = p?.nextPageToken; if (!pageToken || list.length === 0) break;
+      }
+      files = out; render(); setConn("ok", `Drive · ${files.length} Dokumente in „${FOLDER_NAME}“`);
+      if (files.length === 0) banner("warn", `<b>Der Ordner ist leer oder nicht lesbar.</b> Ordner-ID <code>${FOLDER_ID}</code>; Rohantwort in der Diagnose.`);
+    } catch (e) { banner("bad", explain(e)); setConn("bad", "Drive: " + (e?.code ?? "Fehler")); $("diag").open = true; }
+    finally { loading = false; $("refresh").disabled = !mcp; }
+  }
+
+  function render() {
+    const byKey = new Map(files.map((f) => [keyOf(f.title), f]));
+    const have = KEYS.filter(([k]) => byKey.has(k)).length;
+    $("summary").innerHTML = `<span class="pill ok"><span class="dot"></span>${have} Fund-Dokumente</span><span class="pill ${KEYS.length - have ? "wait" : "ok"}"><span class="dot"></span>${KEYS.length - have} Templates</span><span class="pill"><span class="dot"></span>${Math.max(0, files.length - have)} weitere</span>`;
+    if (KEYS.length - have > 0) banner("warn", `<b>${KEYS.length - have} von ${KEYS.length} Schlüsseln haben kein Fund-Dokument im Drive.</b> Die Agenten rechnen dort mit dem fundneutralen Fund-OS-Template und sagen das in jeder Bewertung. Fehlend: ${KEYS.filter(([k]) => !byKey.has(k)).map(([k]) => `<code>${k}</code>`).join(", ")}.`);
+    $("keys").innerHTML = KEYS.map(([k, d]) => { const f = byKey.get(k); return `<div class="doc ${f ? "" : "tpl"}"><div class="h"><div><div class="k">${esc(k)}</div><div class="d">${esc(d)}</div></div><span class="src ${f ? "fund" : "tplc"}">${f ? "fund" : "template"}</span></div>
+      <div class="s">${f ? `${esc(f.title)} · ${f.fileSize ? (Number(f.fileSize) / 1024).toFixed(1) + " KB" : "Google Doc"} · geändert ${esc(String(f.modifiedTime ?? "").slice(0, 10))}` : "kein Fund-Dokument im Drive · fundneutrales Template aus Fund OS"}</div>
+      <div class="row">${f ? `<button type="button" class="btn" data-view="${esc(f.id)}">Ansehen</button><a class="btn" href="${esc(f.viewUrl ?? "#")}" target="_blank" rel="noopener">Im Drive</a>` : `<a class="btn primary" href="https://drive.google.com/drive/folders/${FOLDER_ID}" target="_blank" rel="noopener">${esc(k)}.md ins Drive legen</a>`}</div></div>`; }).join("");
+    const extras = files.filter((f) => !KEYS.some(([k]) => keyOf(f.title) === k)).sort((a, b) => String(a.title).localeCompare(String(b.title)));
+    $("extras").innerHTML = extras.length ? extras.map((f) => `<div class="doc"><div class="h"><div><div class="k">${esc(f.title)}</div><div class="d">${esc(f.mimeType === "application/vnd.google-apps.document" ? "Google Doc" : f.mimeType ?? "")}</div></div><span class="src extra">${esc(keyOf(f.title))}</span></div><div class="s">${f.fileSize ? (Number(f.fileSize) / 1024).toFixed(1) + " KB · " : ""}geändert ${esc(String(f.modifiedTime ?? "").slice(0, 10))}</div><div class="row"><button type="button" class="btn" data-view="${esc(f.id)}">Ansehen</button><a class="btn" href="${esc(f.viewUrl ?? "#")}" target="_blank" rel="noopener">Im Drive</a></div></div>`).join("") : `<div class="sub">Keine weiteren Dokumente.</div>`;
+  }
+
+  // Ein kleiner, sicherer Markdown-Renderer: Überschriften, Listen, Tabellen, Code, Zitate, fett, kursiv, Links.
+  function md(src) {
+    const lines = String(src).replace(/\r/g, "").split("\n"); const out = []; let i = 0;
+    const inline = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<i>$2</i>").replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    while (i < lines.length) {
+      const l = lines[i];
+      if (/^```/.test(l)) { const buf = []; i++; while (i < lines.length && !/^```/.test(lines[i])) buf.push(lines[i++]); i++; out.push(`<pre>${esc(buf.join("\n"))}</pre>`); continue; }
+      const h = /^(#{1,3})\s+(.*)$/.exec(l); if (h) { out.push(`<h${h[1].length}>${inline(h[2])}</h${h[1].length}>`); i++; continue; }
+      if (/^\s*\|/.test(l) && i + 1 < lines.length && /^\s*\|?\s*:?-{2,}/.test(lines[i + 1])) {
+        const rows = []; while (i < lines.length && /^\s*\|/.test(lines[i])) rows.push(lines[i++]);
+        const cells = (r) => r.trim().replace(/^\||\|$/g, "").split("|").map((c) => inline(c.trim()));
+        const head = cells(rows[0]); const body = rows.slice(2).map(cells);
+        out.push(`<div class="tablewrap"><table><thead><tr>${head.map((c) => `<th>${c}</th>`).join("")}</tr></thead><tbody>${body.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`); continue;
+      }
+      if (/^\s*[-*]\s+/.test(l)) { const items = []; while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) items.push(lines[i++].replace(/^\s*[-*]\s+/, "")); out.push(`<ul>${items.map((x) => `<li>${inline(x)}</li>`).join("")}</ul>`); continue; }
+      if (/^\s*\d+\.\s+/.test(l)) { const items = []; while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) items.push(lines[i++].replace(/^\s*\d+\.\s+/, "")); out.push(`<ol>${items.map((x) => `<li>${inline(x)}</li>`).join("")}</ol>`); continue; }
+      if (/^>\s?/.test(l)) { const buf = []; while (i < lines.length && /^>\s?/.test(lines[i])) buf.push(lines[i++].replace(/^>\s?/, "")); out.push(`<blockquote>${inline(buf.join(" "))}</blockquote>`); continue; }
+      if (l.trim() === "") { i++; continue; }
+      const buf = []; while (i < lines.length && lines[i].trim() !== "" && !/^(#{1,3}\s|```|\s*[-*]\s|\s*\d+\.\s|>|\s*\|)/.test(lines[i])) buf.push(lines[i++]);
+      if (buf.length) out.push(`<p>${inline(buf.join(" "))}</p>`); else i++;
+    }
+    return out.join("");
+  }
+  const b64utf8 = (b) => { try { const bin = atob(b); const bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i); return new TextDecoder("utf-8").decode(bytes); } catch { return null; } };
+  async function view(id) {
+    const f = files.find((x) => x.id === id); if (!f) return;
+    $("reader").hidden = false; $("rTitle").textContent = f.title; $("rMeta").textContent = `${f.mimeType ?? ""} · geändert ${String(f.modifiedTime ?? "").slice(0, 10)}`; $("rOpen").href = f.viewUrl ?? "#";
+    $("rBody").innerHTML = `<div class="sub"><span class="spin"></span> Lese…</div>`; $("reader").scrollIntoView({ behavior: "smooth", block: "start" });
+    try {
+      let text = null;
+      if (String(f.mimeType).startsWith("application/vnd.google-apps")) { const p = await call("read_file_content", { fileId: id }, { cache: { staleTime: 300000 } }); const t = typeof p === "string" ? p : [p?.fileContent, p?.content, p?.text].find((v) => typeof v === "string"); text = t ?? ("Dokument ohne lesbaren Inhalt (" + Object.keys(p ?? {}).join(", ") + ")"); }
+      else { const p = await call("download_file_content", { fileId: id }, { cache: { staleTime: 300000 } }); text = typeof p?.content === "string" ? (b64utf8(p.content) ?? p.content) : (typeof p === "string" ? p : JSON.stringify(p, null, 1)); }
+      $("rBody").innerHTML = md(text ?? "");
+    } catch (e) { $("rBody").innerHTML = `<div class="note bad">${explain(e)}</div>`; }
+  }
+
+  $("openFolder").href = `https://drive.google.com/drive/folders/${FOLDER_ID}`;
+  $("refresh").addEventListener("click", () => load(true));
+  document.addEventListener("click", (e) => { const b = e.target.closest("[data-view]"); if (b) view(b.dataset.view); });
+  $("rClose").addEventListener("click", () => { $("reader").hidden = true; });
+  // region:permhelp (F029: when use('mcp') is null, the built-in `permissions` capability tells why and offers the way out; never declared, read-only on load, request / manage only on a click; the namespace, esc, the Diagnose line and the reload come in as arguments; mirrored byte for byte in every page that resolves mcp, held still by tools/check-screen-templates.sh)
+  const PERM_TEXT = {
+    denied: "Connectoren sind für dieses Artefakt abgelehnt. Über ‚Berechtigungen öffnen‘ wieder einschalten.",
+    prompt: "Noch nicht erlaubt: ‚Connectoren anfragen‘.",
+    granted: "Connectoren sind erlaubt, aber diese Ansicht hat sie nicht geladen. Die Seite neu laden.",
+    unavailable: "Als Gast von außerhalb der Organisation bietet claude.ai in geteilten Artefakten keine Connectoren an. Abhilfe: Artefakt duplizieren oder gemeinsamer Team-Account.",
+  };
+  const PERM_MANAGE_FAIL = "Das Panel ließ sich nicht öffnen. Menü des Artefakts oben rechts → Berechtigungen.";
+  const PERM_REQUEST_FAIL = "Die Anfrage ist fehlgeschlagen. Menü des Artefakts oben rechts → Berechtigungen.";
+  const permKnown = (s) => (s === "granted" || s === "prompt" || s === "denied" ? s : "unavailable");
+  const permText = (s) => PERM_TEXT[permKnown(s)];
+  // The box under the "keine Connectoren" banner: the text for the state of "mcp" and the two buttons. Every text goes through the page's esc.
+  function permHtml(esc, state) {
+    const s = permKnown(state);
+    return `<div class="permhelp" data-perm-help="1" style="margin-top:8px"><div data-perm-text>${esc(permText(s))}</div><div class="row" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><button type="button" class="btn" data-perm="request"${s === "denied" ? " disabled" : ""}>Connectoren anfragen</button><button type="button" class="btn" data-perm="manage">Berechtigungen öffnen</button></div><div data-perm-msg aria-live="polite" style="margin-top:6px"></div></div>`;
+  }
+  // Reads without prompting and logs the answers verbatim: the full map, "mcp" and "sample". { mcp, sample, all } holds the raw answers.
+  async function permRead(permissions, say) {
+    const one = async (name) => { try { return await permissions.state(name); } catch (e) { say(`permissions.state("${name}") fehlgeschlagen: ${e?.code ?? "?"}`); return "unavailable"; } };
+    let all = null;
+    try { all = await permissions.state(); } catch (e) { say(`permissions.state() fehlgeschlagen: ${e?.code ?? "?"}`); }
+    const mcp = await one("mcp"), sample = await one("sample");
+    say(`permissions.state() = ${JSON.stringify(all) ?? "undefined"}`);
+    say(`permissions.state("mcp") = ${String(mcp)}`);
+    say(`permissions.state("sample") = ${String(sample)}`);
+    return { mcp, sample, all };
+  }
+  // What one click does. "request": one dialog for ["mcp"], branch on the returned state. "manage": open the panel, then read the state again. { state, reload, msg }: state null = unchanged; reload true only when mcp is granted. Never throws; never asks twice.
+  async function permAct(kind, permissions, say) {
+    if (kind === "request") {
+      try {
+        const res = await permissions.request(["mcp"]);
+        say(`permissions.request(["mcp"]) = ${JSON.stringify(res) ?? "undefined"}`);
+        const s = res && typeof res === "object" && "mcp" in res ? res.mcp : await permissions.state("mcp");
+        return { state: permKnown(s), reload: s === "granted", msg: "" };
+      } catch (e) { say(`permissions.request(["mcp"]) fehlgeschlagen: ${e?.code ?? "?"}`); return { state: null, reload: false, msg: PERM_REQUEST_FAIL }; }
+    }
+    if (kind === "manage") {
+      try { await permissions.manage(); } catch (e) { say(`permissions.manage() abgelehnt: ${e?.code ?? "?"}`); return { state: null, reload: false, msg: PERM_MANAGE_FAIL }; }
+      let s; try { s = await permissions.state("mcp"); } catch { s = "unavailable"; }
+      say(`permissions.state("mcp") nach manage() = ${String(s)}`);
+      return { state: permKnown(s), reload: s === "granted", msg: "" };
+    }
+    return { state: null, reload: false, msg: "" };
+  }
+  // The clicks of the box, delegated on the banner element (the box is repainted with it). One click at a time.
+  function permBind(root, permissions, { say, reload }) {
+    if (root.dataset.permBound === "1") return;
+    root.dataset.permBound = "1";
+    let busy = false;
+    root.addEventListener("click", async (e) => {
+      const b = e.target?.closest?.("[data-perm]"); if (!b || busy || !root.contains(b)) return;
+      busy = true;
+      const set = (sel, fn) => { const el = root.querySelector(sel); if (el) fn(el); };
+      root.querySelectorAll("[data-perm]").forEach((x) => { x.disabled = true; });
+      const r = await permAct(b.dataset.perm, permissions, say);
+      if (r.state) set("[data-perm-text]", (el) => { el.textContent = permText(r.state); });
+      set("[data-perm-msg]", (el) => { el.textContent = r.reload ? "Erlaubt. Die Seite lädt neu …" : r.msg; });
+      root.querySelectorAll("[data-perm]").forEach((x) => { x.disabled = x.dataset.perm === "request" && r.state === "denied"; });
+      busy = false;
+      if (r.reload) reload();
+    });
+  }
+  // The one call of a page whose use('mcp') came back null: reads the state, logs it, mounts the box under the banner (a hidden banner becomes this note), wires the buttons. Returns the read states, or null when the view has no `permissions` (then nothing is shown).
+  async function permInit(root, { claude, esc, say, reload }) {
+    let permissions = null;
+    try { permissions = claude?.use ? await claude.use("permissions") : null; } catch (e) { say(`use('permissions'): ${e?.code ?? "?"}`); }
+    if (!permissions || !root) { say("use('permissions') → null: keine Hilfe beim Erlauben von Connectoren in dieser Ansicht"); return null; }
+    const perm = await permRead(permissions, say), box = permHtml(esc, perm.mcp);
+    if (root.hidden) { root.className = "note warn"; root.innerHTML = `<b>Diese Ansicht erreicht keine Connectoren.</b> ${box}`; root.hidden = false; }
+    else root.insertAdjacentHTML("beforeend", box);
+    permBind(root, permissions, { say, reload });
+    return perm;
+  }
+  // endregion:permhelp
+
+  render();
+  (async () => {
+    mcp = await (window.claude?.use ? window.claude.use("mcp") : Promise.resolve(null));
+    if (!mcp) { log("use('mcp') → null"); setConn("bad", "Keine Connectoren in dieser Ansicht"); banner("bad", `<b>Diese Ansicht erreicht keine Connectoren.</b> Im Browser auf claude.ai öffnen, angemeldet, mit verbundenem Google-Drive-Connector.`); $("diag").open = true; await permInit($("banner"), { claude: window.claude, esc, say: log, reload: () => location.reload() }); return; }
+    log("use('mcp') aufgelöst"); $("refresh").disabled = false;
+    try { const lt = await mcp.listTools(SERVER); log("listTools", lt?.servers?.map((s) => `${s.server}: ${s.authStatus}`)); } catch (e) { log(`listTools ${e?.code ?? "?"}`); }
+    await load(false);
+  })();
+})();
+</script>

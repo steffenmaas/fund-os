@@ -1,0 +1,56 @@
+{
+  "picks": [
+    {
+      "name": "Birchwood Health",
+      "what": "Scheduling and billing platform for small physiotherapy practices.",
+      "whyNow": "The round is closing soon and the window is open.",
+      "next": "Book a partner call this week."
+    },
+    {
+      "name": "Alder Robotics",
+      "what": "Warehouse picking arms sold as a monthly service.",
+      "whyNow": "A live process is running; open questions on scaling.",
+      "next": "Keep driving the process and run reference calls."
+    },
+    {
+      "name": "Delta Fern",
+      "what": "Carbon accounting API for mid-size manufacturers.",
+      "whyNow": "Round window is open and the thesis fit is high.",
+      "next": "First call with the founders."
+    },
+    {
+      "name": "Cinder Analytics",
+      "what": "Usage analytics for embedded finance products.",
+      "whyNow": "Round window is open.",
+      "next": "Ask for the closing date of the round."
+    },
+    {
+      "name": "Kestrel Works",
+      "what": "Rental platform for workshop equipment.",
+      "whyNow": "Window open.",
+      "next": "Refresh the urgency note."
+    },
+    {
+      "name": "Ember Grid",
+      "what": "Software that balances home batteries.",
+      "whyNow": "Top of the list by score.",
+      "next": "Ask for the close date."
+    },
+    {
+      "name": "Garnet Freight",
+      "what": "Load matching for regional carriers.",
+      "whyNow": "Top 20.",
+      "next": "Score urgency."
+    },
+    {
+      "name": "Foxglove AI",
+      "what": "Document review assistant.",
+      "whyNow": "Top 20.",
+      "next": "Ask for the close date."
+    }
+  ],
+  "internal": "Weekly digest, 5 October.\n\n1. Birchwood Health (rank 1, Quality 82, Urgency 85, Initial contact): round closing soon. Next: partner call.\n2. Alder Robotics (In diligence): process running.\n3. Delta Fern: thesis fit stands in for quality, window open.\n4. Cinder Analytics: window open, ask for the closing date.\n\nLeft out: Foxglove AI (rank 8, no window).",
+  "coInvestor": "We are taking a closer look at four companies in our pipeline this week: scheduling software for physiotherapy practices, a carbon accounting API for manufacturers, usage analytics for embedded finance and a robotics service for warehouses. If you would like to compare notes, reach out to us.",
+  "linkedin": "Small businesses in health, climate and logistics are getting software that replaces spreadsheets and phone calls. We follow this closely and talk to founders about their next steps. More about us: https://example.org",
+  "notes": "Foxglove AI stays out: no round window, rank 8."
+}

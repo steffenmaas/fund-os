@@ -1,0 +1,17 @@
+{
+  "modules": {
+    "dealflow": {
+      "mode": "on",
+      "maxOutboundPerDay": 20
+    },
+    "investors": {
+      "mode": "on",
+      "maxOutboundPerDay": 20
+    },
+    "newsletter": {
+      "mode": "review-first",
+      "maxOutboundPerDay": 20
+    }
+  },
+  "version": 1
+}

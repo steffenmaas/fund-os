@@ -24,3 +24,6 @@ dist/
 
 # Bundles are built by CI and attached to the release — never committed
 *.plugin
+
+# Operator's local denylist of fund names, slugs and ids for tools/check-screen-templates.sh - never commit
+tools/.fund-denylist

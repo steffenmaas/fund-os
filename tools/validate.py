@@ -143,6 +143,46 @@ def check_skills_have_anchor() -> None:
     report("Skills anchor their paths", bad, len(files))
 
 
+# ------------------------------------------------- config after fund-settings --
+RAW_CONFIG_ARG = re.compile(r"--config\s+[\"']?\S*user-config\.json")
+
+
+def raw_config_after_fund_settings(text: str) -> list[int]:
+    """Line numbers after the 'Fund settings' paragraph that still pass the raw user-config path to a CLI.
+
+    The 0.13.0 defect: the step said every later CLI gets the merged config, while later lines spelled
+    the raw path, so a session followed whichever it read last and silently dropped the fund's settings.
+    The paragraph itself is exempt (the fund-settings command reads the raw file by definition).
+    """
+    lines = text.splitlines()
+    start = next((i for i, l in enumerate(lines) if l.startswith("**Fund settings.**")), None)
+    if start is None:
+        return []
+    return [i + 1 for i in range(start + 1, len(lines)) if RAW_CONFIG_ARG.search(lines[i])]
+
+
+def check_config_after_fund_settings() -> None:
+    bad = []
+    files = sorted(SKILLS.glob("*/SKILL.md"))
+    n = 0
+    for f in files:
+        t = f.read_text(encoding="utf-8")
+        if "**Fund settings.**" not in t:
+            continue
+        n += 1
+        for ln in raw_config_after_fund_settings(t):
+            bad.append(f'{rel(f)}:{ln}: passes the raw user-config path after the fund-settings step; use --config "$CONFIG"')
+    # negative control: a planted raw path after the step must be found, the merged form must not
+    head = "**Fund settings.** x --config ~/.fund-os/user-config.json y\n"
+    if raw_config_after_fund_settings(head + 'node cli --config ~/.fund-os/user-config.json\n') != [2]:
+        bad.append("negative control failed: a raw ~/.fund-os/user-config.json after the step was not caught")
+    if raw_config_after_fund_settings(head + 'node cli --config "/home/x/.fund-os/user-config.json"\n') != [2]:
+        bad.append("negative control failed: a quoted absolute user-config path after the step was not caught")
+    if raw_config_after_fund_settings(head + 'node cli --config "$CONFIG"\n') != []:
+        bad.append("negative control failed: --config \"$CONFIG\" was flagged")
+    report("Skills with a fund-settings step use $CONFIG afterwards", bad, n)
+
+
 # ------------------------------------------------------- cross-references -----
 def check_skill_crossrefs() -> None:
     """A reference to a sibling skill must name a skill that exists."""
@@ -329,7 +369,7 @@ def check_fund_neutral() -> None:
     ]
     bad = []
     n = 0
-    for f in walk(".md", ".json", ".template", ".html", ".example", ".yml", ".py", ".sh"):
+    for f in walk(".md", ".json", ".template", ".html", ".example", ".yml", ".py", ".sh", ".mjs"):
         r = rel(f)
         if r == "tools/validate.py":
             continue        # this file carries the patterns by definition
@@ -449,7 +489,7 @@ def check_scoring_matrices() -> None:
         (SKILLS / "deal-startup-score" / "knowledge" / "startup-scoring-matrix.md",
          re.compile(r"^### \d+\. .+ — Weight: (\d+)%", re.M), 100, False),
         (SKILLS / "lp-investor-scoring" / "knowledge" / "lp-scoring-matrix.md",
-         re.compile(r"^## Dimension \d+ — .+ \(\d+–(\d+) pts\)", re.M), 120, True),
+         re.compile(r"^## Dimension \d+ — .+ \(\d+–(\d+) pts\)", re.M), 113, True),
     ]
     for path, pat, expected_raw, needs_norm in specs:
         if not path.exists():
@@ -475,6 +515,23 @@ def check_scoring_matrices() -> None:
                 bad.append(f"{rel(path)}: still says 'cap at 100' — capping hides the scale defect instead of fixing it")
         elif "raw" in text and re.search(r"round\(\s*raw\s*/", text):
             bad.append(f"{rel(path)}: caps already sum to 100, so it must not also normalise")
+    # The LP playbook template carries the same Fit rubric (seven dimensions, raw 113, normalised) and the Timing rubric (sum 100).
+    playbook = SKILLS / "lp-investor-scoring" / "knowledge" / "lp-fundraising-playbook.md"
+    if playbook.exists():
+        text = playbook.read_text(encoding="utf-8")
+        for label, section, want, pat in (
+            ("Scoring: Fit", "Scoring: Fit", 113, re.compile(r"^### Dimension \d+ — .+ \(0–(\d+)\)\s*$", re.M)),
+            ("Scoring: Timing", "Scoring: Timing", 100, re.compile(r"^### .+ \(0–(\d+)\)\s*$", re.M)),
+        ):
+            checked += 1
+            m = re.search(rf"^## {re.escape(section)}$(.*?)(?=^## |\Z)", text, re.M | re.S)
+            caps = [int(x) for x in pat.findall(m.group(1))] if m else []
+            if not caps:
+                bad.append(f"{rel(playbook)}: no '{label}' dimension caps found — the heading pattern may have changed")
+            elif sum(caps) != want:
+                bad.append(f"{rel(playbook)}: {label} has {len(caps)} caps summing to {sum(caps)}, expected {want}")
+            elif label == "Scoring: Fit" and not re.search(rf"round\(\s*raw\s*/\s*{want}\s*[×x*]\s*100\s*\)", m.group(1)):
+                bad.append(f"{rel(playbook)}: Fit caps sum to {want}, so the section must state 'round(raw / {want} × 100)'")
     # The startup matrix carries two further rubrics that also declare caps summing to 100.
     # They are scored, stored and sorted on exactly like the quality dimensions, so they get the
     # same arithmetic guarantee -- the defect this check exists for does not care which rubric
@@ -520,6 +577,7 @@ def main() -> int:
     check_plugin_root_refs()
     check_skills_have_anchor()
     check_skill_crossrefs()
+    check_config_after_fund_settings()
     check_fund_neutral()
     check_no_investor_scores()
     check_dashboard()

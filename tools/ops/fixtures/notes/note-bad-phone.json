@@ -1,0 +1,23 @@
+{
+  "summary": "Quillstone Robotics sells warehouse picking arms as a monthly service and has deployed 14 arms at two customers. The pre-seed round is 600k with 40 percent soft-circled. The discussion covered unit economics per arm, with customer payback under 18 months; we asked for the customer pipeline and the supplier agreement.",
+  "decisions": [
+    "Move to screening once the data room is in"
+  ],
+  "nextSteps": [
+    {
+      "text": "Review the data room when Founder shares it",
+      "owner": "Partner",
+      "due": "2026-10-10"
+    },
+    {
+      "text": "Introduce one logistics operator from the portfolio",
+      "owner": "Partner"
+    }
+  ],
+  "openQuestions": [
+    "Who owns the supplier relationship for the arm components?",
+    "How many of the 14 arms are on paid contracts?",
+    "Call the founder on +49 30 1234567 before Friday"
+  ],
+  "proposedStatus": "Screening"
+}

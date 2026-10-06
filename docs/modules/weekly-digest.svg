@@ -1,0 +1,177 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675" role="img" aria-labelledby="t d">
+<title id="t">Weekly Digest Autopilot</title>
+<desc id="d">Every Monday the deal list is read from the CRM and ranked the way the Deal Cockpit ranks it. Three variants of the week's top deals are drafted (internal, co-investor, LinkedIn) and checked against the fund's rules: no scores, stage names or valuations in the co-investor text, no late-stage company named on LinkedIn, no addresses or foreign links. The result is queued as one approval; the module never sends, drafts a mail or posts by itself. A person on the loop approves it and sends it from their own mailbox. Every act is written to the audit feed first.</desc>
+<style>
+  text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; fill: #111827; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .muted { fill: #4b5563; }
+  .box { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.5; }
+  .sw { stroke: #1e3a8a; stroke-width: 2.5; stroke-dasharray: 7 5; }
+  .panel { fill: #f8fafc; stroke: #e5e7eb; stroke-width: 1.5; }
+  .arrow { stroke: #475569; stroke-width: 2.5; fill: none; }
+  .loop { stroke: #1e3a8a; stroke-width: 2.5; fill: none; stroke-dasharray: 8 6; }
+  .pulse { opacity: 0; }
+  .q { fill: #fef3c7; stroke: #d97706; stroke-width: 1.5; } .qt { fill: #92400e; font-weight: 700; }
+  .dr { fill: #dbeafe; stroke: #2563eb; stroke-width: 1.5; } .drt { fill: #1e40af; font-weight: 700; }
+  .se { fill: #d1fae5; stroke: #059669; stroke-width: 1.5; } .set { fill: #065f46; font-weight: 700; }
+  .lg { fill: #f1f5f9; stroke: #94a3b8; stroke-width: 1.5; } .lgt { fill: #334155; font-weight: 700; }
+  .row { fill: #ffffff; stroke: #e5e7eb; stroke-width: 1.5; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .pulse { animation: travel 12s linear infinite; }
+    .b1 { animation: lit 12s infinite 0.16s; } .b2 { animation: lit 12s infinite 1.67s; }
+    .b3 { animation: lit 12s infinite 3.18s; } .b4 { animation: lit 12s infinite 4.69s; }
+    .b5 { animation: lit 12s infinite 6.2s; }  .b6 { animation: lit 12s infinite 7.72s; }
+    .v1 { animation: lit 12s infinite 3.2s; } .v2 { animation: lit 12s infinite 4.7s; } .v3 { animation: lit 12s infinite 6.2s; }
+    .loop, .march { animation: march 1s linear infinite; }
+    .fresh { animation: fresh 12s infinite; }
+  }
+  @keyframes travel { 0% { opacity: 0; transform: translateX(0); } 3% { opacity: 1; transform: translateX(0); } 66% { opacity: 1; transform: translateX(980px); } 70%, 100% { opacity: 0; transform: translateX(980px); } }
+  @keyframes lit { 0% { fill: #ffffff; } 2%, 12% { fill: #dbeafe; } 16%, 100% { fill: #ffffff; } }
+  @keyframes march { to { stroke-dashoffset: -14; } }
+  @keyframes fresh { 0%, 64% { fill: #ffffff; } 68%, 84% { fill: #dbeafe; } 92%, 100% { fill: #ffffff; } }
+</style>
+<defs>
+  <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker>
+  <marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1e3a8a"/></marker>
+</defs>
+
+<rect width="1200" height="675" fill="#ffffff"/>
+
+<!-- header -->
+<text x="30" y="54" font-size="30" font-weight="800">Weekly Digest Autopilot</text>
+<text x="30" y="86" font-size="17" class="muted">The week's best deals are ranked, drafted in three variants, checked, and wait as one approval for a partner.</text>
+<rect x="842" y="26" width="328" height="34" rx="17" fill="#0f172a"/>
+<text x="1006" y="48" font-size="15" font-weight="600" text-anchor="middle" style="fill:#ffffff">Autopilot layer · human on the loop</text>
+
+<!-- flow -->
+<g class="arrow">
+  <line x1="194" y1="175" x2="222" y2="175" marker-end="url(#ah)"/>
+  <line x1="390" y1="175" x2="418" y2="175" marker-end="url(#ah)"/>
+  <line x1="586" y1="175" x2="614" y2="175" marker-end="url(#ah)"/>
+  <line x1="782" y1="175" x2="810" y2="175" marker-end="url(#ah)"/>
+  <line x1="978" y1="175" x2="1006" y2="175" marker-end="url(#ah)"/>
+</g>
+
+<rect class="box b1" x="30" y="115" width="160" height="120" rx="12"/>
+<circle cx="52" cy="139" r="13" fill="#1e3a8a"/><text x="52" y="144" font-size="14" font-weight="700" text-anchor="middle" style="fill:#ffffff">1</text>
+<text x="74" y="144" font-size="14" class="muted">CRM</text>
+<text x="44" y="184" font-size="16" font-weight="700">Read the</text><text x="44" y="205" font-size="16" font-weight="700">deal list</text>
+<text x="44" y="226" font-size="14" class="muted">scores and stages</text>
+
+<rect class="box b2" x="226" y="115" width="160" height="120" rx="12"/>
+<circle cx="248" cy="139" r="13" fill="#1e3a8a"/><text x="248" y="144" font-size="14" font-weight="700" text-anchor="middle" style="fill:#ffffff">2</text>
+<text x="270" y="144" font-size="14" class="muted">cockpit ranking</text>
+<text x="240" y="184" font-size="16" font-weight="700">Rank</text><text x="240" y="205" font-size="16" font-weight="700">the deals</text>
+<text x="240" y="226" font-size="14" class="muted">score x urgency</text>
+
+<rect class="box b3" x="422" y="115" width="160" height="120" rx="12"/>
+<circle cx="444" cy="139" r="13" fill="#1e3a8a"/><text x="444" y="144" font-size="14" font-weight="700" text-anchor="middle" style="fill:#ffffff">3</text>
+<text x="466" y="144" font-size="14" class="muted">knowledge folder</text>
+<text x="436" y="184" font-size="16" font-weight="700">Draft three</text><text x="436" y="205" font-size="16" font-weight="700">variants</text>
+<text x="436" y="226" font-size="14" class="muted">at most seven picks</text>
+
+<rect class="box b4" x="618" y="115" width="160" height="120" rx="12"/>
+<circle cx="640" cy="139" r="13" fill="#1e3a8a"/><text x="640" y="144" font-size="14" font-weight="700" text-anchor="middle" style="fill:#ffffff">4</text>
+<text x="662" y="144" font-size="14" class="muted">checks</text>
+<text x="632" y="184" font-size="16" font-weight="700">Check the</text><text x="632" y="205" font-size="16" font-weight="700">text</text>
+<text x="632" y="226" font-size="14" class="muted">one retry at most</text>
+
+<rect class="box sw b5" x="814" y="115" width="160" height="120" rx="12"/>
+<circle cx="836" cy="139" r="13" fill="#1e3a8a"/><text x="836" y="144" font-size="14" font-weight="700" text-anchor="middle" style="fill:#ffffff">5</text>
+<rect x="858" y="127" width="72" height="24" rx="12" fill="#1e3a8a"/><text x="894" y="144" font-size="13" font-weight="700" text-anchor="middle" style="fill:#ffffff">approval</text>
+<text x="828" y="184" font-size="16" font-weight="700">Queue one</text><text x="828" y="205" font-size="16" font-weight="700">approval</text>
+<text x="828" y="226" font-size="14" class="muted">in every mode</text>
+
+<rect class="box sw b6" x="1010" y="115" width="160" height="120" rx="12"/>
+<circle cx="1032" cy="139" r="13" fill="#1e3a8a"/><text x="1032" y="144" font-size="14" font-weight="700" text-anchor="middle" style="fill:#ffffff">6</text>
+<rect x="1054" y="127" width="64" height="24" rx="12" fill="#1e3a8a"/><text x="1086" y="144" font-size="13" font-weight="700" text-anchor="middle" style="fill:#ffffff">person</text>
+<text x="1024" y="184" font-size="16" font-weight="700">A partner</text><text x="1024" y="205" font-size="16" font-weight="700">sends it</text>
+<text x="1024" y="226" font-size="14" class="muted">from their mailbox</text>
+
+<!-- travelling pulse -->
+<g class="pulse"><circle cx="110" cy="175" r="15" fill="rgba(37,99,235,0.25)"/><circle cx="110" cy="175" r="7" fill="#2563eb"/></g>
+
+<!-- legend -->
+<circle cx="38" cy="262" r="5" fill="#2563eb"/><text x="52" y="267" font-size="14" class="muted">one digest moving through the module</text>
+<rect x="392" y="253" width="26" height="16" rx="4" fill="#fff" stroke="#1e3a8a" stroke-width="2.5" stroke-dasharray="5 3"/><text x="428" y="267" font-size="14" class="muted">dashed border: a person decides this step</text>
+
+<!-- variants panel -->
+<rect class="panel" x="30" y="280" width="460" height="336" rx="14"/>
+<text x="50" y="314" font-size="18" font-weight="800">Three variants, one approval</text>
+<text x="470" y="314" font-size="14" class="muted" text-anchor="end">no switch</text>
+<rect class="row v1" x="50" y="332" width="420" height="48" rx="8"/>
+<rect class="lg" x="60" y="344" width="104" height="24" rx="12"/><text class="lgt" x="112" y="361" font-size="13" text-anchor="middle">internal</text>
+<text x="178" y="361" font-size="14" class="muted">for partners; scores and stages are fine</text>
+<rect class="row v2" x="50" y="388" width="420" height="48" rx="8"/>
+<rect class="dr" x="60" y="400" width="104" height="24" rx="12"/><text class="drt" x="112" y="417" font-size="13" text-anchor="middle">co-investor</text>
+<text x="178" y="417" font-size="14" class="muted">no score, no stage name, no valuation</text>
+<rect class="row v3" x="50" y="444" width="420" height="48" rx="8"/>
+<rect class="se" x="60" y="456" width="104" height="24" rx="12"/><text class="set" x="112" y="473" font-size="13" text-anchor="middle">LinkedIn</text>
+<text x="178" y="473" font-size="14" class="muted">themes only, no late-stage company named</text>
+<line x1="50" y1="502" x2="470" y2="502" stroke="#e5e7eb" stroke-width="1.5"/>
+<text x="50" y="520" font-size="16" font-weight="800">Guardrails, always on</text>
+<g font-size="14">
+  <text x="50" y="540">• An approval in every mode; nothing sent</text>
+  <text x="50" y="556">• Each pick is a ranked name, at most seven</text>
+  <text x="50" y="572">• No e-mail address, no foreign link</text>
+  <text x="50" y="588">• No CRM write of any kind</text>
+  <text x="50" y="604">• Fails the check twice: not queued</text>
+</g>
+
+<!-- feed panel -->
+<rect class="panel" x="530" y="280" width="420" height="336" rx="14"/>
+<text x="550" y="314" font-size="18" font-weight="800">Audit feed</text>
+<text x="930" y="314" font-size="14" class="muted" text-anchor="end">written first</text>
+<g>
+  <rect class="row fresh" x="550" y="332" width="380" height="48" rx="8"/>
+  <text class="mono muted" x="562" y="361" font-size="14">10:20</text>
+  <text x="616" y="352" font-size="15" font-weight="600">Mail draft · partners</text><text x="616" y="370" font-size="13" class="muted">after a person approves</text>
+  <rect class="dr" x="800" y="344" width="70" height="24" rx="12"/><text class="drt" x="835" y="361" font-size="13" text-anchor="middle">drafted</text>
+  <text x="886" y="361" font-size="14" font-weight="600" style="fill:#1d4ed8">undo</text>
+
+  <rect class="row" x="550" y="388" width="380" height="48" rx="8"/>
+  <text class="mono muted" x="562" y="417" font-size="14">09:03</text>
+  <text x="616" y="408" font-size="15" font-weight="600">Approval · digest</text><text x="616" y="426" font-size="13" class="muted">seven picks, pending</text>
+  <rect class="q" x="800" y="400" width="70" height="24" rx="12"/><text class="qt" x="835" y="417" font-size="13" text-anchor="middle">queued</text>
+  <text x="886" y="417" font-size="14" font-weight="600" style="fill:#1d4ed8">undo</text>
+
+  <rect class="row" x="550" y="444" width="380" height="48" rx="8"/>
+  <text class="mono muted" x="562" y="473" font-size="14">09:02</text>
+  <text x="616" y="464" font-size="15" font-weight="600">Check · drafted text</text><text x="616" y="482" font-size="13" class="muted">all rules met</text>
+  <rect class="lg" x="800" y="456" width="70" height="24" rx="12"/><text class="lgt" x="835" y="473" font-size="13" text-anchor="middle">logged</text>
+  <text x="886" y="473" font-size="14" font-weight="600" style="fill:#1d4ed8">undo</text>
+
+  <rect class="row" x="550" y="500" width="380" height="48" rx="8"/>
+  <text class="mono muted" x="562" y="529" font-size="14">09:01</text>
+  <text x="616" y="520" font-size="15" font-weight="600">Ranking · deal list</text><text x="616" y="538" font-size="13" class="muted">attention set first</text>
+  <rect class="lg" x="800" y="512" width="70" height="24" rx="12"/><text class="lgt" x="835" y="529" font-size="13" text-anchor="middle">logged</text>
+  <text x="886" y="529" font-size="14" font-weight="600" style="fill:#1d4ed8">undo</text>
+</g>
+<text x="550" y="578" font-size="14" class="muted">Append-only: who, what, why, how to undo.</text>
+<text x="550" y="598" font-size="14" class="muted">Every act is written here before it runs.</text>
+
+<!-- human on the loop -->
+<rect class="panel" x="990" y="280" width="180" height="336" rx="14"/>
+<circle cx="1080" cy="334" r="22" fill="#1e3a8a"/>
+<path d="M1044 398 C1044 360 1116 360 1116 398 Z" fill="#1e3a8a"/>
+<text x="1080" y="436" font-size="18" font-weight="800" text-anchor="middle">Human on</text>
+<text x="1080" y="458" font-size="18" font-weight="800" text-anchor="middle">the loop</text>
+<g font-size="14" text-anchor="middle" class="muted">
+  <text x="1080" y="490">reads the digest,</text>
+  <text x="1080" y="508">approves and sends it</text>
+  <text x="1080" y="526">from their mailbox</text>
+</g>
+
+<!-- links between panels -->
+<g class="arrow march" style="stroke-dasharray: 6 5">
+  <line x1="494" y1="448" x2="526" y2="448" marker-end="url(#ah)"/>
+  <line x1="954" y1="448" x2="986" y2="448" marker-end="url(#ah)"/>
+</g>
+<text x="510" y="438" font-size="13" text-anchor="middle" class="muted">logs</text>
+<text x="970" y="438" font-size="13" text-anchor="middle" class="muted">reads</text>
+
+<!-- correction loop -->
+<path class="loop" d="M1080 620 V642 H260 V622" marker-end="url(#ab)"/>
+<text x="670" y="664" font-size="15" font-weight="600" text-anchor="middle" style="fill:#1e3a8a">corrects: edit · decline · send by hand (only a person sends)</text>
+</svg>

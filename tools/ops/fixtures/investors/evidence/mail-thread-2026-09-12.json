@@ -1,0 +1,26 @@
+{
+  "id": "thread-example-1",
+  "messageCount": 2,
+  "messages": [
+    {
+      "id": "m1",
+      "threadId": "thread-example-1",
+      "date": "2026-09-10T08:00:00Z",
+      "sender": "Contact Person <investor@example.com>",
+      "toRecipients": ["partner@fund.example"],
+      "subject": "Re: introduction",
+      "snippet": "Thanks for the introduction",
+      "plaintextBody": "Thanks for the introduction. Please send the deck; we review new fund proposals in the second half of November."
+    },
+    {
+      "id": "m2",
+      "threadId": "thread-example-1",
+      "date": "2026-09-12T09:30:00Z",
+      "sender": "Partner <partner@fund.example>",
+      "toRecipients": ["investor@example.com"],
+      "subject": "Re: introduction",
+      "snippet": "Deck attached",
+      "plaintextBody": "Deck attached, happy to walk you through it."
+    }
+  ]
+}

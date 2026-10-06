@@ -1,0 +1,1522 @@
+<!--
+  Agent Workbench · capabilities declared at publish (see README.md in this folder)
+  sample: {}
+  db: rules [{path: "", read: "interact", write: "admin"}]   (approvals, audit, intake, settings/autopilot, runs; every partner who approves needs edit rights on this artifact)
+  user: scopes [profile]
+  mcp.servers:
+    {server: "Attio",  tools: ["list-records-in-list", "update-list-entry-by-id", "search-records", "upsert-record", "add-record-to-list", "create-note", "create-task"]}
+    {server: "Google Drive",  tools: ["search_files"]}
+    {server: "Gmail",  tools: ["search_threads", "get_thread", "create_draft"]}
+-->
+<title>Agent Workbench</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: Seitenleiste links; rechts fünf Reiter: Aktivität (Läufe und Handlungen der Agenten aller Module, nur lesen), Freigaben (Liste + Detail), Eingang (Threads), Autopilot (Schalter je Modul), Protokoll (Feed der Agenten-Handlungen + Audit-Tabelle). */
+  :root {
+    --bg: #04121a; --panel: #0a1c26; --panel-2: #0e2431; --line: rgba(255,255,255,0.09);
+    --fg: #f1f6f8; --muted: rgba(241,246,248,0.58); --faint: rgba(241,246,248,0.36);
+    --accent: #4FD1C5; --accent-ink: #04121a; --alert: #E8384F; --warn: #F2A93B; --good: #5FD68A; --calm: #7FA7C9; --violet: #c9a6ff;
+    --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f3f7f8; --panel: #ffffff; --panel-2: #eaf1f3; --line: rgba(4,18,26,0.12);
+      --fg: #0b1f2a; --muted: rgba(11,31,42,0.62); --faint: rgba(11,31,42,0.4);
+      --accent: #0e9c90; --accent-ink: #ffffff; --alert: #c7233a; --warn: #b8780d; --good: #1f8a4c; --calm: #3f6f96; --violet: #6e4bb8;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f3f7f8; --panel: #ffffff; --panel-2: #eaf1f3; --line: rgba(4,18,26,0.12);
+    --fg: #0b1f2a; --muted: rgba(11,31,42,0.62); --faint: rgba(11,31,42,0.4);
+    --accent: #0e9c90; --accent-ink: #ffffff; --alert: #c7233a; --warn: #b8780d; --good: #1f8a4c; --calm: #3f6f96; --violet: #6e4bb8;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 14px; line-height: 1.45; }
+  a { color: var(--accent); text-decoration: none; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  .app { display: flex; min-height: 100dvh; }
+  .rail { width: 216px; flex: none; border-right: 1px solid var(--line); background: var(--panel); padding: 18px 12px; display: flex; flex-direction: column; gap: 6px; position: sticky; top: 0; height: 100dvh; }
+  .rail .brand { display: flex; align-items: center; gap: 8px; padding: 4px 8px 14px; }
+  .rail .brand svg { width: 18px; height: 18px; color: var(--accent); }
+  .rail .brand span { font-family: var(--mono); font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); line-height: 1.3; }
+  .rail .lbl { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); padding: 8px 8px 2px; font-weight: 600; }
+  .rail a.item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 9px; color: var(--muted); font-size: 13px; }
+  .rail a.item svg { width: 15px; height: 15px; flex: none; }
+  .rail a.item:hover { background: var(--panel-2); color: var(--fg); }
+  .rail a.item.on { background: var(--panel-2); color: var(--fg); font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
+  .rail .spacer { flex: 1; }
+  .rail .foot { font-size: 11px; color: var(--faint); padding: 6px 10px; font-family: var(--mono); }
+  .page { flex: 1; min-width: 0; padding: 18px 20px 40px; display: flex; flex-direction: column; gap: 16px; }
+  /* F017: on a phone the side menu is an off-canvas panel behind a burger button (aria-expanded); wide screens keep the side rail. */
+  .burger, .rail-backdrop, .dclose, .toast { display: none; }
+  @media (max-width: 820px) {
+    .app { flex-direction: column; }
+    .burger { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 44px; height: 44px; min-height: 44px; padding: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--fg); }
+    .burger svg { width: 20px; height: 20px; }
+    .rail { position: fixed; z-index: 40; top: 0; left: 0; bottom: 0; width: min(300px, 86vw); height: 100dvh; overflow-y: auto; overscroll-behavior: contain; padding: calc(16px + env(safe-area-inset-top, 0px)) 12px calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-105%); visibility: hidden; transition: transform .2s ease, visibility 0s linear .2s; }
+    .rail.open { transform: none; visibility: visible; transition: transform .2s ease; box-shadow: 0 0 40px rgba(0,0,0,.45); }
+    .rail-backdrop { display: block; position: fixed; z-index: 39; inset: 0; background: rgba(0,0,0,.5); }
+    .rail-backdrop[hidden] { display: none; }
+    .page { padding-inline: 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .rail, .rail.open { transition: none; } }
+  .titlebar { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+  h1 { font-size: 26px; font-weight: 600; margin: 0; line-height: 1.1; }
+  h2 { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0; }
+  .sub { color: var(--muted); font-size: 13px; margin-top: 4px; max-width: 80ch; }
+  .tabs { display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+  .tabs button { padding: 6px 12px; border-radius: 8px; border: 0; background: none; color: var(--muted); font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px; }
+  .tabs button.on { background: var(--panel-2); color: var(--fg); font-weight: 600; }
+  .badge { background: var(--alert); color: #fff; border-radius: 999px; padding: 0 6px; font-size: 10.5px; font-weight: 600; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-family: var(--mono); font-size: 11.5px; color: var(--muted); background: var(--panel); white-space: nowrap; }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+  .pill.ok .dot { background: var(--good); } .pill.bad .dot { background: var(--alert); } .pill.wait .dot { background: var(--warn); }
+  /* N11 · the connector pill in the header never runs off the screen: it shrinks to its container and cuts the list with an ellipsis (the full list is its title). */
+  .head > .row { min-width: 0; max-width: 100%; }
+  .head .pill { min-width: 0; max-width: 100%; }
+  .head .pill > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .btn { border: 1px solid var(--line); background: var(--panel); border-radius: 9px; padding: 6px 12px; font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .btn:hover { border-color: var(--accent); }
+  .btn[hidden] { display: none; }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  .btn.danger { border-color: var(--alert); color: var(--alert); }
+  .btn.sm { padding: 4px 9px; font-size: 12px; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible, .itemcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  input, select, textarea { background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px; color: var(--fg); padding: 7px 10px; font: inherit; font-size: 13px; width: 100%; }
+  textarea { font-family: var(--mono); font-size: 12.5px; resize: vertical; min-height: 120px; }
+  label.lbl { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; display: block; margin-bottom: 4px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .split { display: grid; grid-template-columns: minmax(280px, 400px) minmax(0, 1fr); gap: 16px; align-items: start; }
+  @media (max-width: 980px) { .split { grid-template-columns: 1fr; } }
+  .list { display: flex; flex-direction: column; gap: 8px; }
+  .itemcard { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); font-size: 12.5px; color: var(--fg); text-align: left; cursor: pointer; }
+  .itemcard.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .itemcard.done { opacity: .6; }
+  .kind { display: inline-flex; align-items: center; gap: 6px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .k-email { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .k-deal-stage { color: var(--warn); background: color-mix(in srgb, var(--warn) 16%, transparent); }
+  .k-investor-status { color: var(--calm); background: color-mix(in srgb, var(--calm) 16%, transparent); }
+  .k-digest { color: var(--violet); background: color-mix(in srgb, var(--violet) 16%, transparent); }
+  .k-unknown { color: var(--muted); background: color-mix(in srgb, var(--muted) 14%, transparent); }
+  .k-newsletter { color: var(--good); background: color-mix(in srgb, var(--good) 16%, transparent); }
+  .k-task { color: var(--calm); background: color-mix(in srgb, var(--calm) 16%, transparent); }
+  .k-note { color: var(--calm); background: color-mix(in srgb, var(--calm) 16%, transparent); }
+  .s { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .note { border: 1px solid var(--line); border-left: 3px solid var(--calm); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--muted); background: var(--panel); }
+  .note.bad { border-left-color: var(--alert); } .note.warn { border-left-color: var(--warn); } .note.ok { border-left-color: var(--good); } .note.acc { border-left-color: var(--accent); }
+  .note b { color: var(--fg); }
+  code { font-family: var(--mono); font-size: 12px; color: var(--fg); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+  table { width: 100%; border-collapse: collapse; min-width: 900px; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 12.5px; }
+  th { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  .m { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+  .who { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .agent { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); } .human { color: var(--warn); background: color-mix(in srgb, var(--warn) 16%, transparent); }
+  pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-family: var(--mono); font-size: 12px; line-height: 1.5; background: var(--panel-2); border-radius: 10px; padding: 12px; color: var(--fg); max-height: 300px; overflow: auto; }
+  .empty { padding: 28px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+  details.diag { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); font-size: 12.5px; color: var(--muted); }
+  details.diag summary { padding: 8px 12px; cursor: pointer; font-family: var(--mono); font-size: 11.5px; }
+  details.diag pre { margin: 0 12px 12px; max-height: 240px; font-size: 11.5px; color: var(--muted); }
+  .spin { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+  .pick { display: flex; flex-direction: column; gap: 6px; }
+  .pick button { text-align: left; background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; font-size: 12.5px; }
+  .pick button.on { border-color: var(--accent); }
+  .actrow { border-top: 1px solid var(--line); padding: 10px 0 2px; display: flex; flex-direction: column; gap: 4px; }
+  .cards3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+  .sw { display: flex; gap: 4px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+  .sw button { flex: 1; padding: 6px 8px; border-radius: 8px; border: 0; background: none; color: var(--muted); font-size: 12.5px; }
+  .sw button[aria-checked="true"] { background: var(--panel); color: var(--fg); font-weight: 600; box-shadow: inset 0 0 0 1px var(--accent); }
+  .sw button.m-on[aria-checked="true"] { color: var(--accent); }
+  .sw button:disabled { opacity: .55; cursor: default; }
+  .nlpane iframe { display: block; width: 100%; height: 520px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+  .nlpane pre { max-height: 520px; }
+  .nlitems { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .recchip { margin-bottom: 10px; }
+  .nlitems li { border-top: 1px solid var(--line); padding-top: 8px; display: flex; flex-direction: column; gap: 2px; }
+  /* F030 · Aktivität: eine Liste aus Läufen und Handlungen der Agenten, Tagestrenner, Zeilen öffnen das Detail (Schublade auf dem Telefon). Base rules; the phone rules sit in the block that follows. */
+  .acday { margin: 14px 0 2px; }
+  .acrow { padding: 0; gap: 0; cursor: default; }
+  .acrow.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .acrow.err { border-left: 3px solid var(--alert); }
+  .acbtn { display: flex; flex-direction: column; gap: 3px; width: 100%; min-height: 44px; padding: 10px 12px; border: 0; border-radius: 10px; background: none; text-align: left; font-size: 12.5px; color: var(--fg); }
+  .acbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .acmeta { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; justify-content: space-between; }
+  .acchips { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .acwhat { font-weight: 600; overflow-wrap: anywhere; }
+  .acsum { color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  .acsum.bad { color: var(--alert); }
+  .aclink { display: inline-flex; align-items: center; padding: 0 12px 10px; }
+  dl.acdl { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 6px 10px; margin: 0; }
+  dl.acdl dt { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding-top: 2px; }
+  dl.acdl dd { margin: 0; overflow-wrap: anywhere; }
+  /* F006 · the Inbox on a phone. The block closes the stylesheet on purpose: the base rules above come later
+     in the source than the first 820px block. CSS only. (F017/B003 adds the detail drawer in the block that closes this stylesheet.) */
+  @media (max-width: 820px) {
+    .rail a.item { min-height: 44px; }
+    .btn, .btn.sm, select, input:not([type="checkbox"]):not([type="radio"]) { min-height: 44px; }
+    input, select, textarea { font-size: 16px; }
+    .tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+    .aclink { min-height: 44px; }
+    .tabs button { min-height: 44px; justify-content: center; padding-inline: 6px; }
+    .sw button, .pick button { min-height: 44px; }
+    .itemcard { min-height: 44px; }
+    .tablewrap { overflow: visible; border: 0; border-radius: 0; background: none; }
+    table, tbody { display: block; width: 100%; min-width: 0; }
+    thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    tbody tr { display: block; margin-bottom: 10px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+    tbody td { display: block; padding: 4px 0; border: 0; overflow-wrap: anywhere; }
+    #auditRows td:not(.empty) { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: 8px; }
+    #auditRows td:not(.empty)::before { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; font-family: var(--sans); }
+    #auditRows td:nth-child(1)::before { content: "Zeit"; } #auditRows td:nth-child(2)::before { content: "Akteur"; } #auditRows td:nth-child(3)::before { content: "Skill"; }
+    #auditRows td:nth-child(4)::before { content: "Aktion"; } #auditRows td:nth-child(5)::before { content: "Input-Hash"; } #auditRows td:nth-child(6)::before { content: "Ergebnis"; }
+    #auditRows td:nth-child(7)::before { content: "Begr\00FCndung"; }
+  }
+  @media (max-width: 480px) {
+    .page { padding-inline: 12px; }
+    h1 { font-size: 22px; }
+    .cards3 { grid-template-columns: minmax(0, 1fr); }
+    .card { padding: 14px; }
+    #auditRows td:not(.empty) { grid-template-columns: 6rem minmax(0, 1fr); }
+  }
+  /* F017 · B003: on <= 980px the detail card (#apDetail, #inDetail) is a full-screen drawer above the list, opened by a tap, closed by
+     "Schließen", Escape or a decision. Header and action bar stay put, only the body scrolls. Wide screens keep the two columns:
+     there head, body and actions are transparent wrappers (display: contents) and the card looks as before. Closes the stylesheet on purpose. */
+  .dhead, .dbody, .dacts { display: contents; }
+  .dhost .dclose { display: none; }
+  .toast.on { display: block; position: fixed; z-index: 50; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); max-width: min(92vw, 420px); background: var(--panel-2); border: 1px solid var(--accent); border-radius: 10px; padding: 10px 14px; font-size: 13px; }
+  @media (max-width: 980px) {
+    .split > .dhost:not(.open) { display: none; }
+    .split > .dhost.open { position: fixed; z-index: 30; inset: 0; width: 100vw; height: 100dvh; max-width: none; padding: 0; gap: 0; border: 0; border-radius: 0; background: var(--panel); overflow: hidden; }
+    .dhost.open .dhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex: none; padding: calc(8px + env(safe-area-inset-top, 0px)) 14px 8px; border-bottom: 1px solid var(--line); background: var(--panel); }
+    .dhost.open .dclose { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; }
+    .dhost.open .dbody { display: flex; flex-direction: column; gap: 12px; flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 14px; }
+    .dhost.open .dacts { display: flex; flex-direction: column-reverse; gap: 8px; flex: none; max-height: 45dvh; overflow-y: auto; padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); background: var(--panel); }
+    .dhost.open .dacts .row { flex-wrap: wrap; }
+    .dhost.open .dacts .row .btn { flex: 1 1 140px; justify-content: center; white-space: normal; text-align: center; min-height: 44px; }
+    .dhost.open .dacts #apMsg:empty, .dhost.open .dacts #inMsg:empty { display: none; }
+  }
+  /* Kontext unter dem Vorschlag (region:context); Zusammenfassungen 44 px hoch, lange Absender brechen um */
+  .ctx { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); min-width: 0; }
+  .ctx summary { min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; cursor: pointer; list-style: none; font-weight: 600; }
+  .ctx summary::-webkit-details-marker { display: none; }
+  .ctx summary::before { content: "▸"; color: var(--faint); flex: none; width: 1ch; }
+  .ctx details[open] > summary::before, .ctx[open] > summary::before { content: "▾"; }
+  .ctxbody { display: flex; flex-direction: column; gap: 8px; padding: 0 8px 8px; min-width: 0; }
+  .ctxsec { border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); min-width: 0; }
+  .ctxin { display: flex; flex-direction: column; gap: 8px; padding: 4px 12px 12px; font-size: 13px; color: var(--muted); min-width: 0; }
+  .ctxlbl { flex: 1 1 auto; } .ctxcount { color: var(--faint); font-weight: 400; }
+  .ctxnote { color: var(--muted); overflow-wrap: anywhere; }
+  .ctxhead { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; justify-content: space-between; }
+  .ctxlink { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent); }
+  .ctxmsg { border-top: 1px solid var(--line); min-width: 0; }
+  .ctxmsg summary { align-items: flex-start; font-weight: 400; padding: 8px 0; color: var(--fg); }
+  .ctxmsg > .row, .ctxmsg > pre { margin: 0 0 8px; }
+  .ctxsum { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+  .ctxfrom { font-weight: 600; color: var(--fg); overflow-wrap: anywhere; }
+  .ctxdate, .ctxprev { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+  .ctxprev { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .ctxmsg[open] .ctxprev { display: none; }
+  .ctxfile { display: flex; flex-direction: column; gap: 2px; min-height: 44px; justify-content: center; padding: 6px 0; border-top: 1px solid var(--line); min-width: 0; }
+  a.ctxfile .ctxfrom { color: var(--accent); }
+  .ctx pre { max-height: 320px; }
+  .ctx .pill { white-space: normal; overflow-wrap: anywhere; max-width: 100%; border-radius: 12px; }
+</style>
+
+<div class="app">
+  <nav class="rail" aria-label="Bereiche" id="rail"></nav>
+  <div class="rail-backdrop" id="railBackdrop" hidden></div>
+  <div class="page">
+    <div class="head">
+      <div class="titlebar">
+        <button type="button" class="burger" id="burger" aria-label="Menü" aria-expanded="false" aria-controls="rail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+        <h1 title="Der Schreibtisch der Agenten: Aktivität zeigt jeden Lauf und jede Handlung aller Module; Freigaben ist, was ein Agent oder eine Partnerin vorschlägt und ein Mensch entscheidet. Nichts wird vom System gesendet: freigeben, der Entwurf liegt in deinem Postfach, du sendest, dann „als gesendet markieren“. Jede Entscheidung steht im Audit-Trail.">Agent Workbench</h1>
+      </div>
+      <div class="row">
+        <span class="pill" id="connDb"><span class="dot"></span><span id="connDbText">Speicher…</span></span>
+        <span class="pill" id="connMcp"><span class="dot"></span><span id="connMcpText">Connectoren…</span></span>
+      </div>
+    </div>
+    <div id="banner" class="note" hidden></div>
+    <div class="row" style="justify-content:space-between">
+      <div class="tabs" role="tablist" id="tabs">
+        <button type="button" role="tab" data-tab="activity" class="on">Aktivität</button>
+        <button type="button" role="tab" data-tab="approvals">Freigaben <span class="badge" id="pendingBadge" hidden>0</span></button>
+        <button type="button" role="tab" data-tab="intake">Eingang</button>
+        <button type="button" role="tab" data-tab="autopilot">Autopilot</button>
+        <button type="button" role="tab" data-tab="audit">Protokoll</button>
+      </div>
+      <button type="button" class="btn primary" id="newBtn" disabled hidden>Neuer Vorschlag</button>
+    </div>
+
+    <section id="tab-activity">
+      <div class="split">
+        <div class="list" id="acList"><div class="empty">Warte auf den Speicher…</div></div>
+        <div class="card dhost" id="acDetail"><div class="empty">Links einen Eintrag wählen.</div></div>
+      </div>
+    </section>
+
+    <section id="tab-approvals" hidden>
+      <div class="recchip" data-recchip hidden></div>
+      <div class="split">
+        <div class="list" id="apList"><div class="empty">Warte auf den Speicher…</div></div>
+        <div class="card dhost" id="apDetail"><div class="empty">Links einen Vorschlag wählen, oder oben „Neuer Vorschlag“.</div></div>
+      </div>
+    </section>
+
+    <section id="tab-intake" hidden>
+      <div class="card">
+        <div class="row">
+          <div style="flex:1 1 320px"><label class="lbl" for="gq">Gmail-Suche</label><input id="gq" value=""></div>
+          <button type="button" class="btn" id="gLoad" disabled style="align-self:flex-end">Postfach lesen</button>
+        </div>
+        <div class="sub">Zeigt Threads, die zur Suche passen. „Aufnehmen“ legt Firma und Listeneintrag in Attio an (Dedupe über die Domain des Absenders), schreibt einen Antwortentwurf in die Freigaben und markiert den Thread hier als aufgenommen. Website-Einreichungen aus dem Pitch-Deck-Analyzer kommen in einem späteren Schritt dazu.</div>
+      </div>
+      <div class="split" style="margin-top:12px">
+        <div class="list" id="inList"><div class="empty">Noch nichts gelesen.</div></div>
+        <div class="card dhost" id="inDetail"><div class="empty">Links einen Thread wählen.</div></div>
+      </div>
+    </section>
+
+    <section id="tab-autopilot" hidden>
+      <div class="note acc"><b>Human on the Loop.</b> Je Modul entscheidest du, wie weit der Agent allein geht. <b>Aus:</b> er schlägt nur vor (Freigaben). <b>Erst prüfen:</b> er legt CRM-Einträge, Scores, Notizen und Entwürfe selbst an; jede ausgehende Mail wartet auf deine Freigabe. <b>An:</b> er sendet selbst, innerhalb der Leitplanken; jede Handlung steht sofort im Protokoll. Ist der Schalter nicht lesbar, gilt: aus.</div>
+      <div class="cards3" id="apCards" style="margin-top:12px"><div class="empty">Warte auf den Speicher…</div></div>
+    </section>
+
+    <section id="tab-audit" hidden>
+      <div class="recchip" data-recchip hidden></div>
+      <div class="list" id="feed"><div class="empty">Warte auf den Speicher…</div></div>
+      <h2 style="margin:18px 0 8px">Alle Audit-Einträge</h2>
+      <div class="tablewrap"><table><thead><tr><th>timestamp_utc</th><th>actor</th><th>skill_version</th><th>action</th><th>input_hash</th><th>output_ref</th><th>rationale</th></tr></thead><tbody id="auditRows"><tr><td colspan="7" class="empty">Noch keine Einträge.</td></tr></tbody></table></div>
+      <div class="sub" style="margin-top:8px">Nur anhängen: diese Seite kennt keinen Weg, einen Eintrag zu ändern oder zu löschen; einzig der Vermerk „korrigiert“ wird nachgetragen, wenn eine Handlung rückgängig gemacht wurde. Schema nach Fund OS legal-audit-trail-write.</div>
+    </section>
+
+    <details class="diag" id="diag"><summary>Diagnose · Speicher, Connectoren, Fehler</summary><pre id="diagBody">Noch nichts protokolliert.</pre></details>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  "use strict";
+  // ══ CONFIG ══ Everything that belongs to one fund. Fill it in before publishing (README.md); nothing below this block names a fund.
+  const CONFIG = {
+    fundName: "",            // shown in the side menu, e.g. "Example Fund"
+    attioWorkspace: "",      // the slug in https://app.attio.com/<slug>/company/...
+    companiesObjectId: "",   // Attio object id of "companies" (uuid): call the Attio connector tool list-attributes / get object "companies" once and copy the object_id
+    dealList: "",            // Attio list slug of the deal flow list (crmFields.dealList)
+    investorList: "",        // Attio list slug of the investor / LP list (crmFields.investorList)
+    dealStageField: "",      // list-entry attribute slug of the deal stage (crmFields.dealStage)
+    dealSourceField: "",     // list-entry attribute slug of the deal source (crmFields.dealSource)
+    investorStatusField: "", // list-entry attribute slug of the investor status (crmFields.investorStatus)
+    stages: ["Awareness", "Screening", "Initial contact", "Due diligence", "Term sheet", "Invested", "Watchlist", "Rejected", "Lost"],  // deal stage titles in pipeline order; must match the Attio status titles exactly
+    statuses: ["Target", "Outreach", "Active discussion", "Due diligence", "Soft commitment", "Hard commitment", "Closed", "Passive"],    // investor status titles in pipeline order; must match exactly
+    forbiddenStages: ["Invested", "Term sheet"],                          // stages only a human sets in Attio itself; the page refuses to write or undo them
+    forbiddenStatuses: ["Soft commitment", "Hard commitment", "Closed"],  // the same for investor statuses
+    intakeStage: "Awareness",   // stage a new inbound deal gets when taken from Gmail
+    intakeSource: "Inbound",    // value of the deal source field for such a deal
+    ackReplyDays: 5,            // working days promised in the acknowledgement mail draft
+    gmailQuery: "newer_than:14d has:attachment filename:pdf -in:sent -from:me",  // default inbox search; the partner can change it on the page
+    links: {  // The seven side-menu URLs. Publish all screens first, then paste the seven URLs here in EVERY screen (README.md).
+      deals: "",
+      investors: "",
+      inbox: "",
+      knowledge: "",
+      newsletter: "",
+      profile: "",
+      start: "",
+    },
+  };
+  const LINKS = CONFIG.links;  // the seven side-menu URLs, set in CONFIG.links when publishing
+  const HERE = "inbox";
+  const ICONS = {
+    deals: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+    investors: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/></svg>',
+    inbox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13l3-8h12l3 8v6H3z M3 13h5l2 3h4l2-3h5"/></svg>',
+    knowledge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 012-2h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2z M8 7h8M8 11h8M8 15h5"/></svg>',
+    newsletter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
+    profile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>',
+    start: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>',
+  };
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  (function rail() {
+    const item = (k, label) => `<a class="item ${k === HERE ? "on" : ""}" href="${LINKS[k].startsWith("http") ? LINKS[k] : "#"}" ${k === HERE ? 'aria-current="page"' : 'target="_blank" rel="noopener"'}>${ICONS[k]}${label}</a>`;
+    $("rail").innerHTML = `<div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 7c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg><span>${String(CONFIG.fundName || "Fund OS").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}<br>Operations</span></div>${item("start", "Start")}<div class="lbl">Domänen</div>${item("deals", "Deal Cockpit")}${item("investors", "Investor Relations")}${item("inbox", "Agent Workbench")}${item("knowledge", "Knowledge")}${item("newsletter", "Content")}<div class="spacer"></div>${item("profile", "Profil")}<div class="foot">Fund OS · Human on the loop</div>`;
+  })();
+
+  // ── Seitenmenü auf dem Telefon (≤ 820 px): Burger öffnet das Menü als Panel; Klick auf den Hintergrund oder Escape schließt es ──
+  const railOpen = () => $("rail").classList.contains("open");
+  function setRail(open) {
+    const was = railOpen(); $("rail").classList.toggle("open", open); $("railBackdrop").hidden = !open; $("burger").setAttribute("aria-expanded", String(open));
+    document.querySelector(".page").inert = open;
+    if (open) $("rail").querySelector("a.item")?.focus(); else if (was) $("burger").focus();
+  }
+  $("burger").addEventListener("click", () => setRail(!railOpen()));
+  $("railBackdrop").addEventListener("click", () => setRail(false));
+  $("rail").addEventListener("click", (e) => { if (e.target.closest("a.item")) setRail(false); });
+  window.matchMedia("(max-width: 820px)").addEventListener?.("change", (e) => { if (!e.matches) setRail(false); });
+
+  // ── Detail als Schublade (≤ 980 px, F017/B003) ───────────────────────────────
+  // Die Detailkarte (#apDetail, #inDetail) liegt auf dem Telefon als Vollbild über der Liste: Kopf mit Art und „Schließen“, Rumpf scrollt,
+  // Aktionsleiste unten fest. Die Liste dahinter wird nie neu aufgebaut, ihre Scrollposition bleibt. Breit bleiben zwei Spalten.
+  const narrow = window.matchMedia("(max-width: 980px)");
+  const INERT_SEL = "#rail, .page > :not(section), .page [data-recchip], #apList, #inList, #acList";
+  const PLACEHOLDER = { apDetail: "Links einen Vorschlag wählen, oder oben „Neuer Vorschlag“.", inDetail: "Links einen Thread wählen.", acDetail: "Links einen Eintrag wählen." };
+  let drawerId = null, drawerFrom = null, toastTimer = null;
+  // Kopf (Art, Schließen), Rumpf, Aktionsleiste: die Teile kommen bereits mit esc() zusammengesetzt hier an.
+  function drawerShell(chip, body, acts) {
+    return `<div class="dhead">${chip}<button type="button" class="btn dclose" data-dclose="1">Schließen</button></div><div class="dbody">${body}</div>${acts ? `<div class="dacts">${acts}</div>` : ""}`;
+  }
+  function openDrawer(id, fromSel) {
+    if (!narrow.matches) return;
+    const el = $(id); drawerId = id; drawerFrom = fromSel ?? null; $("toast").classList.remove("on");
+    el.classList.add("open"); el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", id === "apDetail" ? "Freigabe" : id === "acDetail" ? "Aktivität" : "Thread");
+    document.querySelectorAll(INERT_SEL).forEach((n) => { n.inert = true; });
+    el.querySelector(".dclose")?.focus();
+  }
+  // clearSelection: false beim Wechsel auf ein breites Fenster (die Karte bleibt dann sichtbar).
+  function closeDrawer(clearSelection = true) {
+    if (!drawerId) return;
+    const id = drawerId, el = $(id), from = drawerFrom; drawerId = null; drawerFrom = null;
+    el.classList.remove("open"); ["role", "aria-modal", "aria-label"].forEach((k) => el.removeAttribute(k));
+    document.querySelectorAll(INERT_SEL).forEach((n) => { n.inert = false; });
+    if (clearSelection) {
+      if (id === "apDetail") { selectedId = null; creating = false; } else if (id === "acDetail") acSel = null; else selectedThread = null;
+      document.querySelectorAll("#apList .itemcard.on, #inList .itemcard.on, #acList .acrow.on").forEach((n) => n.classList.remove("on"));
+      el.innerHTML = `<div class="empty">${PLACEHOLDER[id]}</div>`;
+    }
+    if (from) document.querySelector(from)?.focus?.({ preventScroll: true });
+  }
+  narrow.addEventListener?.("change", (e) => { if (!e.matches) closeDrawer(false); });
+  document.addEventListener("keydown", (e) => { if (e.key !== "Escape") return; if (railOpen()) setRail(false); else if (drawerId) closeDrawer(); });
+  function toast(text) { const t = $("toast"); t.textContent = text; t.classList.add("on"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("on"), 4500); }
+
+  // ── Konstanten ───────────────────────────────────────────────────────────────
+  const ATTIO = "Attio", GMAIL = "Gmail";
+  const DEALS = CONFIG.dealList, INVESTORS = CONFIG.investorList;
+  const STAGES = CONFIG.stages;
+  const STATUSES = CONFIG.statuses;
+  const KIND_LABEL = { email: "Mail", "deal-stage": "Stage", "investor-status": "Status", digest: "Digest", newsletter: "Newsletter", task: "Aufgabe", note: "Notiz" };
+  const STATUS_LABEL = { pending: "offen", approved: "freigegeben", rejected: "abgelehnt", sent: "gesendet" };
+  const SKILL = "inbox/1.0";
+  // Die Zustandsmaschine, wie in functions/src/ops/store.ts: pending → alles; approved → nur sent.
+  const transitionAllowed = (from, to) => from === "pending" || (to === "sent" && from === "approved");
+  const attioUrl = (id) => `https://app.attio.com/${CONFIG.attioWorkspace}/company/${id}/overview`;
+  const COMPANIES_OBJECT = CONFIG.companiesObjectId;
+
+  // ==== guards:begin ====
+  // Alles, was aus dem Speicher kommt, ist unvertraut: erst prüfen, dann anzeigen oder nach Attio schreiben.
+  const FORBIDDEN_STAGES = CONFIG.forbiddenStages;
+  const FORBIDDEN_STATUSES = CONFIG.forbiddenStatuses;
+  // Streng: genau die Form 8-4-4-4-12 aus Kleinbuchstaben-Hex. Vor dem Test wird kleingeschrieben und mit dem Original verglichen:
+  // eine Kennung mit Großbuchstaben (oder 36 Bindestrichen) wird abgelehnt, nie stillschweigend geändert und dann geschrieben.
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+  const isUuid = (v) => typeof v === "string" && v === v.toLowerCase() && UUID_RE.test(v.toLowerCase());
+  const own = (o, k) => typeof k === "string" && Object.prototype.hasOwnProperty.call(o, k);
+  const kindLabel = (k) => (own(KIND_LABEL, k) ? KIND_LABEL[k] : "unbekannt");
+  const kindClass = (k) => (own(KIND_LABEL, k) ? "k-" + k : "k-unknown");
+  const statusValid = (s) => own(STATUS_LABEL, s);
+  const statusLabel = (s) => (statusValid(s) ? STATUS_LABEL[s] : "ungültiger Status");
+  const safeHref = (u) => (/^https:\/\//i.test(String(u ?? "")) ? String(u) : null);
+  const attioLink = (id) => (isUuid(id) ? attioUrl(id) : null);
+  // Eine Aufgaben-Freigabe (F014, Modul notes) legt über create-task genau diese fünf Felder an (deadline_at nur, wenn gesetzt): alles andere wird nie geschrieben.
+  // Namen (linked_record_name, assignee_name) dürfen im Dokument stehen, werden nur angezeigt und nie gesendet.
+  function taskBlock(t) {
+    if (!t || typeof t !== "object") return "keine Aufgabe im Dokument";
+    if (typeof t.content !== "string" || !t.content.trim() || t.content.length > 2000) return "Aufgabentext fehlt oder ist zu lang";
+    if (!isUuid(t.assignee_workspace_member_id)) return "Zuständige Person (Workspace-Member-ID) ist ungültig";
+    if (!["companies", "people"].includes(t.linked_record_object) || !isUuid(t.linked_record_id)) return "Verknüpfter Datensatz ist ungültig";
+    if (t.deadline_at !== undefined && t.deadline_at !== null && !(typeof t.deadline_at === "string" && /^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(t.deadline_at) && Number.isFinite(Date.parse(t.deadline_at)))) return "Fälligkeit ist kein ISO-Datum (UTC)";
+    return null;
+  }
+  // Eine Notiz-Freigabe (F014) legt über create-note genau diese vier Felder an: title, content, parent_object, parent_record_id.
+  function noteBlock(n) {
+    if (!n || typeof n !== "object") return "keine Notiz im Dokument";
+    if (typeof n.title !== "string" || !n.title.trim() || n.title.length > 500) return "Titel der Notiz fehlt oder ist zu lang (höchstens 500 Zeichen)";
+    if (typeof n.content !== "string" || !n.content.trim() || n.content.length > 50000) return "Text der Notiz fehlt oder ist zu lang (höchstens 50 000 Zeichen)";
+    if (!["companies", "people"].includes(n.parent_object) || !isUuid(n.parent_record_id)) return "Datensatz der Notiz ist ungültig";
+    return null;
+  }
+  // Die Art, mit der die Karte geöffnet wurde, muss die Art des frisch gelesenen Dokuments sein; sonst würde eine andere Handlung
+  // ausgeführt, als die Person gesehen und freigegeben hat.
+  function kindChanged(openedKind, cur) {
+    return cur?.kind === openedKind ? null : `Die Art der Freigabe hat sich seit dem Öffnen geändert (${String(openedKind).slice(0, 40)} → ${String(cur?.kind).slice(0, 40)}); bitte neu öffnen`;
+  }
+  // Ausführungssperre (nur Arten, die Attio anlegen und nicht zweimal angelegt werden dürfen): `locking.executing` ist ein ISO-Zeitpunkt.
+  // Jünger als 10 Minuten oder unlesbar: nicht ausführen. Älter oder null: frei.
+  const EXEC_LOCK_MS = 10 * 60 * 1000;
+  const LOCKED_KINDS = ["task", "note"];
+  function lockBlock(cur, nowMs) {
+    const e = cur?.locking?.executing;
+    if (e === undefined || e === null) return null;
+    const t = typeof e === "string" ? Date.parse(e) : NaN;
+    if (!Number.isFinite(t)) return "Die Ausführungssperre ist unlesbar; nichts geschrieben";
+    return nowMs - t < EXEC_LOCK_MS ? `Diese Freigabe wird seit ${Math.max(0, Math.round((nowMs - t) / 60000))} Min. ausgeführt (oder der Ausgang ist unklar); frühestens nach 10 Min. erneut, vorher in Attio prüfen` : null;
+  }
+  // Darf diese Freigabe nach Attio schreiben? → null (ja) oder der Grund, warum nicht.
+  function approvalBlock(ap) {
+    if (!ap || typeof ap !== "object") return "kein Dokument";
+    if (ap.kind === "task") return taskBlock(ap.task);
+    if (ap.kind === "note") return noteBlock(ap.crmNote);
+    if (ap.kind !== "deal-stage" && ap.kind !== "investor-status") return null;
+    const stage = ap.kind === "deal-stage", to = ap.change?.to;
+    if (ap.target?.list !== (stage ? DEALS : INVESTORS)) return "Liste passt nicht zur Art des Vorschlags";
+    if (!isUuid(ap.target?.entryId)) return "Eintrags-ID ist ungültig";
+    if (typeof to !== "string" || !(stage ? STAGES : STATUSES).includes(to)) return "Zielwert ist keine bekannte Option";
+    if ((stage ? FORBIDDEN_STAGES : FORBIDDEN_STATUSES).includes(to)) return `„${to}“ ist gesperrt: nur ein Mensch setzt das in Attio selbst`;
+    return null;
+  }
+  // Rückgängig nur für erlaubte Handlungen mit geprüftem Ziel; sonst nie ein Schreibvorgang aus Speicherdaten.
+  function undoTargetOk(act) {
+    const t = act?.target ?? {};
+    // recordId ist Pflicht: ohne den Datensatz gäbe es keine Vorabprüfung des Ist-Werts.
+    if (!isUuid(t.entryId) || !isUuid(t.recordId)) return false;
+    if (typeof act.before !== "string" || typeof act.after !== "string") return false;
+    if (act.kind === "stage") return t.list === DEALS && STAGES.includes(act.before) && !FORBIDDEN_STAGES.includes(act.before);
+    if (act.kind === "status") return t.list === INVESTORS && STATUSES.includes(act.before) && !FORBIDDEN_STATUSES.includes(act.before);
+    return false;
+  }
+  // Empfänger-Feld aus dem Speicher: Liste, Text (getrennt durch Komma, Semikolon oder Leerraum) oder nichts → immer eine Liste.
+  const toList = (v) => (Array.isArray(v) ? v : typeof v === "string" ? v.split(/[,;\s]+/).filter(Boolean) : []);
+  // N6: Eine Freigabe, die schon einen Entscheidungszeitpunkt oder (Mail) eine Entwurfs-ID trägt, wird nicht noch einmal ausgeführt:
+  // ein früherer Versuch hat den Aufruf vermutlich gemacht und nur den Status nicht mehr gespeichert.
+  const STATUS_WRITE_FAILED = "Entwurf/Attio-Änderung ist ausgeführt, der Status konnte nicht gespeichert werden — nicht erneut freigeben; Status von Hand setzen";
+  const filled = (v) => v !== undefined && v !== null && v !== "";
+  function executedBlock(cur) {
+    if (filled(cur?.decidedAt)) return "Diese Freigabe trägt schon einen Entscheidungszeitpunkt (decidedAt); sie wurde vermutlich schon ausgeführt. In Attio bzw. Gmail prüfen und den Status von Hand setzen";
+    if ((cur?.kind === "email" || cur?.kind === "digest") && filled(cur.email?.draftId)) return "Zu dieser Freigabe liegt schon ein Gmail-Entwurf (draftId); ein zweiter wird nicht angelegt. Den Entwurf in Gmail öffnen und hier „Als gesendet markieren“";
+    return null;
+  }
+  // Eine Mail-Freigabe mit Gmail-Entwurf (draftId) bietet „Entwurf öffnen“ und „Als gesendet markieren“ statt „Freigeben“;
+  // der Link ist die gespeicherte draftUrl, sonst die Gmail-Adresse des Entwurfs. Beides ohne Gmail-Aufruf.
+  const hasDraft = (a) => (a?.kind === "email" || a?.kind === "digest") && filled(a.email?.draftId);
+  const draftOpenHref = (a) => (hasDraft(a) ? safeHref(a.email?.draftUrl) ?? `https://mail.google.com/mail/u/0/#drafts?compose=${encodeURIComponent(String(a.email.draftId))}` : null);
+  // Wer hat den Schalter zuletzt gesetzt? Ein Agent darf es nicht still tun: das zeigt die Seite an.
+  const looksLikeAgent = (by) => /^(agent|orchestrator)/i.test(String(by ?? "").trim());
+  // Das Protokoll ist nur anhängend: ein "mail-sent" wird nie geändert. Die Bestätigung ist ein zweiter Eintrag
+  // (act.kind "mail-confirmed" oder "mail-failed", act.ref = Dokument-ID des Versand-Eintrags).
+  // → null (kein Versand) | "failed" | "confirmed" | "open" (noch nicht bestätigt). "failed" geht vor "confirmed".
+  function sendState(e, docs) {
+    if (e?.act?.kind !== "mail-sent") return null;
+    const list = Array.isArray(docs) ? docs : [];
+    const has = (k) => list.some((x) => x?.act?.kind === k && typeof e.id === "string" && x.act.ref === e.id);
+    return has("mail-failed") ? "failed" : has("mail-confirmed") ? "confirmed" : "open";
+  }
+  // Deep-Link aus Deal Cockpit und Investor Relations: <Inbox-URL>#record=<recordId> (F007). Gilt nur, wenn der Wert eine UUID ist; alles andere wird ignoriert.
+  const RECORD_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+  function recordFromHash(hash) {
+    for (const part of String(hash ?? "").replace(/^#/, "").split("&")) {
+      if (!part.startsWith("record=")) continue;
+      let v;
+      try { v = decodeURIComponent(part.slice(7)); } catch { return null; }
+      v = v.trim().toLowerCase();
+      return RECORD_ID_RE.test(v) ? v : null;
+    }
+    return null;
+  }
+  const sameRecord = (id, rec) => typeof id === "string" && id.toLowerCase() === rec;
+  // Freigabe: target.recordId (alle Arten) oder, bei Aufgaben, task.linked_record_id. Audit-Eintrag: act.target.recordId.
+  const approvalHasRecord = (ap, rec) => sameRecord(ap?.target?.recordId, rec) || sameRecord(ap?.task?.linked_record_id, rec) || sameRecord(ap?.crmNote?.parent_record_id, rec);
+  const actHasRecord = (e, rec) => sameRecord(e?.act?.target?.recordId, rec);
+  // ==== guards:end ====
+
+  // ── Autopilot: der Speichervertrag. Rein: kein DOM, kein db. ──
+  const AUTOPILOT_DOC = "settings/autopilot", RUNS = "runs"; // Speicherpfade des Vertrags
+  // ==== autopilot:begin ====
+  const MODULES = ["newsletter", "notes"];
+  const MODULE_LABEL = { dealflow: "Dealflow", investors: "Investoren", newsletter: "Newsletter", notes: "Meeting-Notizen" };
+  const MODES = ["off", "review-first", "on"];
+  const MODE_LABEL = { off: "Aus", "review-first": "Erst prüfen", on: "An" };
+  // Fehlt settings/autopilot oder ist es unlesbar, ist jedes Modul aus.
+  const AUTOPILOT_DEFAULTS = {
+    version: 1,
+    modules: {
+      dealflow: { mode: "off", maxOutboundPerDay: 20, purposes: ["acknowledge", "request-deck", "schedule-call", "pass"] },
+      investors: { mode: "off", maxOutboundPerDay: 20, purposes: ["lp-first-touch", "lp-follow-up", "schedule-call"] },
+      newsletter: { mode: "off", maxOutboundPerDay: 20, purposes: ["newsletter"] },
+      notes: { mode: "off", maxOutboundPerDay: 20, purposes: ["note", "task", "status-proposal"] },
+    },
+  };
+  // settings/autopilot (auch teilweise oder kaputt) → wirksame Einstellungen; unbekannter Modus gilt als "off".
+  function readAutopilot(doc) {
+    const src = doc && typeof doc === "object" && doc.modules && typeof doc.modules === "object" ? doc.modules : {};
+    const modules = {};
+    for (const m of MODULES) {
+      const d = AUTOPILOT_DEFAULTS.modules[m];
+      const g = src[m] && typeof src[m] === "object" ? src[m] : {};
+      modules[m] = {
+        mode: MODES.includes(g.mode) ? g.mode : "off",
+        maxOutboundPerDay: Number.isFinite(g.maxOutboundPerDay) && g.maxOutboundPerDay >= 0 ? g.maxOutboundPerDay : d.maxOutboundPerDay,
+        purposes: Array.isArray(g.purposes) && g.purposes.every((p) => typeof p === "string") ? g.purposes.slice() : d.purposes.slice(),
+        updatedAt: g.updatedAt ?? null,
+        updatedBy: g.updatedBy ?? null,
+      };
+    }
+    return { version: 1, modules };
+  }
+  // Audit-Einträge des Agenten → Läufe, neuester zuerst; innerhalb eines Laufs in zeitlicher Reihenfolge.
+  // Einträge ohne runId stehen gesammelt unter "einzeln".
+  function groupActs(entries) {
+    const byRun = new Map();
+    for (const e of Array.isArray(entries) ? entries : []) {
+      if (!e || typeof e !== "object") continue;
+      const id = typeof e.runId === "string" && e.runId ? e.runId : "einzeln";
+      if (!byRun.has(id)) byRun.set(id, { runId: id, module: e.module ?? null, at: "", acts: [] });
+      const r = byRun.get(id);
+      r.acts.push(e);
+      if (!r.module && e.module) r.module = e.module;
+    }
+    const runs = [...byRun.values()];
+    for (const r of runs) {
+      r.acts.sort((a, b) => String(a.timestampUtc ?? "").localeCompare(String(b.timestampUtc ?? "")));
+      r.at = r.acts.reduce((mx, e) => (String(e.timestampUtc ?? "") > mx ? String(e.timestampUtc) : mx), "");
+    }
+    return runs.sort((a, b) => b.at.localeCompare(a.at));
+  }
+  // ==== autopilot:end ====
+
+  // ==== activity:begin ====
+  // F030 · Aktivität: die Läufe (runs/) und die Handlungen der Agenten (audit/, actorType "agent") aller Module in einer Liste, neueste zuerst.
+  // Rein: kein DOM, kein db, nur lesen. Alles aus dem Speicher ist unvertraut: Modul, Status und Modus werden gegen feste Tabellen geprüft
+  // (unbekanntes Modul = "Sonstige"), jeder Wert läuft vor der Ausgabe durch esc(); gebraucht werden esc, own und attioLink der Seite.
+  const AC_MODULES = ["dealflow", "investors", "newsletter", "notes", "digest"];
+  const AC_MODULE_LABEL = { dealflow: "Dealflow", investors: "Investoren", newsletter: "Newsletter", notes: "Meeting-Notizen", digest: "Digest", other: "Sonstige" };
+  const AC_MODULE_CHIP = { dealflow: "k-deal-stage", investors: "k-investor-status", newsletter: "k-newsletter", notes: "k-note", digest: "k-digest", other: "k-unknown" };
+  const AC_KIND_LABEL = { all: "Alle", run: "Läufe", act: "Aktionen", error: "Fehler" };
+  const AC_RUN_STATUS = { running: "läuft", done: "fertig", failed: "fehlgeschlagen" };
+  const AC_MODE_LABEL = { off: "Aus", "review-first": "Erst prüfen", on: "An" };
+  const AC_ACT_LABEL = { "issue-draft": "Newsletter-Entwurf", "campaign-draft": "Kampagnen-Entwurf", "mail-draft": "Mail-Entwurf", "mail-sent": "Mail gesendet", "mail-confirmed": "Versand bestätigt", "mail-failed": "Versand fehlgeschlagen", answered: "Antwort eingegangen", score: "Scoring", record: "CRM-Datensatz", stage: "Stage", status: "Status", note: "Notiz", task: "Aufgabe", invite: "Termin" };
+  const AC_MAX_ROWS = 300;
+  const acObj = (v) => (v && typeof v === "object" && !Array.isArray(v) ? v : {});
+  const acText = (v, max) => (typeof v === "string" ? v : typeof v === "number" && Number.isFinite(v) ? String(v) : "").slice(0, max ?? 600);
+  const acModule = (m) => (typeof m === "string" && AC_MODULES.includes(m) ? m : "other");
+  const acMs = (iso) => (typeof iso === "string" ? Date.parse(iso) : NaN);
+  // Läufe und Agenten-Einträge → eine Liste, neueste zuerst; ohne gültige Zeit ans Ende. Einträge von Menschen gehören ins Protokoll, nicht hierher.
+  function acItems(runs, audits) {
+    const list = (Array.isArray(runs) ? runs : []).filter((r) => r && typeof r === "object" && !Array.isArray(r));
+    const byId = new Map();
+    for (const r of list) if (typeof r.id === "string") byId.set(r.id, r);
+    const items = list.map((r, n) => ({ key: "run:" + (typeof r.id === "string" ? r.id : "#" + n), type: "run", module: acModule(r.module), ms: acMs(r.startedAt), error: r.status === "failed" || acText(r.error, 1) !== "", doc: r, run: r }));
+    (Array.isArray(audits) ? audits : []).forEach((e, n) => {
+      if (!e || typeof e !== "object" || Array.isArray(e) || e.actorType !== "agent") return;
+      items.push({ key: "audit:" + (typeof e.id === "string" ? e.id : "#" + n), type: "act", module: acModule(e.module), ms: acMs(e.timestampUtc), error: acObj(e.act).kind === "mail-failed" || acText(e.error, 1) !== "", doc: e, run: typeof e.runId === "string" ? byId.get(e.runId) ?? null : null });
+    });
+    return items.sort((p, q) => (Number.isFinite(q.ms) ? q.ms : -Infinity) - (Number.isFinite(p.ms) ? p.ms : -Infinity) || p.key.localeCompare(q.key));
+  }
+  const acInKind = (it, kind) => kind === "all" || (kind === "run" && it.type === "run") || (kind === "act" && it.type === "act") || (kind === "error" && it.error);
+  // Formatierer einmal je (Art, Zeitzone) bauen, nicht je Zeile: Intl.DateTimeFormat ist teuer, die Liste hat bis zu 300 Zeilen und wird bei jedem Snapshot neu gezeichnet.
+  const AC_FMT = {
+    key: { locale: "en-CA", opts: { year: "numeric", month: "2-digit", day: "2-digit" } },
+    day: { locale: "de-DE", opts: { weekday: "short", day: "numeric", month: "short", year: "numeric" } },
+    clock: { locale: "de-DE", opts: { hour: "2-digit", minute: "2-digit" } },
+    stamp: { locale: "de-DE", opts: { dateStyle: "short", timeStyle: "medium" } },
+  };
+  const acFmtCache = new Map();
+  function acFmt(kind, tz) {
+    const k = kind + "|" + String(tz);
+    let f = acFmtCache.get(k);
+    if (!f) { f = new Intl.DateTimeFormat(AC_FMT[kind].locale, { timeZone: tz, ...AC_FMT[kind].opts }); acFmtCache.set(k, f); }
+    return f;
+  }
+  // Tag (Trenner) und Uhrzeit in der Zeitzone o.tz (Standard: die des Browsers); o.now ist "jetzt".
+  function acDay(ms, o) {
+    if (!Number.isFinite(ms)) return { key: "", label: "Ohne Datum" };
+    const now = Number.isFinite(o.now) ? o.now : Date.now(), f = (t) => acFmt("key", o.tz).format(t);
+    const key = f(ms), text = acFmt("day", o.tz).format(ms);
+    return { key, label: key === f(now) ? "Heute · " + text : key === f(now - 86400000) ? "Gestern · " + text : text };
+  }
+  const acClock = (ms, o) => (Number.isFinite(ms) ? acFmt("clock", o.tz).format(ms) : "—");
+  const acStamp = (iso, o) => { const ms = acMs(iso); return Number.isFinite(ms) ? acFmt("stamp", o.tz).format(ms) : acText(iso, 40); };
+  const acCount = (v) => (typeof v === "number" && Number.isFinite(v) ? String(v) : "");
+  // Eine Zeile als reiner Text (noch nicht escaped; die Vorlagen unten rufen esc() für jedes Feld).
+  function acRow(it, o) {
+    const d = it.doc, a = acObj(d.act), t = acObj(a.target), isRun = it.type === "run", day = acDay(it.ms, o);
+    const modeRaw = isRun ? d.mode : it.run?.mode, mode = typeof modeRaw === "string" && own(AC_MODE_LABEL, modeRaw) ? AC_MODE_LABEL[modeRaw] : acText(modeRaw, 30);
+    const status = isRun ? (typeof d.status === "string" && own(AC_RUN_STATUS, d.status) ? AC_RUN_STATUS[d.status] : "") : "";
+    const act = isRun ? "" : typeof a.kind === "string" && own(AC_ACT_LABEL, a.kind) ? AC_ACT_LABEL[a.kind] : acText(d.action, 60) || acText(a.kind, 60) || "Aktion";
+    const target = isRun ? "" : acText(t.name, 160) || (Array.isArray(t.to) ? t.to.map((v) => acText(v, 80)).filter(Boolean).join(", ") : acText(t.to, 160)) || acText(t.subject, 160);
+    const counts = isRun ? [["Handlungen", acCount(d.acts)], ["ausgehend", acCount(d.outbound)]].filter((c) => c[1] !== "").map((c) => c[1] + " " + c[0]).join(" · ") : "";
+    return {
+      key: it.key, day: day.key, dayLabel: day.label, mod: it.module, modLabel: AC_MODULE_LABEL[it.module], clock: acClock(it.ms, o), kindLabel: isRun ? "Lauf" : act, status, mode,
+      target, what: isRun ? "Lauf" + (status ? " · " + status : "") : target ? act + " · " + target : act,
+      sub: [mode ? "Modus " + mode : "", counts, isRun ? "" : acText(d.actor, 80)].filter(Boolean).join(" · "),
+      sum: acText(isRun ? d.summary : d.rationale, 600), err: acText(d.error, 400), link: isRun ? null : attioLink(t.recordId),
+    };
+  }
+  // Chips (Modul, Art) und Liste: Tagestrenner, je Eintrag eine Zeile mit Knopf (öffnet das Detail) und, wenn die Datensatz-ID eine UUID ist, dem Link nach Attio.
+  function activityHtml(items, f, o) {
+    o = acObj(o); f = acObj(f);
+    if (!items.length) return `<div class="empty">Noch keine Aktivität. Sobald ein Modul läuft, steht hier jeder Lauf und jede Handlung der Agenten.</div>`;
+    const mod = f.module === "all" || (typeof f.module === "string" && own(AC_MODULE_LABEL, f.module)) ? f.module : "all";
+    const kind = typeof f.kind === "string" && own(AC_KIND_LABEL, f.kind) ? f.kind : "all";
+    const inMod = (it, mk) => mk === "all" || it.module === mk;
+    const mods = ["all", ...AC_MODULES, ...(items.some((it) => it.module === "other") ? ["other"] : [])];
+    const modChips = mods.map((mk) => `<button type="button" class="btn sm ${mod === mk ? "primary" : ""}" data-acf="module" data-acv="${esc(mk)}" aria-pressed="${mod === mk}">${mk === "all" ? "Alle Module" : esc(AC_MODULE_LABEL[mk])} · ${items.filter((z) => acInKind(z, kind) && inMod(z, mk)).length}</button>`).join("");
+    const kindChips = Object.keys(AC_KIND_LABEL).map((kk) => `<button type="button" class="btn sm ${kind === kk ? "primary" : ""}" data-acf="kind" data-acv="${esc(kk)}" aria-pressed="${kind === kk}">${esc(AC_KIND_LABEL[kk])} · ${items.filter((z) => inMod(z, mod) && acInKind(z, kk)).length}</button>`).join("");
+    const vis = items.filter((it) => inMod(it, mod) && acInKind(it, kind)), shown = vis.slice(0, AC_MAX_ROWS);
+    let rows = "", last = null;
+    for (const it of shown) {
+      const x = acRow(it, o);
+      if (x.day !== last) { rows += `<h2 class="acday">${esc(x.dayLabel)}</h2>`; last = x.day; }
+      rows += `<div class="itemcard acrow ${o.selected === it.key ? "on" : ""} ${it.error ? "err" : ""}"><button type="button" class="acbtn" data-ac="${esc(x.key)}"><span class="acmeta"><span class="acchips"><span class="kind ${esc(AC_MODULE_CHIP[x.mod])}">${esc(x.modLabel)}</span><span class="s">${esc(x.clock)}</span></span>${x.mode ? `<span class="s">${esc(x.mode)}</span>` : ""}</span><span class="acwhat">${esc(x.what)}</span>${x.sub ? `<span class="s">${esc(x.sub)}</span>` : ""}${x.sum ? `<span class="acsum">${esc(x.sum)}</span>` : ""}${x.err ? `<span class="acsum bad">${esc(x.err)}</span>` : ""}</button>${x.link ? `<a class="s aclink" href="${esc(x.link)}" target="_blank" rel="noopener">In Attio öffnen</a>` : ""}</div>`;
+    }
+    return `<div class="row" role="group" aria-label="Modul">${modChips}</div><div class="row" role="group" aria-label="Art">${kindChips}</div>` +
+      (shown.length ? rows : `<div class="empty">Keine Einträge für diesen Filter.</div>`) +
+      (vis.length > AC_MAX_ROWS ? `<div class="sub">Die neuesten ${AC_MAX_ROWS} von ${vis.length} Einträgen.</div>` : "") +
+      `<div class="sub">Nur lesen. Quelle: die neuesten 200 Läufe und 400 Einträge dieses Speichers; die Module schreiben ihre Läufe und Agenten-Einträge hierher.</div>`;
+  }
+  // Das Detail eines Eintrags: Kopf (Chips) und Rumpf (die gespeicherten Felder, dazu das ganze Dokument); beides schon escaped.
+  function activityDetail(it, o) {
+    o = acObj(o);
+    const x = acRow(it, o), d = it.doc, a = acObj(d.act), isRun = it.type === "run";
+    const pairs = isRun
+      ? [["Modul", x.modLabel], ["Art", "Lauf"], ["Status", x.status || acText(d.status, 40)], ["Modus", x.mode], ["Start", acStamp(d.startedAt, o)], ["Ende", d.finishedAt ? acStamp(d.finishedAt, o) : ""], ["Handlungen", acCount(d.acts)], ["Ausgehend", acCount(d.outbound)],
+        ["Zusammenfassung", acText(d.summary, 4000)], ["Fehler", acText(d.error, 4000)], ["Hinweis zum Modus", acText(d.modeNote, 400)], ["Lauf-ID", acText(d.id, 200)]]
+      : [["Modul", x.modLabel], ["Art", "Handlung"], ["Aktion", x.kindLabel], ["Verb", acText(d.action, 80)], ["Ziel", x.target], ["Zeit", acStamp(d.timestampUtc, o)], ["Akteur", acText(d.actor, 120)], ["Modus", x.mode],
+        ["Lauf", acText(d.runId, 200)], ["Begründung", acText(d.rationale, 4000)], ["Ergebnis", acText(d.outputRef, 400)], ["Vorher", a.before === undefined ? "" : acText(typeof a.before === "string" ? a.before : JSON.stringify(a.before), 400)],
+        ["Nachher", a.after === undefined ? "" : acText(typeof a.after === "string" ? a.after : JSON.stringify(a.after), 400)], ["Fehler", acText(d.error, 4000)], ["Eintrags-ID", acText(d.id, 200)]];
+    const rows = pairs.filter((p) => p[1] !== "");
+    let json; try { json = JSON.stringify(d, null, 1).slice(0, 6000); } catch { json = "(nicht darstellbar)"; }
+    return {
+      chip: `<span class="row"><span class="kind ${esc(AC_MODULE_CHIP[x.mod])}">${esc(x.modLabel)}</span><span class="kind k-unknown">${esc(isRun ? "Lauf" : "Handlung")}</span></span>`,
+      body: `<dl class="acdl">${rows.map((p) => `<dt>${esc(p[0])}</dt><dd>${esc(p[1])}</dd>`).join("")}</dl>${x.link ? `<a class="ctxlink" href="${esc(x.link)}" target="_blank" rel="noopener">In Attio öffnen</a>` : ""}<details class="diag"><summary>Gespeicherte Felder</summary><pre>${esc(json)}</pre></details>`,
+    };
+  }
+  // ==== activity:end ====
+
+  let db = null, mcp = null, actor = "unbekannt", canEdit = false;
+  let approvals = [], selectedId = null, tab = "activity", creating = false;
+  let acRuns = [], acAudit = [], acSel = null, acShown = "";  // F030: Aktivität, siehe unten
+  const acFilter = { module: "all", kind: "all" };
+  let threads = [], intakeState = {}, selectedThread = null;
+  let autopilotRaw = null, runsDocs = [], auditDocs = [], confirmOn = null, apMsgs = {};
+  let undoOpen = null, feedMsgs = {};
+  let recordFilter = null; // UUID aus #record=… oder null
+  const diag = [];
+  const log = (t, raw) => { diag.unshift(`${new Date().toLocaleTimeString("de-DE")} ${t}${raw !== undefined ? "\n" + (typeof raw === "string" ? raw : JSON.stringify(raw, null, 1)).slice(0, 900) : ""}`); $("diagBody").textContent = diag.slice(0, 20).join("\n\n"); };
+  function banner(kind, html) { const b = $("banner"); if (!html) { b.hidden = true; return; } b.className = "note " + kind; b.innerHTML = html; b.hidden = false; }
+  const setPill = (id, state, text) => { $(id).className = "pill " + state; $(id + "Text").textContent = text; $(id).title = text; };
+
+  // ── Attios Textnotation lesen (identisch mit dem Deal Cockpit) ──────────────
+  function parseAttioText(text) {
+    const raw = String(text).replace(/\r/g, "").split("\n").filter((l) => l.trim() !== "");
+    const lines = raw.map((l) => { const m = /^(\s*)(.*)$/.exec(l); return { ind: m[1].length, t: m[2] }; });
+    let i = 0;
+    const scalar = (s) => { s = s.trim(); if (s === "") return null; if (s[0] === '"') { try { return JSON.parse(s); } catch { return s.slice(1, -1); } } if (s === "true") return true; if (s === "false") return false; if (s === "null") return null; if (/^-?\d+(\.\d+)?$/.test(s)) return Number(s); return s; };
+    const splitCsv = (s) => { const out = []; let cur = "", q = false; for (const c of s) { if (c === '"') q = !q; else if (c === "," && !q) { out.push(cur); cur = ""; } else cur += c; } out.push(cur); return out.map(scalar); };
+    const keyOf = (k) => { const m = /^([^\[\]{}]*)(?:\[(\d+)\])?(?:\{([^}]*)\})?$/.exec(k.trim()); return m ? { name: m[1], arr: m[2] !== undefined, fields: m[3] ? m[3].split(",").map((x) => x.trim()) : null } : { name: k.trim(), arr: false, fields: null }; };
+    function block(ind) { if (i >= lines.length || lines[i].ind < ind) return null; return lines[i].t.startsWith("- ") ? sequence(ind) : mapping(ind); }
+    function sequence(ind) { const out = []; while (i < lines.length && lines[i].ind === ind && lines[i].t.startsWith("- ")) { lines[i] = { ind: ind + 2, t: lines[i].t.slice(2) }; out.push(block(ind + 2)); } return out; }
+    function mapping(ind) {
+      const obj = {};
+      while (i < lines.length && lines[i].ind === ind && !lines[i].t.startsWith("- ")) {
+        const line = lines[i].t; let depth = 0, cut = -1;
+        for (let k = 0; k < line.length; k++) { const ch = line[k]; if (ch === "{" || ch === "[") depth++; else if (ch === "}" || ch === "]") depth--; else if (ch === ":" && depth === 0) { cut = k; break; } }
+        if (cut < 0) { i++; continue; }
+        const key = keyOf(line.slice(0, cut)); const rest = line.slice(cut + 1); i++;
+        let val;
+        if (rest.trim() === "") {
+          if (key.fields) { val = []; while (i < lines.length && lines[i].ind > ind && !lines[i].t.startsWith("- ")) { const cells = splitCsv(lines[i].t); const o = {}; key.fields.forEach((f, n) => { o[f] = cells[n] ?? null; }); val.push(o); i++; } }
+          else if (i < lines.length && lines[i].ind > ind) val = block(lines[i].ind);
+          else val = key.arr ? [] : null;
+        } else if (key.arr) val = rest.trim()[0] === '"' ? [scalar(rest)] : splitCsv(rest);
+        else val = scalar(rest);
+        if (key.name === "") return val;
+        obj[key.name] = val;
+      }
+      return obj;
+    }
+    return block(lines[0]?.ind ?? 0);
+  }
+  function parsePayload(res) { let p = res?.payload; if (p === undefined && Array.isArray(res?.content)) p = res.content.find((c) => c.type === "text")?.text; if (typeof p === "string") { const s = p.trim(); if (s[0] === "{" || s[0] === "[") { try { return JSON.parse(s); } catch { /* weiter */ } } try { return parseAttioText(s); } catch { return s; } } return p ?? null; }
+  const first = (v) => Array.isArray(v) ? v[0] : v;
+  const str = (v) => { v = first(v); if (v === null || v === undefined) return null; if (typeof v === "object") return v.value ?? v.title ?? v.status ?? v.option ?? v.domain ?? null; return String(v); };
+  // Irgendwo in einer Antwort eine record_id oder entry_id finden.
+  function findId(obj, key, depth = 0) { if (!obj || depth > 6) return null; if (typeof obj !== "object") return null; if (typeof obj[key] === "string") return obj[key]; if (obj.id && typeof obj.id === "object" && typeof obj.id[key] === "string") return obj.id[key]; for (const v of Object.values(obj)) { const r = findId(v, key, depth + 1); if (r) return r; } return null; }
+
+  async function call(server, tool, input, opts) { const t0 = Date.now(); try { const res = await mcp.callTool(server, tool, input, opts); const p = res?.payload; log(`${server}.${tool} ok · ${Date.now() - t0} ms · ${typeof p}`, typeof p === "string" ? p.slice(0, 400) : p); return res; } catch (e) { log(`${server}.${tool} ${e?.code ?? "?"} ${e?.message ?? ""}`, input); throw e; } }
+  function explain(err, server) { const code = err?.code ?? "upstream_error"; switch (code) {
+    case "needs_reauth": return `<b>${server} muss neu verbunden werden.</b> In claude.ai unter Einstellungen → Connectoren.`;
+    case "server_not_connected": case "selection_required": return `<b>Kein ${server}-Connector in dieser Ansicht.</b> In claude.ai unter Einstellungen → Connectoren hinzufügen.`;
+    case "not_in_manifest": return `<b>${server} ist für diese Seite nicht erlaubt.</b> Beim Aufruf erlauben.`;
+    case "server_unavailable": case "rate_limited": return `<b>${server} hat nicht rechtzeitig geantwortet.</b> Gleich noch einmal.`;
+    case "tool_error": return `<b>${server} meldet einen Fehler:</b> ${esc(err.message ?? "")}`;
+    case "cancelled": return `<b>Abgebrochen.</b> Ausgang unbekannt; in ${server} prüfen.`;
+    default: return `<b>${server}: etwas ist fehlgeschlagen</b> (${esc(code)}). ${esc(err?.message ?? "")}`; } }
+
+  // region:context (the context under every proposal; builders, render and load; no globals but esc, safeHref, attioLink and parsePayload of the page, the connector calls and their error text come in through `io`; mirrored byte for byte in inbox.html and deal-cockpit.html, held still by tools/check-screen-templates.sh)
+  const CTX_TEXT_CAP = 4000, CTX_MAX_MSGS = 50, CTX_DRIVE_PAGE = 20;
+  const ctxCache = Object.create(null);  // approval id -> { open, secOpen, msgOpen, thread, drive }; each section is { state: idle | loading | done | error, data?, html? }
+  const ctxState = (id) => (ctxCache[id] ??= { open: false, secOpen: {}, msgOpen: {}, thread: { state: "idle" }, drive: { state: "idle" } });
+  const ctxStr = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+  // Drive's grammar knows title, fullText, mimeType, the time terms, parentId, owner, sharedWithMe: no name, no trashed. A quote and a backslash inside the name are escaped.
+  function driveQuery(name) {
+    const n = ctxStr(name, 200);
+    return n ? `title contains '${n.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'` : null;
+  }
+  // The thread of a proposal: its own field, else the source's, else the message a reply answers (the first message of a thread has the thread's id).
+  function threadIdOf(a) {
+    for (const v of [a?.target?.threadId, a?.source?.threadId, a?.email?.replyToMessageId]) { const s = ctxStr(v, 80); if (/^[A-Za-z0-9_-]{4,80}$/.test(s)) return s; }
+    return null;
+  }
+  // Gmail get_thread (PLAIN_TEXT): { id, messageCount, viewUrl, messages: [{ sender, date, internalDate, snippet, plaintextBody, attachments: [{ filename }] }] }; null when the answer is not that.
+  function flattenThread(p) {
+    if (!p || typeof p !== "object" || !Array.isArray(p.messages)) return null;
+    const all = p.messages.filter((m) => m && typeof m === "object");  // the newest CTX_MAX_MSGS stay (a long thread is read from its end); total says how many there were
+    const messages = all.slice(-CTX_MAX_MSGS).map((m) => {
+      const full = [m.plaintextBody ?? m.plaintext_body, m.snippet].find((v) => typeof v === "string" && v.trim()) ?? "";
+      const ms = Number(m.internalDate), date = ctxStr(m.date, 40) || (Number.isFinite(ms) && ms > 0 ? new Date(ms).toISOString() : "");
+      const preview = full.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith(">")).slice(0, 3).join(" ").slice(0, 240);
+      const attachments = (Array.isArray(m.attachments) ? m.attachments : []).slice(0, 10).map((x) => ctxStr(x?.filename ?? x?.name ?? x?.id, 80) || "Anhang");
+      return { from: ctxStr(m.sender ?? m.from, 200), date, preview, text: full.slice(0, CTX_TEXT_CAP), cut: full.length > CTX_TEXT_CAP, attachments };
+    });
+    return { viewUrl: safeHref(p.viewUrl), messages, total: all.length };
+  }
+  // Drive search_files: { files: [{ title, mimeType, modifiedTime, viewUrl }] }, and the bare object {} when nothing matches; null when the answer is not an object.
+  function flattenFiles(p) {
+    if (!p || typeof p !== "object" || Array.isArray(p) || (p.files !== undefined && !Array.isArray(p.files))) return null;
+    return (p.files ?? []).slice(0, CTX_DRIVE_PAGE).filter((f) => f && typeof f === "object").map((f) => ({ title: ctxStr(f.title ?? f.name, 200) || "(ohne Titel)", mimeType: ctxStr(f.mimeType, 100), modifiedTime: ctxStr(f.modifiedTime, 40), href: safeHref(f.viewUrl) }));
+  }
+  // The record the proposal is about, its list entry and, for a note, the source line the notes run appends ("Source: Granola · <date> · [notes](<url>)").
+  function ctxRecord(a) {
+    const rid = a?.kind === "task" ? (a.task?.linked_record_object === "companies" ? a.task.linked_record_id : null) : a?.kind === "note" ? (a.crmNote?.parent_object === "companies" ? a.crmNote.parent_record_id : null) : a?.target?.recordId;
+    const lines = a?.kind === "note" ? String(a.crmNote?.content ?? "").split("\n").map((l) => l.trim()).filter(Boolean) : [], last = lines[lines.length - 1] ?? "";
+    const m = /\]\((https:\/\/[^\s)]+)\)/.exec(last) ?? /(https:\/\/[^\s)\]>]+)/.exec(last);
+    let href = null; try { href = m && /(^|\.)granola\.ai$/.test(new URL(m[1]).hostname) ? safeHref(m[1]) : null; } catch { href = null; }
+    const source = /granola/i.test(last) ? last.slice(0, 200) : "";
+    const out = { attio: attioLink(rid), list: ctxStr(a?.target?.list, 80), entry: ctxStr(a?.target?.entryId, 80), source, href };
+    return out.attio || out.entry || out.source ? out : null;
+  }
+  const ctxWhen = (iso, time) => { const d = new Date(iso); return Number.isFinite(d.getTime()) ? (time ? d.toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" }) : d.toLocaleDateString("de-DE")) : String(iso ?? "").slice(0, 16); };
+  const ctxType = (mime) => ({ "application/vnd.google-apps.folder": "Ordner", "application/vnd.google-apps.document": "Google Doc", "application/vnd.google-apps.spreadsheet": "Google Sheet", "application/vnd.google-apps.presentation": "Google Slides", "application/pdf": "PDF" })[mime] ?? (String(mime).split("/").pop() || "Datei").slice(0, 24);
+  const ctxCount = (id, key) => { const s = ctxState(id)[key]; return s.state === "done" ? ` · ${key === "thread" ? (s.data.total > s.data.messages.length ? `${s.data.messages.length} von ${s.data.total}` : s.data.messages.length) : s.data.length}` : ""; };
+  function ctxBody(id, key) {
+    const s = ctxState(id)[key];
+    if (s.state === "loading") return `<div class="ctxnote"><span class="spin"></span> ${key === "thread" ? "Lese den Thread…" : "Suche auf dem Drive…"}</div>`;
+    if (s.state === "error") return `<div class="note bad">${s.html}</div><button type="button" class="btn" data-ctx-retry="${key}">Erneut laden</button>`;
+    if (s.state !== "done") return "";
+    if (key === "drive") return s.data.length ? s.data.map((f) => { const inner = `<span class="ctxfrom">${esc(f.title)}</span><span class="ctxdate">${esc(ctxType(f.mimeType))}${f.modifiedTime ? ` · geändert ${esc(ctxWhen(f.modifiedTime, false))}` : ""}</span>`; return f.href ? `<a class="ctxfile" href="${esc(f.href)}" target="_blank" rel="noopener">${inner}</a>` : `<div class="ctxfile">${inner}</div>`; }).join("") : `<div class="ctxnote">Nichts auf dem Drive gefunden</div>`;
+    const t = s.data, n = t.messages.length;
+    const head = `<div class="ctxhead"><span>${t.total > n ? `${n} von ${t.total} Nachrichten` : `${n} Nachricht${n === 1 ? "" : "en"}`}</span>${t.viewUrl ? `<a class="ctxlink" href="${esc(t.viewUrl)}" target="_blank" rel="noopener">In Gmail öffnen</a>` : ""}</div>`;
+    return head + (n ? t.messages.map((g, i) => `<details class="ctxmsg" data-ctx-msg="${i}" ${ctxState(id).msgOpen[i] ? "open" : ""}><summary><span class="ctxsum"><span class="ctxfrom">${esc(g.from || "(unbekannt)")}</span><span class="ctxdate">${esc(ctxWhen(g.date, true))}</span><span class="ctxprev">${esc(g.preview)}</span></span></summary>${g.attachments.length ? `<div class="row">${g.attachments.map((n) => `<span class="pill">${esc(n)}</span>`).join("")}</div>` : ""}<pre>${esc(g.text)}${g.cut ? "\n… (gekürzt)" : ""}</pre></details>`).join("") : `<div class="ctxnote">Keine Nachrichten im Thread.</div>`);
+  }
+  const ctxRecordBody = (r) => `${r.attio ? `<a class="ctxlink" href="${esc(r.attio)}" target="_blank" rel="noopener">In Attio öffnen</a>` : ""}${r.entry ? `<div class="ctxnote">Listeneintrag${r.list ? ` in <code>${esc(r.list)}</code>` : ""}: <code>${esc(r.entry)}</code></div>` : ""}${r.source ? `<div class="ctxnote">${esc(r.source)}</div>` : ""}${r.href ? `<a class="ctxlink" href="${esc(r.href)}" target="_blank" rel="noopener">Granola-Notiz öffnen</a>` : ""}`;
+  // The block under the proposal body: closed by default, a section only when its input is there. Opening a section loads it (ctxBind); nothing here calls a connector.
+  function ctxRender(a) {
+    if (!a || typeof a.id !== "string") return "";
+    const c = ctxState(a.id), rec = ctxRecord(a);
+    const secs = [["thread", "E-Mail-Thread", threadIdOf(a)], ["drive", "Dokumente auf dem Drive", driveQuery(a.target?.name)], ["record", "Datensatz", rec]].filter((x) => x[2]);
+    if (!secs.length) return "";
+    return `<details class="ctx" data-ctx-block="${esc(a.id)}" ${c.open ? "open" : ""}><summary>Kontext</summary><div class="ctxbody">${secs.map(([key, label]) => `<details class="ctxsec" data-ctx-sec="${key}" ${c.secOpen[key] ? "open" : ""}><summary><span class="ctxlbl">${label}</span><span class="ctxcount">${key === "record" ? "" : esc(ctxCount(a.id, key))}</span></summary><div class="ctxin">${key === "record" ? ctxRecordBody(rec) : ctxBody(a.id, key)}</div></details>`).join("")}</div></details>`;
+  }
+  function ctxPaint(host, id, key) {
+    const blk = [...host.querySelectorAll("[data-ctx-block]")].find((el) => el.dataset.ctxBlock === id), sec = blk?.querySelector(`[data-ctx-sec="${key}"]`);
+    if (!sec) return;  // another proposal is on screen now; the result waits in the cache
+    sec.querySelector(".ctxin").innerHTML = ctxBody(id, key); sec.querySelector(".ctxcount").textContent = ctxCount(id, key);
+  }
+  // One load per open per proposal: only an idle section loads; a failure stays in the cache until the partner taps "Erneut laden".
+  async function ctxLoad(host, a, key, io) {
+    const s = ctxState(a.id)[key];
+    if (s.state !== "idle") return;
+    s.state = "loading"; ctxPaint(host, a.id, key);
+    try {
+      if (key === "thread") {
+        const t = flattenThread(parsePayload(await io.gmail("get_thread", { threadId: threadIdOf(a), messageFormat: "PLAIN_TEXT" }, { cache: { staleTime: 300000 } })));
+        if (!t) throw Object.assign(new Error("unerwartete Antwort"), { code: "upstream_error" });
+        s.data = t;
+      } else {
+        const f = flattenFiles(parsePayload(await io.drive("search_files", { query: driveQuery(a.target?.name), pageSize: CTX_DRIVE_PAGE, excludeContentSnippets: true })));
+        if (!f) throw Object.assign(new Error("unerwartete Antwort"), { code: "upstream_error" });
+        s.data = f;
+      }
+      s.state = "done";
+    } catch (e) { s.state = "error"; s.html = io.explain(e, key === "thread" ? "Gmail" : "Google Drive"); }
+    ctxPaint(host, a.id, key);
+  }
+  // Wired once on the element that holds the detail: <details> toggle events do not bubble, so the listener captures them.
+  function ctxBind(host, getApproval, io) {
+    host.addEventListener("toggle", (ev) => {
+      const el = ev.target, blk = el.closest?.("[data-ctx-block]"), a = getApproval();
+      if (!blk || !a || a.id !== blk.dataset.ctxBlock) return;
+      const c = ctxState(a.id);
+      if (el === blk) c.open = el.open;
+      else if (el.dataset.ctxSec) { c.secOpen[el.dataset.ctxSec] = el.open; if (el.open && (el.dataset.ctxSec === "thread" || el.dataset.ctxSec === "drive")) ctxLoad(host, a, el.dataset.ctxSec, io); }
+      else if (el.dataset.ctxMsg !== undefined) c.msgOpen[el.dataset.ctxMsg] = el.open;
+    }, true);
+    host.addEventListener("click", (ev) => {
+      const b = ev.target.closest?.("[data-ctx-retry]"), a = getApproval(), key = b?.dataset.ctxRetry;
+      if (!b || !a || (key !== "thread" && key !== "drive")) return;
+      const s = ctxState(a.id)[key];
+      if (s.state === "error") { s.state = "idle"; ctxLoad(host, a, key, io); }
+    });
+  }
+  // endregion:context
+
+  // ── Audit: nur anhängen ──────────────────────────────────────────────────────
+  async function sha(input) { try { const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(input))); return "sha256:" + [...new Uint8Array(buf)].slice(0, 8).map((b) => b.toString(16).padStart(2, "0")).join(""); } catch { return "sha256:unavailable"; } }
+  async function audit(action, input, outputRef, rationale, actorType = "human", extra = null) {
+    if (!db) return;
+    const entry = { timestampUtc: new Date().toISOString(), actor: actor || "unknown", actorType, skillVersion: SKILL, action: action || "unknown", inputHash: await sha(input ?? null), outputRef: outputRef || "unknown", rationale: rationale || "unknown", ...(extra ?? {}) };
+    try { await db.collection("audit").add(entry); } catch (e) { log(`audit.add ${e?.code ?? "?"}`); }
+  }
+
+  // ── Freigaben ────────────────────────────────────────────────────────────────
+  let apFilter = "pending";
+  // Die Zahl am Reiter: offene Freigaben plus unkorrigierte Agenten-Handlungen der letzten 24 Stunden, nur von Modulen, deren Speicher dieser ist (nicht die gespiegelten von Dealflow und Investoren).
+  function updateBadge() {
+    const pend = approvals.filter((a) => a.status === "pending").length;
+    const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+    const acts = auditDocs.filter((e) => e.actorType === "agent" && !isMirrored(e) && e.act && e.act.kind !== "mail-confirmed" && !e.corrected && String(e.timestampUtc ?? "") >= since).length;
+    const n = pend + acts, b = $("pendingBadge");
+    b.textContent = n; b.hidden = n === 0; b.title = `${pend} offene Freigaben · ${acts} Agenten-Handlungen der letzten 24 h`;
+  }
+  function renderApprovals() {
+    updateBadge(); renderRecChip();
+    const base = recordFilter ? approvals.filter((x) => approvalHasRecord(x, recordFilter)) : approvals;
+    const vis = base.filter((a) => apFilter === "all" || a.status === apFilter || (apFilter === "pending" && !statusValid(a.status))).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+    const counts = Object.fromEntries(["pending", "approved", "rejected", "sent"].map((s) => [s, base.filter((a) => a.status === s).length]));
+    $("apList").innerHTML = `<div class="row">${["pending", "approved", "sent", "rejected", "all"].map((s) => `<button type="button" class="btn sm ${apFilter === s ? "primary" : ""}" data-f="${s}">${s === "all" ? "alle" : STATUS_LABEL[s]} · ${s === "all" ? base.length : counts[s]}</button>`).join("")}</div>` +
+      (vis.length ? vis.map((a) => `<button type="button" class="itemcard ${a.id === selectedId ? "on" : ""} ${a.status !== "pending" ? "done" : ""}" data-id="${esc(a.id)}"><div class="row" style="justify-content:space-between"><span class="kind ${kindClass(a.kind)}">${esc(kindLabel(a.kind))}${a.email?.purpose ? " · " + esc(a.email.purpose) : ""}</span><span class="s">${esc(ago(a.createdAt))}</span></div><div style="font-weight:600">${esc(a.title)}</div><div class="s">${esc(a.createdBy ?? "")} · ${esc(statusLabel(a.status))}${a.decidedBy ? " von " + esc(a.decidedBy) : ""}</div></button>`).join("") : `<div class="empty">${recordFilter ? "Keine Vorschläge zu diesem Datensatz." : apFilter === "pending" ? "Nichts wartet. Gut." : "Keine Einträge."}</div>`);
+    const a = base.find((x) => x.id === selectedId);
+    if (a) renderDetail(a); else if (!creating) { if (drawerId === "apDetail") closeDrawer(); else $("apDetail").innerHTML = `<div class="empty">${PLACEHOLDER.apDetail}</div>`; }
+  }
+  function ago(iso) { const d = new Date(iso); if (!Number.isFinite(d.getTime())) return ""; const m = Math.round((Date.now() - d.getTime()) / 60000); return m < 1 ? "jetzt" : m < 60 ? `vor ${m} min` : m < 1440 ? `vor ${Math.round(m / 60)} h` : `vor ${Math.round(m / 1440)} T`; }
+  // ── Datensatz-Filter (#record=<uuid>) ───────────────────────────────────────
+  // Der Name stammt aus der ersten Freigabe (oder dem ersten Agenten-Eintrag), die den Datensatz tragen; er wird nur über esc() ausgegeben.
+  function recordName() {
+    if (!recordFilter) return null;
+    const ap = approvals.find((x) => approvalHasRecord(x, recordFilter) && typeof x.target?.name === "string" && x.target.name.trim());
+    if (ap) return ap.target.name.trim();
+    const au = auditDocs.find((x) => actHasRecord(x, recordFilter) && typeof x.act?.target?.name === "string" && x.act.target.name.trim());
+    return au ? au.act.target.name.trim() : null;
+  }
+  function renderRecChip() {
+    const nm = recordName();
+    const html = recordFilter ? `<button type="button" class="btn sm" data-rec-clear="1" title="Filter aufheben">Nur Datensatz <code>${esc(recordFilter.slice(0, 8))}…</code>${nm ? " (" + esc(nm) + ")" : ""} · alle anzeigen</button>` : "";
+    document.querySelectorAll("[data-recchip]").forEach((el) => { el.innerHTML = html; el.hidden = !recordFilter; });
+  }
+  function applyHash() {
+    const rec = recordFromHash(location.hash);
+    if (rec === recordFilter) return;
+    recordFilter = rec;
+    if (rec) { selectedId = null; creating = false; showTab("approvals"); }
+    renderRecChip();
+    if (db) { renderApprovals(); renderFeed(); }
+  }
+  function clearRecordFilter() {
+    recordFilter = null;
+    try { history.replaceState(null, "", location.pathname + location.search); } catch { try { location.hash = ""; } catch { /* Adresse nicht änderbar: der Filter ist trotzdem aufgehoben */ } }
+    renderRecChip(); renderApprovals(); renderFeed();
+  }
+  // ── Newsletter-Freigabe (F013): Vorschau im Sandkasten, nichts wird ausgeführt ──
+  const nlTextView = new Set(); // Freigaben, deren Vorschau gerade als Text steht
+  const nlToDraft = new Map(); // getippte Adressen überleben das Umschalten der Vorschau
+  const nlPartners = (a) => { const v = a.newsletter?.partnersTo; return (Array.isArray(v) ? v : typeof v === "string" ? v.split(/[,;\s]+/) : []).map((x) => String(x).trim()).filter(Boolean); };
+  function newsletterBody(a) {
+    const n = a.newsletter ?? {}, items = Array.isArray(n.issue?.items) ? n.issue.items : [], asText = nlTextView.has(a.id);
+    return `
+      <div class="note"><b>Freigeben führt nichts aus.</b> Die Kampagne legt die Routine an, wenn der Schalter des Moduls Newsletter auf <b>An</b> steht; hier wird nur die Entscheidung festgehalten.</div>
+      <div class="nlpane">
+        <div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="s">${asText ? "Nur Text" : "HTML-Vorschau (ohne Skripte, ohne Formulare)"}</span><button type="button" class="btn sm" data-nl-view="1" aria-pressed="${asText}">${asText ? "HTML" : "Text"}</button></div>
+        ${asText ? `<pre>${esc(n.text ?? "")}</pre>` : `<iframe sandbox="" srcdoc="${esc(n.html ?? "")}" title="Newsletter-Vorschau"></iframe>`}
+      </div>
+      <div><h2 style="margin-bottom:6px">Beiträge · ${items.length}</h2>${items.length ? `<ul class="nlitems">${items.map((it) => { const href = safeHref(it?.url ?? it?.link); return `<li><b>${esc(it?.title ?? "ohne Titel")}</b><span class="s">${esc(it?.sourceName ?? "?")} · ${esc(it?.date ?? "?")}</span>${href ? `<a class="s" href="${esc(href)}" rel="noopener" target="_blank">${esc(href)}</a>` : `<span class="s">${esc(it?.url ?? it?.link ?? "keine Quelle")}</span>`}</li>`; }).join("")}</ul>` : `<div class="sub">Keine Beiträge im Entwurf.</div>`}</div>
+      <div><label class="lbl" for="nlTo">Gmail-Entwurf an (Partner-Adressen)</label><input id="nlTo" value="${esc(nlToDraft.get(a.id) ?? nlPartners(a).join(", "))}" placeholder="leer lassen und im Entwurf eintragen">
+        <div class="sub">Der Entwurf enthält den reinen Text; das HTML-Feld des Gmail-Connectors ist noch nicht beobachtet. Das HTML steht in der Vorschau oben.</div></div>`;
+  }
+  // Aufgabe und Notiz zeigen, was geschrieben wird: die Felder des Dokuments, die auch an den Connector gehen (task.* bzw. crmNote.*), nicht target.*.
+  const shownName = (v) => (typeof v === "string" && v.trim() ? ` (${esc(v.trim().slice(0, 120))})` : "");
+  function taskBody(a) {
+    const t = a.task ?? {};
+    return `<div class="note">${esc(t.content ?? "")}</div>
+      <div class="s">fällig ${esc(String(t.deadline_at ?? "—").slice(0, 10))}</div>
+      <div class="s">Verknüpft mit: ${esc(t.linked_record_object ?? "?")} <code>${esc(t.linked_record_id ?? "?")}</code>${shownName(t.linked_record_name)}</div>
+      <div class="s">Zuständig: <code>${esc(t.assignee_workspace_member_id ?? "?")}</code>${shownName(t.assignee_name)}</div>`;
+  }
+  function noteBody(a) {
+    const n = a.crmNote ?? {}, claimed = typeof a.target?.name === "string" ? a.target.name.trim().slice(0, 120) : "";
+    const clash = typeof a.target?.recordId === "string" && a.target.recordId !== n.parent_record_id;
+    return `
+      <div class="note"><b>Freigeben legt diese Notiz in Attio an:</b> genau diesen Titel und diesen Text, an genau diesen Datensatz. Nichts davon wurde bisher geschrieben.</div>
+      <div class="s">Datensatz: ${esc(n.parent_object ?? "?")} <code>${esc(n.parent_record_id ?? "?")}</code>${claimed ? ` · der Vorschlag nennt: ${esc(claimed)}` : ""}${a.source?.confidence ? ` · Zuordnung: ${esc(a.source.confidence)}` : ""}${a.source?.title ? ` · Meeting: ${esc(String(a.source.title).slice(0, 120))}` : ""}</div>
+      ${clash ? `<div class="note warn"><b>Achtung:</b> die Datensatz-ID des Vorschlags weicht von der Datensatz-ID der Notiz ab; maßgeblich ist die Notiz.</div>` : ""}
+      <div><span class="lbl">Titel</span><div class="note">${esc(n.title ?? "")}</div></div>
+      <div><span class="lbl">Text (Markdown, hier nur als Text)</span><pre style="white-space:pre-wrap;max-height:360px;overflow:auto">${esc(n.content ?? "")}</pre></div>`;
+  }
+  async function newsletterDraft(a) {
+    const msg = $("apMsg"), n = a.newsletter ?? {};
+    const to = ($("nlTo")?.value ?? "").split(/[,;\s]+/).filter(Boolean), subject = a.title ?? "Newsletter";
+    msg.innerHTML = `<div class="note"><span class="spin"></span> Lege Entwurf an…</div>`;
+    try {
+      const res = await call(GMAIL, "create_draft", { to, subject, body: n.text ?? "" }, { cache: false });
+      const p = parsePayload(res), draftUrl = p?.viewUrl ?? p?.draft?.viewUrl ?? null, draftId = p?.id ?? p?.draft?.id ?? null;
+      const outputRef = draftId ? `gmail:draft/${draftId}` : "gmail:draft";
+      await audit("mail-draft", { to, subject }, outputRef, `Newsletter-Entwurf aus Freigabe ${a.id} an die Partner im Postfach von ${actor}`, "human", { module: "newsletter", act: { kind: "mail-draft", target: { name: a.title ?? null, subject, to }, reversible: false } });
+      msg.innerHTML = `<div class="note ok"><b>Entwurf liegt in Gmail.</b> ${draftUrl && safeHref(draftUrl) ? `<a href="${esc(draftUrl)}" target="_blank" rel="noopener">Entwurf öffnen</a>` : "Im Postfach unter Entwürfe."}</div>`;
+    } catch (e) {
+      const ambiguous = ["server_unavailable", "upstream_error", "cancelled"].includes(e?.code);
+      msg.innerHTML = `<div class="note bad">${explain(e, GMAIL)}${ambiguous ? ` <b>Der Entwurf kann trotzdem angelegt sein</b>; in Gmail prüfen, bevor du es erneut versuchst.` : ""}</div>`;
+    }
+  }
+  function renderDetail(a) {
+    creating = false;
+    if (!statusValid(a.status)) { $("apDetail").innerHTML = drawerShell(`<span class="kind ${kindClass(a.kind)}">${esc(kindLabel(a.kind))} · ungültiger Status</span>`, `<h2 style="font-size:20px;letter-spacing:0;text-transform:none;color:var(--fg)">${esc(a.title)}</h2><div class="note bad"><b>Ungültiger Status.</b> Das Dokument im Speicher trägt einen Status, den diese Seite nicht kennt. Es gibt dafür keine Aktionen.</div>`, ""); return; }
+    if (!own(KIND_LABEL, a.kind)) { $("apDetail").innerHTML = drawerShell(`<span class="kind k-unknown">unbekannt · ${esc(statusLabel(a.status))}</span>`, `<h2 style="font-size:20px;letter-spacing:0;text-transform:none;color:var(--fg)">${esc(a.title)}</h2><div class="note bad"><b>Unbekannte Art.</b> Dieses Dokument gehört zu keiner Art, die diese Seite ausführen kann. Es gibt dafür keine Aktionen.</div>`, ""); return; }
+    const isMail = a.kind === "email" || a.kind === "digest";
+    const isNl = a.kind === "newsletter";
+    const can = canEdit;
+    const linked = a.kind === "task" ? (a.task?.linked_record_object === "companies" ? a.task.linked_record_id : null) : a.kind === "note" ? (a.crmNote?.parent_object === "companies" ? a.crmNote.parent_record_id : null) : a.target?.recordId;
+    const attio = attioLink(linked), draftHref = safeHref(a.email?.draftUrl);
+    const words = String(a.email?.body ?? "").trim().split(/\s+/).filter(Boolean).length;
+    const keep = drawerId === "apDetail" ? $("apDetail").querySelector(".dbody")?.scrollTop ?? 0 : 0;
+    const chip = `<span class="kind ${kindClass(a.kind)}">${esc(kindLabel(a.kind))} · ${esc(statusLabel(a.status))}</span>`;
+    const openHref = isMail ? draftOpenHref(a) : null, drafted = Boolean(openHref) && (a.status === "pending" || a.status === "approved");
+    const body = `
+      <div><h2 style="font-size:20px;letter-spacing:0;text-transform:none;color:var(--fg)">${esc(a.title)}</h2><div class="sub">Vorgeschlagen von ${esc(a.createdBy ?? "?")} · ${esc(new Date(a.createdAt).toLocaleString("de-DE"))}${a.decidedAt ? ` · entschieden von ${esc(a.decidedBy ?? "?")} · ${esc(new Date(a.decidedAt).toLocaleString("de-DE"))}` : ""}</div></div>
+        ${attio ? `<div class="row" style="margin-top:8px"><a class="btn" href="${esc(attio)}" target="_blank" rel="noopener">In Attio öffnen</a></div>` : ""}
+      ${a.rationale ? `<div class="note acc"><b>Warum:</b> ${esc(a.rationale)}</div>` : ""}
+      ${isNl ? newsletterBody(a) : a.kind === "task" ? taskBody(a) : a.kind === "note" ? noteBody(a) : !isMail ? `<div class="note"><b>${esc(a.target?.name ?? "")}</b>: ${esc(a.change?.from ?? "?")} → <b>${esc(a.change?.to ?? "?")}</b> auf <code>${esc(a.target?.list ?? "")}</code></div>` : `
+        <div class="grid2"><div><label class="lbl" for="eTo">An</label><input id="eTo" value="${esc(toList(a.email?.to).join(", "))}" ${a.status !== "pending" ? "disabled" : ""}></div><div><label class="lbl" for="eSub">Betreff</label><input id="eSub" value="${esc(a.email?.subject ?? "")}" ${a.status !== "pending" ? "disabled" : ""}></div></div>
+        <div><label class="lbl" for="eBody">Text · ${words} Wörter</label><textarea id="eBody" ${a.status !== "pending" ? "disabled" : ""}>${esc(a.email?.body ?? "")}</textarea></div>
+        ${draftHref ? `<div class="note ok"><b>Entwurf liegt in Gmail.</b> <a href="${esc(draftHref)}" target="_blank" rel="noopener">Entwurf öffnen</a>, senden, dann unten „als gesendet markieren“.</div>` : drafted ? `<div class="note ok"><b>Entwurf liegt in Gmail.</b> Ein zweiter wird nicht angelegt: den Entwurf öffnen, senden, dann unten „Als gesendet markieren“.</div>` : ""}`}
+      ${a.note ? `<div class="note warn"><b>Notiz:</b> ${esc(a.note)}</div>` : ""}
+      ${ctxRender(a)}`;
+    const acts = `<div class="row">
+        ${drafted ? `<a class="btn primary" href="${esc(openHref)}" target="_blank" rel="noopener" data-draft-open="1">Entwurf öffnen</a>` : ""}
+        ${a.status === "pending" && can ? `${drafted ? "" : `<button type="button" class="btn primary" data-dec="approved">${isNl ? "Freigeben" : isMail ? "Freigeben und Gmail-Entwurf anlegen" : "Freigeben und in Attio schreiben"}</button>`}<button type="button" class="btn danger" data-dec="rejected">Ablehnen…</button>` : ""}
+        ${isMail && (a.status === "approved" || a.status === "pending") && can ? `<button type="button" class="btn" data-dec="sent">Als gesendet markieren</button>` : ""}
+        ${isMail ? `<button type="button" class="btn" data-copy="1">Text kopieren</button>` : ""}
+        ${isNl && (a.status === "approved" || a.status === "pending") && can ? `<button type="button" class="btn" data-nl-draft="1" ${mcp ? "" : "disabled"}>Als Gmail-Entwurf an Partner</button>` : ""}
+        ${!can ? `<span class="sub">Nur Bearbeiter dieses Artefakts dürfen entscheiden.</span>` : ""}
+      </div>
+      <div id="apMsg"></div>`;
+    $("apDetail").innerHTML = drawerShell(chip, body, acts);
+    if (keep) $("apDetail").querySelector(".dbody").scrollTop = keep;
+  }
+  async function decide(a, decision) {
+    const msg = $("apMsg");
+    if (!transitionAllowed(a.status, decision)) { msg.innerHTML = `<div class="note bad">Schon ${esc(statusLabel(a.status))}; dieser Übergang ist nicht erlaubt.</div>`; return; }
+    if (!own(KIND_LABEL, a.kind)) { msg.innerHTML = `<div class="note bad">Unbekannte Art; nichts geschrieben.</div>`; return; }
+    if (decision === "approved") { const why = approvalBlock(a); if (why) { msg.innerHTML = `<div class="note bad"><b>Nicht freigegeben, nichts geschrieben:</b> ${esc(why)}.</div>`; return; } }
+    let note = null;
+    if (decision === "rejected") { note = window.prompt ? null : null; const box = document.createElement("div"); box.className = "note warn"; box.innerHTML = `<b>Warum ablehnen?</b><div class="row" style="margin-top:6px"><input id="rejNote" placeholder="kurzer Grund"><button type="button" class="btn danger" id="rejGo">Ablehnen</button></div>`; msg.innerHTML = ""; msg.appendChild(box); $("rejGo").addEventListener("click", () => { finish(a, "rejected", $("rejNote").value.trim() || "ohne Grund"); }); return; }
+    await finish(a, decision, note);
+  }
+  // finish: `a` ist die Karte, wie sie geöffnet wurde (veraltet); entschieden und ausgeführt wird nur, was frisch gelesen (`cur`) und geprüft ist.
+  // Reihenfolge bei „freigeben“:
+  //   1. frisch lesen; Übergang erlaubt? Art des frischen Dokuments = Art der geöffneten Karte? approvalBlock(cur) bestanden?
+  //   2. nur Aufgabe und Notiz (LOCKED_KINDS): ist `locking.executing` jünger als 10 Min., wird nicht ausgeführt; sonst
+  //      `locking: {executing: <iso>, by, token}` mit update() setzen, zurücklesen und nur weitermachen, wenn das eigene token dort steht
+  //      (der Speicher kennt hier keine Versionsprüfung; das Zurücklesen ist die Prüfung, dass keine zweite Sitzung gewonnen hat).
+  //   3. Connector-Aufruf mit genau den geprüften Feldern aus `cur`.
+  //   4. erst danach Status `approved` mit der angelegten ID und der Sperre `executing: null` schreiben.
+  //   Fehler vor dem Aufruf oder ein eindeutiger Fehler des Connectors gibt die Sperre frei. Ein unklarer Ausgang (Zeitüberschreitung, abgebrochen)
+  //   und ein Fehler beim Schreiben des Status nach erfolgreichem Aufruf lassen die Sperre stehen: Der Status wird NICHT vor dem Aufruf geschrieben,
+  //   sonst ginge die Aufgabe bei einem Fehler verloren, und ohne Sperre würde ein zweiter Klick sie doppelt anlegen.
+  async function finish(a, decision, note) {
+    const msg = $("apMsg"); msg.innerHTML = `<div class="note"><span class="spin"></span> ${decision === "approved" && a.kind !== "newsletter" ? "Führe aus…" : "Speichere…"}</div>`;
+    const ref = db.collection("approvals").doc(a.id);
+    const refuse = (why) => { msg.innerHTML = `<div class="note bad"><b>Nicht freigegeben, nichts geschrieben:</b> ${esc(why)}.</div>`; };
+    let kind = a.kind, lockToken = null, toolDone = false;
+    try {
+      // Erst noch einmal lesen: zweimal anwenden ist der Fehler, den die Zustandsmaschine verhindern soll.
+      const snap = await ref.get(); const cur = snap.exists ? snap.data() : null;
+      if (!cur || !transitionAllowed(cur.status, decision)) { msg.innerHTML = `<div class="note bad">Inzwischen ${esc(statusValid(cur?.status) ? STATUS_LABEL[cur.status] : "geändert")}; nichts geschrieben.</div>`; return; }
+      if (decision === "approved") {
+        // Ab hier gilt nur noch `cur`, nie `a`: die Art, die Felder, der Datensatz.
+        const why = kindChanged(a.kind, cur) ?? (own(KIND_LABEL, cur.kind) ? approvalBlock(cur) : "Unbekannte Art") ?? executedBlock(cur);
+        if (why) { refuse(why); return; }
+      }
+      kind = cur.kind;
+      let outputRef = `approval/${a.id}`; let patch = {};
+      if (decision === "approved" && LOCKED_KINDS.includes(kind)) {
+        const held = lockBlock(cur, Date.now()); if (held) { refuse(held); return; }
+        lockToken = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+        await ref.update({ locking: { executing: new Date().toISOString(), by: actor, token: lockToken } });
+        const again = (await ref.get()).data();
+        if (again?.locking?.token !== lockToken || again.kind !== kind || again.status !== cur.status) { lockToken = null; refuse("Eine andere Sitzung führt diese Freigabe gerade aus"); return; }
+      }
+      if (decision === "approved") {
+        if (kind === "newsletter") {
+          // Nichts auszuführen: die Kampagne legt die Routine an (F013). Nur Statuswechsel und Audit-Eintrag unten.
+        } else if (kind === "task") {
+          const t = cur.task; // frisch gelesen und oben geprüft (approvalBlock)
+          // Genau die fünf geprüften Schlüssel (deadline_at nur, wenn gesetzt); Namen und alles andere aus dem Dokument gehen nie an den Connector.
+          const args = { content: t.content, assignee_workspace_member_id: t.assignee_workspace_member_id, linked_record_object: t.linked_record_object, linked_record_id: t.linked_record_id, ...(t.deadline_at ? { deadline_at: t.deadline_at } : {}) };
+          const res = await call(ATTIO, "create-task", args, { cache: false }); toolDone = true;
+          const createdId = findId(parsePayload(res), "task_id");
+          outputRef = createdId ? `attio:task/${createdId}` : `attio:task/${t.linked_record_id}`;
+          patch.result = { taskId: createdId };
+          await audit("create-task", { recordId: t.linked_record_id, content: t.content }, outputRef, `Effekt der Freigabe ${a.id}: Aufgabe für ${t.linked_record_object} ${t.linked_record_id}`);
+        } else if (kind === "note") {
+          const n = cur.crmNote;
+          // Genau die vier geprüften Schlüssel.
+          const args = { title: n.title, content: n.content, parent_object: n.parent_object, parent_record_id: n.parent_record_id };
+          const res = await call(ATTIO, "create-note", args, { cache: false }); toolDone = true;
+          const createdId = findId(parsePayload(res), "note_id");
+          outputRef = createdId ? `attio:note/${createdId}` : `attio:note/${n.parent_record_id}`;
+          patch.result = { noteId: createdId };
+          await audit("create-note", { recordId: n.parent_record_id, title: n.title }, outputRef, `Effekt der Freigabe ${a.id}: Notiz an ${n.parent_object} ${n.parent_record_id}`);
+        } else if (kind === "deal-stage" || kind === "investor-status") {
+          const slug = kind === "deal-stage" ? CONFIG.dealStageField : CONFIG.investorStatusField;
+          await call(ATTIO, "update-list-entry-by-id", { list: cur.target.list, entry_id: cur.target.entryId, entry_values: { [slug]: cur.change.to } }, { cache: false }); toolDone = true;
+          outputRef = `attio:entry/${cur.target.entryId}`;
+          await audit(kind === "deal-stage" ? "write-stage" : "write-status", { entryId: cur.target.entryId, to: cur.change.to }, outputRef, `Effekt der Freigabe ${a.id}: ${cur.target.name} ${cur.change.from} → ${cur.change.to}`);
+        } else {
+          const to = toList($("eTo")?.value ?? toList(cur.email?.to).join(",")); const subject = $("eSub")?.value ?? cur.email?.subject ?? ""; const body = $("eBody")?.value ?? cur.email?.body ?? "";
+          const res = await call(GMAIL, "create_draft", { to, subject, body }, { cache: false }); toolDone = true;
+          const p = parsePayload(res); const draftUrl = p?.viewUrl ?? p?.draft?.viewUrl ?? null; const draftId = p?.id ?? p?.draft?.id ?? null;
+          patch.email = { ...(cur.email ?? {}), to, subject, body, draftUrl, draftId };
+          outputRef = draftId ? `gmail:draft/${draftId}` : "gmail:draft";
+          await audit("draft-created", { to, subject }, outputRef, `Entwurf aus Freigabe ${a.id} im Postfach von ${actor}`);
+        }
+      }
+      if (lockToken) patch.locking = { executing: null, finishedAt: new Date().toISOString(), token: lockToken };
+      const next = { ...cur, ...patch, status: decision, decidedAt: new Date().toISOString(), decidedBy: actor, note: note ?? cur.note ?? null };
+      await ref.set(next);
+      lockToken = null;
+      await audit(decision === "approved" ? "approve" : decision === "rejected" ? "reject" : "mark-sent", { approvalId: a.id, kind }, outputRef, note ?? `${cur.title ?? a.id}: ${STATUS_LABEL[decision]}`);
+      msg.innerHTML = `<div class="note ok"><b>${STATUS_LABEL[decision]}.</b></div>`;
+      // Auf dem Telefon schließt die Entscheidung die Schublade; die Liste zeigt den neuen Status, ein Hinweis bestätigt sie.
+      if (narrow.matches && drawerId === "apDetail") { closeDrawer(); toast(`${STATUS_LABEL[decision][0].toUpperCase()}${STATUS_LABEL[decision].slice(1)}.${decision === "approved" && (kind === "email" || kind === "digest") ? " Der Entwurf liegt in Gmail; Karte erneut öffnen für den Link." : ""}`); }
+    } catch (e) {
+      const server = kind === "email" || kind === "digest" ? GMAIL : ATTIO; const ambiguous = ["server_unavailable", "upstream_error", "cancelled"].includes(e?.code);
+      // Eindeutiger Fehler: Sperre freigeben, damit ein neuer Versuch möglich ist. Unklarer Ausgang: Sperre bleibt 10 Minuten stehen.
+      if (lockToken && !toolDone && !ambiguous && e?.code !== undefined) { try { await ref.update({ locking: { executing: null, releasedAt: new Date().toISOString(), token: lockToken } }); } catch (r) { log(`approvals.unlock ${r?.code ?? "?"}`); } }
+      if (toolDone) await audit("status-write-failed", { approvalId: a.id, kind }, `approval/${a.id}`, `Status der Freigabe ${a.id} nicht gespeichert, obwohl der Aufruf ausgeführt wurde (${e?.code ?? "?"})`, "human", { act: { kind: "status-write-failed", target: { name: a.title ?? null }, reversible: false } });
+      msg.innerHTML = `<div class="note bad">${explain(e, server)}${ambiguous ? ` <b>Der Schreibvorgang kann trotzdem durchgegangen sein</b>; in ${server} prüfen, bevor du es erneut versuchst.` : ""}${toolDone ? ` <b>${esc(STATUS_WRITE_FAILED)}.</b>` : ""}${lockToken && (ambiguous || toolDone) ? " Die Freigabe ist 10 Minuten gesperrt." : ""} Die Freigabe bleibt ${esc(statusLabel(a.status))}.</div>`;
+    }
+  }
+
+  // ── Neuer Vorschlag ──────────────────────────────────────────────────────────
+  let draft = null; // {kind, record, entry, from}
+  function renderNew() {
+    creating = true; selectedId = null; renderApprovals();
+    draft = { kind: "deal-stage", record: null, entry: null, from: null };
+    $("apDetail").innerHTML = drawerShell(`<span class="kind k-unknown">neu</span>`, `
+      <h2 style="font-size:20px;letter-spacing:0;text-transform:none;color:var(--fg)">Neuer Vorschlag</h2>
+      <div class="sub">Ein Vorschlag wartet, bis eine Bearbeiterin ihn freigibt. Erst dann wird in Attio geschrieben oder ein Entwurf im Postfach angelegt.</div>
+      <div><label class="lbl" for="nKind">Art</label><select id="nKind"><option value="deal-stage">Stage-Wechsel (Startups-Liste)</option><option value="investor-status">Status-Wechsel (Investors-Liste)</option><option value="email">Mail-Entwurf</option></select></div>
+      <div><label class="lbl" for="nQ">Firma in Attio suchen</label><div class="row"><input id="nQ" placeholder="Name oder Domain" style="flex:1 1 240px"><button type="button" class="btn" id="nSearch">Suchen</button></div><div class="pick" id="nPick"></div></div>
+      <div id="nTarget"></div>
+      <div id="nMail" hidden><div class="grid2"><div><label class="lbl" for="nTo">An</label><input id="nTo" placeholder="name@firma.example"></div><div><label class="lbl" for="nSub">Betreff</label><input id="nSub"></div></div><div><label class="lbl" for="nBody">Text</label><textarea id="nBody"></textarea></div></div>
+      <div><label class="lbl" for="nWhy">Warum</label><input id="nWhy" placeholder="Begründung, die im Audit steht"></div>
+      `, `<div class="row"><button type="button" class="btn primary" id="nSave" disabled>Vorschlag anlegen</button><button type="button" class="btn" id="nCancel">Abbrechen</button></div>
+      <div id="nMsg"></div>`);
+    openDrawer("apDetail");
+    $("nKind").addEventListener("change", () => { draft.kind = $("nKind").value; draft.entry = null; draft.from = null; $("nMail").hidden = draft.kind !== "email"; $("nTarget").innerHTML = ""; checkSave(); if (draft.record) loadEntry(); });
+    $("nSearch").addEventListener("click", search); $("nQ").addEventListener("keydown", (e) => { if (e.key === "Enter") search(); });
+    $("nCancel").addEventListener("click", () => { creating = false; closeDrawer(); renderApprovals(); });
+    $("nSave").addEventListener("click", saveNew);
+    ["nTo", "nSub", "nBody", "nWhy"].forEach((id) => $(id).addEventListener("input", checkSave));
+  }
+  function checkSave() { const ok = draft.kind === "email" ? Boolean($("nTo")?.value.trim() && $("nBody")?.value.trim()) : Boolean(draft.entry && $("nTarget").querySelector("select")?.value); $("nSave").disabled = !ok; }
+  async function search() {
+    const q = $("nQ").value.trim(); if (!q) return; $("nPick").innerHTML = `<div class="sub"><span class="spin"></span> suche…</div>`;
+    try { const res = await call(ATTIO, "search-records", { object: "companies", query: q, limit: 8 }, { cache: { staleTime: 60000 } }); const p = parsePayload(res); const list = Array.isArray(p) ? p : (p?.results ?? p?.data ?? []);
+      $("nPick").innerHTML = list.length ? list.map((r, i) => { const a = r.attributes ?? {}; const dom = Array.isArray(a.domains) ? a.domains[0] : str(a.domains); return `<button type="button" data-i="${i}">${esc(str(a.name) ?? dom ?? "?")} <span class="s">${esc(dom ?? "")}${a.primary_location?.country_code ? " · " + esc(a.primary_location.country_code) : ""}</span></button>`; }).join("") : `<div class="sub">Nichts gefunden.</div>`;
+      $("nPick").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { const r = list[Number(b.dataset.i)]; const a = r.attributes ?? {}; draft.record = { recordId: r.record_id ?? findId(r, "record_id"), name: str(a.name) ?? (Array.isArray(a.domains) ? a.domains[0] : null) ?? "?", domain: Array.isArray(a.domains) ? a.domains[0] : str(a.domains) }; $("nPick").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); if (draft.kind === "email" && draft.record.domain && !$("nTo").value) $("nTo").placeholder = `name@${draft.record.domain}`; loadEntry(); }));
+    } catch (e) { $("nPick").innerHTML = `<div class="note bad">${explain(e, ATTIO)}</div>`; }
+  }
+  async function loadEntry() {
+    if (!draft.record || draft.kind === "email") { checkSave(); return; }
+    const list = draft.kind === "deal-stage" ? DEALS : INVESTORS; const slug = draft.kind === "deal-stage" ? CONFIG.dealStageField : CONFIG.investorStatusField; const options = draft.kind === "deal-stage" ? STAGES : STATUSES;
+    $("nTarget").innerHTML = `<div class="sub"><span class="spin"></span> suche den Listeneintrag…</div>`;
+    try {
+      const res = await call(ATTIO, "list-records-in-list", { list, limit: 1, filter: { attribute: "parent_record", op: "eq", value: { object_id: COMPANIES_OBJECT, record_id: draft.record.recordId } } }, { cache: false });
+      const p = parsePayload(res); const e = (p?.entries ?? [])[0];
+      if (!e) { draft.entry = null; $("nTarget").innerHTML = `<div class="note warn"><b>${esc(draft.record.name)}</b> steht nicht in <code>${list}</code>. Erst in Attio in die Liste aufnehmen.</div>`; checkSave(); return; }
+      draft.entry = e.entry_id ?? findId(e, "entry_id"); draft.from = str((e.attributes ?? {})[slug]);
+      $("nTarget").innerHTML = `<div class="note"><b>${esc(draft.record.name)}</b> · aktuell <b>${esc(draft.from ?? "—")}</b></div><label class="lbl" for="nTo2">Neu</label><select id="nTo2">${options.map((o) => `<option ${o === draft.from ? "disabled" : ""} value="${esc(o)}">${esc(o)}${o === draft.from ? " (aktuell)" : ""}</option>`).join("")}</select>`;
+      const sel = $("nTo2"); const f = options.find((o) => o !== draft.from); if (f) sel.value = f; sel.addEventListener("change", checkSave); checkSave();
+    } catch (e) { $("nTarget").innerHTML = `<div class="note bad">${explain(e, ATTIO)}</div>`; }
+  }
+  async function saveNew() {
+    const msg = $("nMsg"); msg.innerHTML = `<div class="note"><span class="spin"></span> Speichere…</div>`;
+    const why = $("nWhy").value.trim() || "ohne Begründung";
+    let a;
+    if (draft.kind === "email") { const to = $("nTo").value.split(/[,;\s]+/).filter(Boolean); a = { kind: "email", title: `${draft.record?.name ?? to[0] ?? "Mail"} · ${$("nSub").value.trim() || "ohne Betreff"}`, target: draft.record ? { recordId: draft.record.recordId, name: draft.record.name } : {}, email: { purpose: draft.purpose ?? "custom", to, subject: $("nSub").value.trim(), body: $("nBody").value } }; }
+    else { const to = $("nTo2").value; a = { kind: draft.kind, title: `${draft.record.name} · ${draft.from ?? "?"} → ${to}`, target: { list: draft.kind === "deal-stage" ? DEALS : INVESTORS, entryId: draft.entry, recordId: draft.record.recordId, name: draft.record.name }, change: { from: draft.from, to } }; }
+    a = { ...a, status: "pending", rationale: why, createdAt: new Date().toISOString(), createdBy: actor, decidedAt: null, decidedBy: null, note: null };
+    try { const ref = await db.collection("approvals").add(a); await audit("propose", a, `approval/${ref.id}`, why); creating = false; if (narrow.matches) { closeDrawer(); toast("Vorschlag angelegt."); } else selectedId = ref.id; renderApprovals(); }
+    catch (e) { msg.innerHTML = `<div class="note bad">Speichern fehlgeschlagen (${esc(e?.code ?? "?")}). ${esc(e?.message ?? "")}</div>`; }
+  }
+
+  // ── Eingang (Gmail) ──────────────────────────────────────────────────────────
+  const GQ_KEY = "fundOs.inbox.gmailQuery";
+  $("gq").value = CONFIG.gmailQuery;
+  try { const q = localStorage.getItem(GQ_KEY); if (q) $("gq").value = q; } catch { /* egal */ }
+  const senderEmail = (s) => { const m = /<([^>]+)>/.exec(String(s ?? "")); return (m ? m[1] : String(s ?? "")).trim().toLowerCase(); };
+  const domainOf = (email) => { const d = email.split("@")[1] ?? ""; return /^(gmail|googlemail|outlook|hotmail|yahoo|icloud|me|gmx|web|proton|protonmail)\./.test(d) ? null : d; };
+  async function loadThreads() {
+    if (!mcp) return; $("gLoad").disabled = true; $("inList").innerHTML = `<div class="sub"><span class="spin"></span> lese…</div>`;
+    const q = $("gq").value.trim(); try { localStorage.setItem(GQ_KEY, q); } catch { /* egal */ }
+    try {
+      const res = await call(GMAIL, "search_threads", { query: q, pageSize: 25 }, { cache: { staleTime: 120000 } }); const p = parsePayload(res);
+      threads = Array.isArray(p?.threads) ? p.threads : [];
+      renderThreads();
+    } catch (e) { $("inList").innerHTML = `<div class="note bad">${explain(e, GMAIL)}</div>`; }
+    finally { $("gLoad").disabled = false; }
+  }
+  function renderThreads() {
+    if (!threads.length) { $("inList").innerHTML = `<div class="empty">Keine Threads zur Suche.</div>`; return; }
+    $("inList").innerHTML = threads.map((t) => { const m = t.messages?.[0] ?? {}; const st = intakeState[t.id]?.status; return `<button type="button" class="itemcard ${selectedThread === t.id ? "on" : ""} ${st ? "done" : ""}" data-th="${esc(t.id)}"><div class="row" style="justify-content:space-between"><span class="s">${esc(senderEmail(m.sender))}</span><span class="s">${esc(String(m.date ?? "").slice(0, 10))}</span></div><div style="font-weight:600">${esc(m.subject ?? "(ohne Betreff)")}</div><div class="s" style="font-family:var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.snippet ?? "")}</div>${st ? `<div class="s">${st === "taken" ? "aufgenommen" : st === "skipped" ? "übersprungen" : esc(st)} · ${esc(intakeState[t.id].by ?? "")}</div>` : ""}</button>`; }).join("");
+  }
+  async function openThread(id) {
+    selectedThread = id; renderThreads(); const t = threads.find((x) => x.id === id); if (!t) return; const m = t.messages?.[0] ?? {}; const email = senderEmail(m.sender); const domain = domainOf(email);
+    $("inDetail").innerHTML = drawerShell(`<span class="kind k-email">Mail-Thread</span>`, `<h2 style="font-size:18px;letter-spacing:0;text-transform:none;color:var(--fg)">${esc(m.subject ?? "(ohne Betreff)")}</h2><div class="sub">${esc(m.sender ?? "")} · ${esc(String(m.date ?? "").replace("T", " ").slice(0, 16))} · ${esc(t.messageCount ?? t.messages?.length ?? 1)} Nachricht(en) · <a href="${esc(safeHref(t.viewUrl) ?? "#")}" target="_blank" rel="noopener">in Gmail öffnen</a></div><div id="thBody"><div class="sub"><span class="spin"></span> lese den Thread…</div></div>
+      <div class="note ${domain ? "" : "warn"}">${domain ? `Domain <code>${esc(domain)}</code>. Aufnehmen prüft, ob sie schon im CRM ist, legt sonst Firma und Listeneintrag an (${esc(CONFIG.intakeStage)}, Quelle ${esc(CONFIG.intakeSource)}) und schreibt einen Antwortentwurf in die Freigaben.` : `Absender ohne Firmendomain (${esc(email)}). Aufnehmen legt die Firma mit dem Namen aus dem Betreff an; Domain bitte später in Attio ergänzen.`}</div>
+      `, `<div class="row"><button type="button" class="btn primary" id="takeBtn" ${canEdit ? "" : "disabled"}>Aufnehmen</button><button type="button" class="btn" id="skipBtn" ${canEdit ? "" : "disabled"}>Überspringen</button>${!canEdit ? `<span class="sub">Nur Bearbeiter.</span>` : ""}</div><div id="inMsg"></div>`);
+    openDrawer("inDetail", `#inList [data-th="${CSS.escape(id)}"]`);
+    $("takeBtn").addEventListener("click", () => take(t, email, domain)); $("skipBtn").addEventListener("click", async () => { await db.doc(`intake/${id}`).set({ status: "skipped", by: actor, at: new Date().toISOString(), subject: m.subject ?? null }); closeDrawer(); });
+    try { const res = await call(GMAIL, "get_thread", { threadId: id, messageFormat: "PLAIN_TEXT" }, { cache: { staleTime: 300000 } }); const p = parsePayload(res); const msgs = p?.messages ?? []; const last = msgs[msgs.length - 1] ?? {};
+      const atts = msgs.flatMap((x) => (x.attachments ?? []).map((a) => a.filename ?? a.name ?? a.id ?? "Anhang"));
+      $("thBody").innerHTML = `${atts.length ? `<div class="row">${atts.map((a) => `<span class="pill">${esc(a)}</span>`).join("")}</div>` : ""}<pre>${esc(String(last.plaintextBody ?? last.plaintext_body ?? last.snippet ?? "").slice(0, 4000))}</pre>`;
+    } catch (e) { $("thBody").innerHTML = `<div class="note bad">${explain(e, GMAIL)}</div>`; }
+  }
+  async function take(t, email, domain) {
+    const msg = $("inMsg"); const m = t.messages?.[0] ?? {}; msg.innerHTML = `<div class="note"><span class="spin"></span> prüfe das CRM…</div>`;
+    try {
+      let recordId = null, name = null, existed = false;
+      if (domain) { const res = await call(ATTIO, "search-records", { object: "companies", query: domain, limit: 5 }, { cache: false }); const p = parsePayload(res); const hit = (p?.results ?? []).find((r) => (Array.isArray(r.attributes?.domains) ? r.attributes.domains : [str(r.attributes?.domains)]).some((d) => String(d ?? "").toLowerCase() === domain)); if (hit) { recordId = hit.record_id ?? findId(hit, "record_id"); name = str(hit.attributes?.name) ?? domain; existed = true; } }
+      if (!recordId) {
+        name = (m.subject ?? "").replace(/^(re|aw|fwd?|wg):\s*/i, "").split(/[|–—-]/)[0].trim().slice(0, 80) || domain || email;
+        msg.innerHTML = `<div class="note"><span class="spin"></span> lege ${esc(name)} an…</div>`;
+        const values = domain ? { name, domains: [domain] } : { name };
+        const res = await call(ATTIO, "upsert-record", domain ? { object: "companies", matching_attribute: "domains", values } : { object: "companies", matching_attribute: "name", values }, { cache: false });
+        recordId = findId(parsePayload(res), "record_id");
+        if (!recordId) throw Object.assign(new Error("Attio hat keine record_id zurückgegeben; Antwort in der Diagnose."), { code: "tool_error" });
+        await audit("create-company", values, `attio:record/${recordId}`, `Intake aus Gmail-Thread ${t.id}`);
+      }
+      msg.innerHTML = `<div class="note"><span class="spin"></span> ${existed ? "schon im CRM, prüfe die Liste…" : "nehme in die Startups-Liste auf…"}</div>`;
+      let entryId = null, listed = false;
+      try { const res = await call(ATTIO, "add-record-to-list", { list: DEALS, parent_object: "companies", parent_record_id: recordId, entry_values: { [CONFIG.dealStageField]: CONFIG.intakeStage, [CONFIG.dealSourceField]: CONFIG.intakeSource } }, { cache: false }); entryId = findId(parsePayload(res), "entry_id"); }
+      catch (e) { if (e?.code === "tool_error") { listed = true; entryId = findId(e?.result, "entry_id"); log("add-record-to-list: Eintrag existiert", e?.message); } else throw e; }
+      if (entryId && !listed) await audit("add-to-list", { recordId }, `attio:entry/${entryId}`, `Intake: ${name} → ${DEALS} (${CONFIG.intakeStage}, ${CONFIG.intakeSource})`);
+      // Antwortentwurf in die Freigaben.
+      const body = `Hallo,\n\ndanke für die Nachricht und den Einblick in ${name}. Wir haben alles erhalten und schauen es uns an.\n\nIhr hört innerhalb von ${CONFIG.ackReplyDays} Werktagen von uns mit einer klaren Einschätzung – auch, wenn es ein Nein wird. Falls es ein aktuelles Deck gibt, das wir noch nicht haben, gern als PDF per Antwort.\n\nBeste Grüße\n${actor}`;
+      const ap = { kind: "email", title: `${name} · Eingangsbestätigung`, target: { list: DEALS, entryId, recordId, name }, email: { purpose: "acknowledge", to: [email], subject: `Re: ${m.subject ?? name}`, body, replyToMessageId: m.id ?? null }, status: "pending", rationale: `Intake aus Gmail (${email})${existed ? ", Firma war schon im CRM" : ", Firma neu angelegt"}${listed ? ", Listeneintrag bestand schon" : ""}. 24h-SLA.`, createdAt: new Date().toISOString(), createdBy: actor, decidedAt: null, decidedBy: null, note: null };
+      const ref = await db.collection("approvals").add(ap); await audit("propose", ap, `approval/${ref.id}`, ap.rationale);
+      await db.doc(`intake/${t.id}`).set({ status: "taken", by: actor, at: new Date().toISOString(), recordId, entryId, approvalId: ref.id, subject: m.subject ?? null });
+      msg.innerHTML = `<div class="note ok"><b>${esc(name)}</b> ist im CRM${existed ? " (war schon da)" : ""}${listed ? ", Listeneintrag bestand schon" : ""}. Der Antwortentwurf wartet in den Freigaben. ${attioLink(recordId) ? `<a href="${esc(attioLink(recordId))}" target="_blank" rel="noopener">In Attio öffnen</a>` : ""}</div>`;
+    } catch (e) { msg.innerHTML = `<div class="note bad">${explain(e, ATTIO)} ${["server_unavailable", "upstream_error", "cancelled"].includes(e?.code) ? "<b>Teile davon können geschrieben worden sein</b>; in Attio prüfen." : ""}</div>`; $("diag").open = true; }
+  }
+
+  // ── Autopilot-Karten ─────────────────────────────────────────────────────────
+  const RUN_STATUS = { running: "läuft", done: "fertig", failed: "fehlgeschlagen" };
+  const fmtTime = (iso) => { const d = new Date(iso); return Number.isFinite(d.getTime()) ? d.toLocaleString("de-DE") : "—"; };
+  // Ausgehende Handlungen des Agenten heute (UTC-Tag, wie die Zeitstempel) je Modul. Der Feed lädt nur die neuesten 200 Einträge;
+  // für die Tageszählung fragt die Seite den ganzen Tag ab (refreshToday) und fällt bei einem Fehler auf die geladene Liste zurück.
+  // Ein fehlgeschlagener Versand (zweiter Eintrag "mail-failed") zählt nicht.
+  let todayDocs = [], todayOk = false, todayBusy = false;
+  const FEED_LIMIT = 200;
+  const dayStart = () => new Date().toISOString().slice(0, 10) + "T00:00:00.000Z";
+  function allAudit() { const m = new Map(); for (const d of [...auditDocs, ...todayDocs]) if (d && d.id) m.set(d.id, d); return [...m.values()]; }
+  function sentToday(module) { const day = dayStart().slice(0, 10), pool = allAudit(); return pool.filter((e) => e.actorType === "agent" && e.module === module && ["mail-sent", "invite"].includes(e.act?.kind) && String(e.timestampUtc ?? "").startsWith(day) && sendState(e, pool) !== "failed").length; }
+  const todayNote = () => (todayOk ? "Zählung aus allen Einträgen des heutigen UTC-Tags." : auditDocs.length >= FEED_LIMIT ? "Die Tagesabfrage ist fehlgeschlagen; gezählt wurden nur die neuesten 200 Einträge. Die Zahl kann unvollständig sein." : "Die Tagesabfrage ist fehlgeschlagen; gezählt wurde aus der geladenen Liste (weniger als 200 Einträge, daher vollständig).");
+  async function refreshToday() {
+    if (!db || todayBusy) return; todayBusy = true;
+    try { const snap = await db.collection("audit").where("timestampUtc", ">=", dayStart()).get(); todayDocs = snap.docs.filter((x) => x.exists).map((x) => ({ ...x.data(), id: x.id })); todayOk = true; }
+    catch (err) { todayOk = false; log(`audit.heute ${err?.code ?? err?.message ?? "?"}`); }
+    finally { todayBusy = false; }
+    renderAutopilot();
+  }
+  function lastRun(module) { return runsDocs.find((r) => r.module === module) ?? null; }
+  // M1 (F027 review): dealflow and investors read their switch from their own artifacts' stores, not from this one. The Inbox shows a plain pointer, no buttons, no write path.
+  // Outside the mirrored autopilot region on purpose; URLs from CONFIG.links; a link that is not set yet shows the pointer without the button.
+  const MOVED_SWITCHES = [
+    { module: "dealflow", page: "Deal Cockpit", where: "im Deal Cockpit", url: LINKS.deals },
+    { module: "investors", page: "Investor Relations", where: "in Investor Relations", url: LINKS.investors },
+  ];
+  // F030 review: the Workbench copy of dealflow and investors runs and acts is a read-only log; their own store (and so every correction) is the Deal Cockpit / Investor Relations.
+  // Derived from MOVED_SWITCHES (the same two modules), outside every mirrored region. The Protokoll offers no Rückgängig / Nachfassen for them and the Freigaben badge does not count them.
+  const MIRRORED_MODULES = MOVED_SWITCHES.map((x) => x.module);
+  const isMirrored = (e) => MIRRORED_MODULES.includes(e?.module);
+  const movedCard = (x) => `<div class="card" data-moved="${esc(x.module)}"><h2 style="font-size:16px;letter-spacing:0;text-transform:none;color:var(--fg)">${esc(MODULE_LABEL[x.module])}</h2><div class="s">Der Schalter für ${esc(MODULE_LABEL[x.module])} liegt jetzt ${esc(x.where)}.</div>${x.url ? `<div class="row" style="margin-top:8px"><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.page)} öffnen</a></div>` : ""}</div>`;
+  function renderAutopilot() {
+    if (!db) return;
+    const cfg = readAutopilot(autopilotRaw);
+    // B003/F017: the red note "Zuletzt von einem Agenten gesetzt; bitte prüfen" is gone. looksLikeAgent stays in the guards region (the template check holds it).
+    $("apCards").innerHTML = (canEdit ? "" : `<div class="note warn" style="grid-column:1/-1">Nur Bearbeiter dieses Artefakts dürfen die Schalter ändern.</div>`) + MODULES.map((m) => {
+      const c = cfg.modules[m], am = apMsgs[m] ?? "", run = lastRun(m), n = sentToday(m), over = n >= c.maxOutboundPerDay;
+      const sw = MODES.map((mode) => `<button type="button" role="radio" aria-checked="${c.mode === mode}" class="m-${mode}" data-mod="${esc(m)}" data-mode="${esc(mode)}" ${canEdit ? "" : "disabled"}>${MODE_LABEL[mode]}</button>`).join("");
+      const isNotes = m === "notes";
+      const confirm = confirmOn === m && isNotes ? `<div class="note warn"><b>Autopilot für ${esc(MODULE_LABEL[m])} einschalten?</b> Der Agent schreibt dann Notizen und Aufgaben selbst nach Attio, zu diesen Zwecken: <code>${esc(c.purposes.join(", "))}</code>. Er sendet nie eine Mail. Jede Handlung steht vor dem Schreiben im Protokoll. Status- und Stage-Wechsel und jede Mail brauchen immer eine Freigabe.<div class="row" style="margin-top:8px"><button type="button" class="btn primary sm" data-go="${esc(m)}">Autopilot einschalten</button><button type="button" class="btn sm" data-cancel="1">Abbrechen</button></div></div>` : confirmOn === m ? `<div class="note warn"><b>Autopilot für ${esc(MODULE_LABEL[m])} einschalten?</b> Der Agent sendet dann selbst, bis zu <b>${esc(c.maxOutboundPerDay)} Mails pro Tag</b>, nur zu diesen Zwecken: <code>${esc(c.purposes.join(", "))}</code>. Jede Mail steht vor dem Senden im Protokoll. Diese Leitplanken gelten weiter: <ul style="margin:6px 0 0;padding-left:18px"><li>höchstens eine Antwort je Thread und 24 Stunden</li><li>keine Mail an einen Empfänger, dem das Modul in den letzten 7 Tagen geschrieben hat, es sei denn, er hat geantwortet</li><li>nur die genannten Zwecke</li><li>höchstens ${esc(c.maxOutboundPerDay)} ausgehende Handlungen pro Tag</li><li>keine Stage oder kein Status in Invested, Term sheet, Soft Commitment, Hard Commitment oder Closed / Wired</li><li>den Schalter ändert nur ein Mensch, hier</li></ul><div class="row" style="margin-top:8px"><button type="button" class="btn primary sm" data-go="${esc(m)}">Autopilot einschalten</button><button type="button" class="btn sm" data-cancel="1">Abbrechen</button></div></div>` : "";
+      const runHtml = run ? `<div class="note ${run.status === "failed" ? "bad" : run.status === "running" ? "warn" : "ok"}"><b>Letzter Lauf</b> · ${esc(fmtTime(run.startedAt))} · ${esc(RUN_STATUS[run.status] ?? run.status ?? "?")}<div class="s" style="margin-top:4px">${esc(run.acts ?? 0)} Handlungen · ${esc(run.outbound ?? 0)} ausgehend${run.mode ? " · Modus " + esc(MODE_LABEL[run.mode] ?? run.mode) : ""}</div>${run.summary ? `<div style="margin-top:4px">${esc(run.summary)}</div>` : ""}${run.error ? `<div style="margin-top:4px;color:var(--alert)">${esc(run.error)}</div>` : ""}</div>` : `<div class="note">Noch kein Lauf.</div>`;
+      return `<div class="card"><div class="row" style="justify-content:space-between"><h2 style="font-size:16px;letter-spacing:0;text-transform:none;color:var(--fg)">${esc(MODULE_LABEL[m])}</h2><span class="pill ${c.mode === "on" ? "ok" : c.mode === "review-first" ? "wait" : ""}"><span class="dot"></span>${esc(MODE_LABEL[c.mode])}</span></div>
+        <div class="sw" role="radiogroup" aria-label="Autopilot ${esc(MODULE_LABEL[m])}">${sw}</div>
+        ${confirm}${am}
+        ${isNotes ? `<div class="s">sendet nie Mails; Aufgaben ab „Erst prüfen“ als Freigabe, Statuswechsel immer als Freigabe</div>` : `<div class="s" title="${esc(todayNote())}">heute: <b style="color:${over ? "var(--alert)" : "var(--fg)"}">${n}</b> von ${esc(c.maxOutboundPerDay)} ausgehenden Handlungen</div>`}
+        <div class="s">Zwecke: ${esc(c.purposes.join(" · "))}</div>
+        <div class="s">${c.updatedAt ? `zuletzt geändert von ${esc(c.updatedBy ?? "?")} am ${esc(fmtTime(c.updatedAt))}` : "noch nie geändert (Standard: aus)"}</div>
+        ${runHtml}</div>`;
+    }).join("") + MOVED_SWITCHES.map(movedCard).join("");
+  }
+  async function setMode(m, mode) {
+    confirmOn = null; apMsgs[m] = `<div class="note"><span class="spin"></span> Speichere…</div>`; renderAutopilot();
+    try {
+      const ref = db.doc(AUTOPILOT_DOC);
+      const snap = await ref.get(); const cur = snap.exists ? (snap.data() ?? {}) : {};
+      const eff = readAutopilot(cur).modules[m], before = eff.mode;
+      if (before === mode) { delete apMsgs[m]; renderAutopilot(); return; }
+      const at = new Date().toISOString();
+      // Ein Modul je Schreibvorgang, zusammengeführt: nie das ganze `modules`-Objekt aus dem Lesen, nie fremde Schlüssel.
+      const next = { modules: { [m]: { mode, maxOutboundPerDay: eff.maxOutboundPerDay, purposes: eff.purposes, updatedAt: at, updatedBy: actor } } };
+      await ref.set(next, { merge: true });
+      await audit("autopilot-set", { module: m, before, after: mode }, AUTOPILOT_DOC, `${m}: ${before} → ${mode}`);
+      apMsgs[m] = `<div class="note ok"><b>${esc(MODULE_LABEL[m])}: ${esc(MODE_LABEL[before])} → ${esc(MODE_LABEL[mode])}.</b></div>`;
+    } catch (e) { apMsgs[m] = `<div class="note bad">Speichern fehlgeschlagen (${esc(e?.code ?? "?")}). ${esc(e?.message ?? "")}</div>`; }
+    renderAutopilot();
+  }
+
+  // ── Protokoll: Feed der Agenten-Handlungen ──────────────────────────────────
+  const ACT_LABEL = { "issue-draft": "Newsletter-Entwurf", "campaign-draft": "Kampagnen-Entwurf", "mail-draft": "Mail-Entwurf", "mail-sent": "Mail gesendet", "mail-confirmed": "Versand bestätigt", "mail-failed": "Versand fehlgeschlagen", score: "Scoring", record: "CRM-Datensatz", stage: "Stage", status: "Status", note: "Notiz", task: "Aufgabe", invite: "Termin" };
+  const actChip = (kind) => kind === "mail-sent" || kind === "mail-confirmed" || kind === "mail-failed" ? "k-email" : kind === "issue-draft" || kind === "campaign-draft" ? "k-newsletter" : "k-deal-stage";
+  const fmtVal = (v) => v === undefined || v === null ? "—" : typeof v === "string" ? v : JSON.stringify(v);
+  const canUndo = (e) => Boolean(!isMirrored(e) && e.act?.reversible && !e.corrected && undoTargetOk(e.act));
+  const canFollow = (e) => Boolean(!isMirrored(e) && e.act?.kind === "mail-sent");
+  function renderFeed() {
+    if (!db) return;
+    renderRecChip();
+    const runs = groupActs(auditDocs.filter((e) => e.actorType === "agent" && (!recordFilter || actHasRecord(e, recordFilter))));
+    if (!runs.length && recordFilter) { $("feed").innerHTML = `<div class="empty">Keine Handlungen eines Agenten zu diesem Datensatz (in den neuesten ${FEED_LIMIT} Einträgen).</div>`; return; }
+    if (!runs.length) { $("feed").innerHTML = `<div class="empty">Noch keine Handlungen eines Agenten. Sobald ein Modul läuft, steht hier jede Handlung, mit Weg zurück.</div>`; return; }
+    const pool = allAudit();
+    $("feed").innerHTML = runs.slice(0, 20).map((r) => {
+      const run = runsDocs.find((x) => x.id === r.runId);
+      const head = `<div class="row" style="justify-content:space-between"><div><b>${r.runId === "einzeln" ? "Einzelne Handlungen" : esc(MODULE_LABEL[r.module] ?? r.module ?? "Lauf")}</b> <span class="s">${esc(fmtTime(r.at))} · ${Number(r.acts.length)} Handlung(en)${run?.status ? " · " + esc(RUN_STATUS[run.status] ?? run.status) : ""}</span></div>${r.runId !== "einzeln" ? `<span class="s">${esc(r.runId)}</span>` : ""}</div>${run?.summary ? `<div class="sub" style="margin:0">${esc(run.summary)}</div>` : ""}`;
+      const rows = [...r.acts].reverse().map((e) => {
+        const a = e.act ?? null, t = a?.target ?? {}, id = esc(e.id);
+        const label = a ? (own(ACT_LABEL, a.kind) ? ACT_LABEL[a.kind] : a.kind) : e.action;
+        const fm = feedMsgs[e.id] ?? "", open = undoOpen === e.id, link = attioLink(t.recordId), ss = sendState(e, pool);
+        const sendNote = ss === "confirmed" ? `<div class="s" style="color:var(--good)"><b>bestätigt</b></div>` : ss === "failed" ? `<div class="s" style="color:var(--alert)"><b>fehlgeschlagen</b> · zählt nicht zu „heute“</div>` : ss === "open" ? `<div class="s" style="color:var(--warn)"><b>Versand nicht bestätigt</b></div>` : "";
+        return `<div class="actrow"><div class="row" style="justify-content:space-between"><div class="row"><span class="kind ${actChip(a?.kind)}">${esc(label)}</span><b>${esc(t.name ?? "")}</b>${link ? `<a class="s" href="${esc(link)}" target="_blank" rel="noopener">In Attio öffnen</a>` : ""}</div><span class="s">${esc(fmtTime(e.timestampUtc))}</span></div>
+          ${a && (a.before !== undefined || a.after !== undefined) ? `<div class="m">${esc(fmtVal(a.before))} → <b>${esc(fmtVal(a.after))}</b></div>` : ""}
+          ${a?.kind === "mail-sent" && t.to ? `<div class="m">an ${esc(Array.isArray(t.to) ? t.to.join(", ") : t.to)}</div>` : ""}
+          ${(a?.kind === "mail-sent" || a?.kind === "mail-draft") && t.subject ? `<div class="m">Betreff: ${esc(t.subject)}</div>` : ""}
+          ${sendNote}
+          <div>${esc(e.rationale)}</div>
+          ${e.corrected ? `<div class="s">korrigiert (${esc(e.corrected.how ?? "?")}) von ${esc(e.corrected.by ?? "?")} am ${esc(fmtTime(e.corrected.at))}</div>` : ""}
+          <div class="row">${canUndo(e) && canEdit && mcp ? `<button type="button" class="btn sm danger" data-undo="${id}">Rückgängig</button>` : ""}${canFollow(e) ? `<button type="button" class="btn sm" data-follow="${id}" ${canEdit && mcp ? "" : "disabled"}>Nachfassen</button>` : ""}</div>
+          ${open ? `<div class="note warn"><b>${esc(t.name ?? "Eintrag")}</b> zurück auf <b>${esc(fmtVal(a.before))}</b> setzen? Vorher wird der aktuelle Wert gelesen; nur wenn er noch <b>${esc(fmtVal(a.after))}</b> ist, wird geschrieben und im Protokoll vermerkt.${t.recordId ? "" : " Der aktuelle Wert kann hier nicht vorab geprüft werden (kein Datensatz im Eintrag)."}<div class="row" style="margin-top:8px"><button type="button" class="btn danger sm" data-undo-go="${id}">Rückgängig machen</button><button type="button" class="btn sm" data-undo-cancel="1">Abbrechen</button></div></div>` : ""}
+          ${fm}</div>`;
+      }).join("");
+      return `<div class="card">${head}<div>${rows}</div></div>`;
+    }).join("") + (runs.length > 20 ? `<div class="sub">Die 20 neuesten Läufe; ältere stehen in der Tabelle darunter.</div>` : "");
+  }
+  async function undoAct(e) {
+    feedMsgs[e.id] = `<div class="note"><span class="spin"></span> Schreibe zurück…</div>`; undoOpen = null; renderFeed();
+    if (!canUndo(e)) { feedMsgs[e.id] = `<div class="note bad">Kein Undo: Ziel oder Wert dieses Eintrags ist nicht zulässig; nichts geschrieben.</div>`; renderFeed(); return; }
+    const a = e.act, slug = a.kind === "stage" ? CONFIG.dealStageField : CONFIG.investorStatusField;
+    let wrote = false;
+    try {
+      if (a.target.recordId) {
+        // Erst den Ist-Zustand lesen: zurückgeschrieben wird nur, wenn der Wert noch der ist, den der Agent gesetzt hat.
+        const res = await call(ATTIO, "list-records-in-list", { list: a.target.list, limit: 1, filter: { attribute: "parent_record", op: "eq", value: { object_id: COMPANIES_OBJECT, record_id: a.target.recordId } } }, { cache: false });
+        const ent = (parsePayload(res)?.entries ?? [])[0];
+        const entId = ent ? (ent.entry_id ?? findId(ent, "entry_id")) : null;
+        const now = ent ? str((ent.attributes ?? {})[slug]) : null;
+        if (entId !== a.target.entryId || now !== a.after) { feedMsgs[e.id] = `<div class="note warn"><b>Wert hat sich inzwischen geändert; kein Undo.</b> Nichts geschrieben.</div>`; renderFeed(); return; }
+      }
+      await call(ATTIO, "update-list-entry-by-id", { list: a.target.list, entry_id: a.target.entryId, entry_values: { [slug]: a.before } }, { cache: false });
+      wrote = true;
+      await audit("undo", { auditId: e.id, act: a }, `attio/entry/${a.target.entryId}`, `Rückgängig: ${a.target.name ?? a.target.entryId} ${fmtVal(a.after)} → ${fmtVal(a.before)} (Eintrag ${e.id}${e.runId ? ", Lauf " + e.runId : ""})`);
+      await db.doc(`audit/${e.id}`).update({ corrected: { at: new Date().toISOString(), by: actor, how: "undo" } });
+      feedMsgs[e.id] = `<div class="note ok"><b>Rückgängig gemacht.</b> ${esc(a.target.name ?? "")}: ${esc(fmtVal(a.before))}</div>`;
+    } catch (err) {
+      const ambiguous = ["server_unavailable", "upstream_error", "cancelled"].includes(err?.code);
+      feedMsgs[e.id] = wrote
+        ? `<div class="note bad"><b>In Attio zurückgeschrieben, aber der Vermerk „korrigiert“ konnte nicht gespeichert werden</b> (${esc(err?.code ?? "?")} ${esc(err?.message ?? "")}). Nicht erneut rückgängig machen.</div>`
+        : `<div class="note bad">${explain(err, ATTIO)}${ambiguous ? ` <b>Der Schreibvorgang kann trotzdem durchgegangen sein</b>; in Attio prüfen.` : ""}</div>`;
+    }
+    renderFeed();
+  }
+  // Nachfassen: das bestehende Formular „Neuer Vorschlag“, vorbefüllt als Mail an denselben Empfänger.
+  function followUp(e) {
+    const a = e.act, t = a.target ?? {};
+    const subj = String(t.subject ?? a.after?.subject ?? t.name ?? "").trim();
+    const to = Array.isArray(t.to) ? t.to.join(", ") : String(t.to ?? "");
+    showTab("approvals"); renderNew();
+    draft.kind = "email"; draft.purpose = "follow-up"; draft.record = t.recordId ? { recordId: t.recordId, name: t.name ?? to, domain: null } : null;
+    $("nKind").value = "email"; $("nMail").hidden = false; $("nTarget").innerHTML = "";
+    $("nTo").value = to; $("nSub").value = subj ? (/^(re|aw):/i.test(subj) ? subj : "Re: " + subj) : "";
+    $("nWhy").value = `Nachfassen zur Mail an ${to}${e.runId ? " (Lauf " + e.runId + ")" : ""}`;
+    checkSave(); $("apDetail").scrollIntoView?.({ behavior: "smooth", block: "start" }); $("nBody").focus?.();
+  }
+
+  // ── Audit-Tabelle ────────────────────────────────────────────────────────────
+  function renderAudit(docs) {
+    if (!docs.length) { $("auditRows").innerHTML = `<tr><td colspan="7" class="empty">Noch keine Einträge.</td></tr>`; return; }
+    $("auditRows").innerHTML = docs.map((e) => `<tr><td class="m">${esc(e.timestampUtc)}</td><td><span class="who ${e.actorType === "agent" ? "agent" : "human"}">${esc(e.actorType)} · ${esc(e.actor)}</span></td><td class="m">${esc(e.skillVersion)}</td><td>${esc(e.action)}</td><td class="m">${esc(e.inputHash)}</td><td class="m">${esc(e.outputRef)}</td><td>${esc(e.rationale)}</td></tr>`).join("");
+  }
+
+  // ── Aktivität (F030): nur lesen. Eine Liste aus runs/ und audit/ dieses Speichers (Abonnement siehe Start), Filter-Chips, Zeile → Detail ──
+  // Nur zeichnen, solange der Reiter zu sehen ist; showTab("activity") zeichnet beim Zurückkehren neu. Ein Fokus in der Liste (Chip oder Zeile) bleibt auf demselben Element.
+  function renderActivity() {
+    if (!db || tab !== "activity") return;
+    const items = acItems(acRuns, acAudit), o = { now: Date.now(), selected: acSel };
+    const html = activityHtml(items, acFilter, o);
+    const ae = document.activeElement, inList = Boolean(ae && ae !== document.body && $("acList").contains(ae));
+    const keep = inList ? (ae.dataset.acf ? `[data-acf="${CSS.escape(ae.dataset.acf)}"][data-acv="${CSS.escape(ae.dataset.acv ?? "")}"]` : ae.dataset.ac ? `[data-ac="${CSS.escape(ae.dataset.ac)}"]` : "") : "";
+    $("acList").innerHTML = html;
+    if (keep) { const again = $("acList").querySelector(keep); if (again && document.activeElement !== again) again.focus({ preventScroll: true }); }
+    const it = items.find((x) => x.key === acSel);
+    if (it) {
+      const v = activityDetail(it, o), stamp = v.chip + v.body;
+      if (stamp !== acShown) { acShown = stamp; $("acDetail").innerHTML = drawerShell(v.chip, v.body, ""); }
+    } else { acShown = ""; if (drawerId === "acDetail") closeDrawer(); else $("acDetail").innerHTML = `<div class="empty">${PLACEHOLDER.acDetail}</div>`; }
+  }
+  $("acList").addEventListener("click", (e) => {
+    const f = e.target.closest("[data-acf]");
+    if (f) { if (f.dataset.acf === "module" || f.dataset.acf === "kind") { acFilter[f.dataset.acf] = f.dataset.acv; renderActivity(); } return; }
+    const c = e.target.closest("[data-ac]");
+    if (c) { acSel = c.dataset.ac; acShown = ""; renderActivity(); openDrawer("acDetail", `#acList [data-ac="${CSS.escape(c.dataset.ac)}"]`); }
+  });
+
+  // ── Reiter, Ereignisse ───────────────────────────────────────────────────────
+  function showTab(t) { tab = t; document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === t)); ["activity", "approvals", "intake", "autopilot", "audit"].forEach((x) => { $("tab-" + x).hidden = x !== t; }); $("newBtn").hidden = t !== "approvals"; if (t === "activity") renderActivity(); }
+  $("tabs").addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) showTab(b.dataset.tab); });
+  $("newBtn").addEventListener("click", renderNew);
+  document.addEventListener("click", (e) => { if (e.target.closest("[data-rec-clear]")) clearRecordFilter(); });
+  window.addEventListener("hashchange", applyHash);
+  $("apList").addEventListener("click", (e) => { const f = e.target.closest("[data-f]"); if (f) { apFilter = f.dataset.f; renderApprovals(); return; } const c = e.target.closest("[data-id]"); if (c) { selectedId = c.dataset.id; creating = false; renderApprovals(); openDrawer("apDetail", `#apList [data-id="${CSS.escape(c.dataset.id)}"]`); } });
+  document.addEventListener("click", (e) => { if (e.target.closest("[data-dclose]")) closeDrawer(); });
+  ctxBind($("apDetail"), () => approvals.find((x) => x.id === selectedId), { gmail: (tool, input, opts) => call(GMAIL, tool, input, opts), drive: (tool, input, opts) => call("Google Drive", tool, input, opts), explain });
+  $("apDetail").addEventListener("click", (e) => { const a = approvals.find((x) => x.id === selectedId); const d = e.target.closest("[data-dec]"); if (d && a) { decide(a, d.dataset.dec); return; } if (a?.kind === "newsletter") { if (e.target.closest("[data-nl-view]")) { if ($("nlTo")) nlToDraft.set(a.id, $("nlTo").value); if (nlTextView.has(a.id)) nlTextView.delete(a.id); else nlTextView.add(a.id); renderDetail(a); return; } if (e.target.closest("[data-nl-draft]")) { newsletterDraft(a); return; } } const c = e.target.closest("[data-copy]"); if (c && a) { const text = `${a.email?.subject ?? ""}\n\n${$("eBody")?.value ?? a.email?.body ?? ""}`; navigator.clipboard?.writeText(text).then(() => { c.textContent = "Kopiert"; }).catch(() => { const ta = $("eBody"); if (ta) { ta.select(); } }); } });
+  $("feed").addEventListener("click", (ev) => {
+    const find = (sel, attr) => { const b = ev.target.closest(sel); return b ? auditDocs.find((x) => x.id === b.dataset[attr]) : null; };
+    let e;
+    if ((e = find("[data-undo]", "undo"))) { if (canUndo(e)) { undoOpen = e.id; delete feedMsgs[e.id]; renderFeed(); } return; }
+    if ((e = find("[data-undo-go]", "undoGo"))) { if (canUndo(e)) undoAct(e); return; }
+    if (ev.target.closest("[data-undo-cancel]")) { undoOpen = null; renderFeed(); return; }
+    if ((e = find("[data-follow]", "follow"))) { if (canFollow(e)) followUp(e); }
+  });
+  $("apCards").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-mode]"); if (b) { const m = b.dataset.mod, mode = b.dataset.mode; delete apMsgs[m]; if (mode === "on" && readAutopilot(autopilotRaw).modules[m].mode !== "on") { confirmOn = m; renderAutopilot(); } else { confirmOn = null; if (readAutopilot(autopilotRaw).modules[m].mode !== mode) setMode(m, mode); else renderAutopilot(); } return; }
+    const g = e.target.closest("[data-go]"); if (g) { setMode(g.dataset.go, "on"); return; }
+    if (e.target.closest("[data-cancel]")) { confirmOn = null; renderAutopilot(); }
+  });
+  $("gLoad").addEventListener("click", loadThreads);
+  $("inList").addEventListener("click", (e) => { const c = e.target.closest("[data-th]"); if (c) openThread(c.dataset.th); });
+
+  // region:permhelp (F029: when use('mcp') is null, the built-in `permissions` capability tells why and offers the way out; never declared, read-only on load, request / manage only on a click; the namespace, esc, the Diagnose line and the reload come in as arguments; mirrored byte for byte in every page that resolves mcp, held still by tools/check-screen-templates.sh)
+  const PERM_TEXT = {
+    denied: "Connectoren sind für dieses Artefakt abgelehnt. Über ‚Berechtigungen öffnen‘ wieder einschalten.",
+    prompt: "Noch nicht erlaubt: ‚Connectoren anfragen‘.",
+    granted: "Connectoren sind erlaubt, aber diese Ansicht hat sie nicht geladen. Die Seite neu laden.",
+    unavailable: "Als Gast von außerhalb der Organisation bietet claude.ai in geteilten Artefakten keine Connectoren an. Abhilfe: Artefakt duplizieren oder gemeinsamer Team-Account.",
+  };
+  const PERM_MANAGE_FAIL = "Das Panel ließ sich nicht öffnen. Menü des Artefakts oben rechts → Berechtigungen.";
+  const PERM_REQUEST_FAIL = "Die Anfrage ist fehlgeschlagen. Menü des Artefakts oben rechts → Berechtigungen.";
+  const permKnown = (s) => (s === "granted" || s === "prompt" || s === "denied" ? s : "unavailable");
+  const permText = (s) => PERM_TEXT[permKnown(s)];
+  // The box under the "keine Connectoren" banner: the text for the state of "mcp" and the two buttons. Every text goes through the page's esc.
+  function permHtml(esc, state) {
+    const s = permKnown(state);
+    return `<div class="permhelp" data-perm-help="1" style="margin-top:8px"><div data-perm-text>${esc(permText(s))}</div><div class="row" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><button type="button" class="btn" data-perm="request"${s === "denied" ? " disabled" : ""}>Connectoren anfragen</button><button type="button" class="btn" data-perm="manage">Berechtigungen öffnen</button></div><div data-perm-msg aria-live="polite" style="margin-top:6px"></div></div>`;
+  }
+  // Reads without prompting and logs the answers verbatim: the full map, "mcp" and "sample". { mcp, sample, all } holds the raw answers.
+  async function permRead(permissions, say) {
+    const one = async (name) => { try { return await permissions.state(name); } catch (e) { say(`permissions.state("${name}") fehlgeschlagen: ${e?.code ?? "?"}`); return "unavailable"; } };
+    let all = null;
+    try { all = await permissions.state(); } catch (e) { say(`permissions.state() fehlgeschlagen: ${e?.code ?? "?"}`); }
+    const mcp = await one("mcp"), sample = await one("sample");
+    say(`permissions.state() = ${JSON.stringify(all) ?? "undefined"}`);
+    say(`permissions.state("mcp") = ${String(mcp)}`);
+    say(`permissions.state("sample") = ${String(sample)}`);
+    return { mcp, sample, all };
+  }
+  // What one click does. "request": one dialog for ["mcp"], branch on the returned state. "manage": open the panel, then read the state again. { state, reload, msg }: state null = unchanged; reload true only when mcp is granted. Never throws; never asks twice.
+  async function permAct(kind, permissions, say) {
+    if (kind === "request") {
+      try {
+        const res = await permissions.request(["mcp"]);
+        say(`permissions.request(["mcp"]) = ${JSON.stringify(res) ?? "undefined"}`);
+        const s = res && typeof res === "object" && "mcp" in res ? res.mcp : await permissions.state("mcp");
+        return { state: permKnown(s), reload: s === "granted", msg: "" };
+      } catch (e) { say(`permissions.request(["mcp"]) fehlgeschlagen: ${e?.code ?? "?"}`); return { state: null, reload: false, msg: PERM_REQUEST_FAIL }; }
+    }
+    if (kind === "manage") {
+      try { await permissions.manage(); } catch (e) { say(`permissions.manage() abgelehnt: ${e?.code ?? "?"}`); return { state: null, reload: false, msg: PERM_MANAGE_FAIL }; }
+      let s; try { s = await permissions.state("mcp"); } catch { s = "unavailable"; }
+      say(`permissions.state("mcp") nach manage() = ${String(s)}`);
+      return { state: permKnown(s), reload: s === "granted", msg: "" };
+    }
+    return { state: null, reload: false, msg: "" };
+  }
+  // The clicks of the box, delegated on the banner element (the box is repainted with it). One click at a time.
+  function permBind(root, permissions, { say, reload }) {
+    if (root.dataset.permBound === "1") return;
+    root.dataset.permBound = "1";
+    let busy = false;
+    root.addEventListener("click", async (e) => {
+      const b = e.target?.closest?.("[data-perm]"); if (!b || busy || !root.contains(b)) return;
+      busy = true;
+      const set = (sel, fn) => { const el = root.querySelector(sel); if (el) fn(el); };
+      root.querySelectorAll("[data-perm]").forEach((x) => { x.disabled = true; });
+      const r = await permAct(b.dataset.perm, permissions, say);
+      if (r.state) set("[data-perm-text]", (el) => { el.textContent = permText(r.state); });
+      set("[data-perm-msg]", (el) => { el.textContent = r.reload ? "Erlaubt. Die Seite lädt neu …" : r.msg; });
+      root.querySelectorAll("[data-perm]").forEach((x) => { x.disabled = x.dataset.perm === "request" && r.state === "denied"; });
+      busy = false;
+      if (r.reload) reload();
+    });
+  }
+  // The one call of a page whose use('mcp') came back null: reads the state, logs it, mounts the box under the banner (a hidden banner becomes this note), wires the buttons. Returns the read states, or null when the view has no `permissions` (then nothing is shown).
+  async function permInit(root, { claude, esc, say, reload }) {
+    let permissions = null;
+    try { permissions = claude?.use ? await claude.use("permissions") : null; } catch (e) { say(`use('permissions'): ${e?.code ?? "?"}`); }
+    if (!permissions || !root) { say("use('permissions') → null: keine Hilfe beim Erlauben von Connectoren in dieser Ansicht"); return null; }
+    const perm = await permRead(permissions, say), box = permHtml(esc, perm.mcp);
+    if (root.hidden) { root.className = "note warn"; root.innerHTML = `<b>Diese Ansicht erreicht keine Connectoren.</b> ${box}`; root.hidden = false; }
+    else root.insertAdjacentHTML("beforeend", box);
+    permBind(root, permissions, { say, reload });
+    return perm;
+  }
+  // endregion:permhelp
+
+  // ── Start ────────────────────────────────────────────────────────────────────
+  showTab(tab);
+  applyHash();
+  (async () => {
+    const [u, d, m] = await Promise.all([
+      window.claude?.use ? window.claude.use("user") : null,
+      window.claude?.use ? window.claude.use("db") : null,
+      window.claude?.use ? window.claude.use("mcp") : null,
+    ]);
+    if (u) { try { const me = await u.me(); actor = (me?.name || "").trim() || (me?.id ? `user:${String(me.id).slice(0, 8)}` : "unbekannt"); canEdit = await u.canEdit().catch(() => false); } catch (e) { log(`user.me ${e?.code ?? e}`); } }
+    log(`user ${u ? "ok" : "null"} · actor ${actor} · canEdit ${canEdit}`);
+    db = d; mcp = m;
+    if (!db) { setPill("connDb", "bad", "kein Speicher"); banner("bad", `<b>Diese Ansicht erreicht den Artefakt-Speicher nicht.</b> Im Browser auf claude.ai öffnen, angemeldet.`); $("apList").innerHTML = `<div class="empty">Kein Speicher in dieser Ansicht.</div>`; $("apCards").innerHTML = `<div class="empty">Kein Speicher in dieser Ansicht. Ohne Speicher gilt für jedes Modul: aus.</div>`; $("feed").innerHTML = `<div class="empty">Kein Speicher in dieser Ansicht.</div>`; $("acList").innerHTML = `<div class="empty">Kein Speicher in dieser Ansicht.</div>`; }
+    else {
+      setPill("connDb", "ok", "Speicher verbunden");
+      db.collection("approvals").onSnapshot((snap) => { approvals = snap.docs.filter((x) => x.exists).map((x) => ({ ...x.data(), id: x.id })); renderApprovals(); }, (e) => { log(`approvals.onSnapshot ${e?.code}`); setPill("connDb", "bad", "Speicher: " + e?.code); });
+      db.collection("audit").orderBy("timestampUtc", "desc").limit(200).onSnapshot((snap) => { auditDocs = snap.docs.filter((x) => x.exists).map((x) => ({ ...x.data(), id: x.id })); renderAudit(auditDocs); renderFeed(); renderAutopilot(); updateBadge(); refreshToday(); }, (e) => log(`audit.onSnapshot ${e?.code}`));
+      db.collection("settings").onSnapshot((snap) => { const d = snap.docs.find((x) => x.exists && x.id === "autopilot"); autopilotRaw = d ? d.data() : null; renderAutopilot(); }, (e) => { log(`settings.onSnapshot ${e?.code}`); autopilotRaw = null; renderAutopilot(); });
+      db.collection(RUNS).orderBy("startedAt", "desc").limit(30).onSnapshot((snap) => { runsDocs = snap.docs.filter((x) => x.exists).map((x) => ({ ...x.data(), id: x.id })); renderAutopilot(); renderFeed(); }, (e) => log(`runs.onSnapshot ${e?.code}`));
+      // F030: Aktivität liest die neuesten 200 Läufe und 400 Audit-Einträge dieses Speichers, je ein Abonnement.
+      db.collection(RUNS).orderBy("startedAt", "desc").limit(200).onSnapshot((snap) => { acRuns = snap.docs.filter((x) => x.exists).map((x) => ({ ...x.data(), id: x.id })); renderActivity(); }, (e) => log(`aktivitaet.runs.onSnapshot ${e?.code}`));
+      db.collection("audit").orderBy("timestampUtc", "desc").limit(400).onSnapshot((snap) => { acAudit = snap.docs.filter((x) => x.exists).map((x) => ({ ...x.data(), id: x.id })); renderActivity(); }, (e) => log(`aktivitaet.audit.onSnapshot ${e?.code}`));
+      db.collection("intake").onSnapshot((snap) => { intakeState = Object.fromEntries(snap.docs.filter((x) => x.exists).map((x) => [x.id, x.data()])); renderThreads(); }, (e) => log(`intake.onSnapshot ${e?.code}`));
+      $("newBtn").disabled = !canEdit || !mcp;
+    }
+    if (!mcp) await permInit($("banner"), { claude: window.claude, esc, say: log, reload: () => location.reload() });
+    if (!mcp) { setPill("connMcp", "bad", "keine Connectoren"); if (db) banner("warn", `<b>Keine Connectoren in dieser Ansicht.</b> Freigaben lassen sich lesen, aber nicht ausführen; der Eingang bleibt leer.`); }
+    else { setPill("connMcp", "ok", "Attio · Gmail"); $("gLoad").disabled = false; try { const lt = await mcp.listTools(); log("listTools", lt?.servers?.map((s) => `${s.server}: ${s.authStatus}`)); const names = (lt?.servers ?? []).map((s) => s.server); setPill("connMcp", names.includes(ATTIO) && names.includes(GMAIL) ? "ok" : "wait", names.length ? names.join(" · ") : "Connectoren noch nicht gefragt"); } catch (e) { log(`listTools ${e?.code ?? "?"}`); } }
+  })();
+})();
+</script>

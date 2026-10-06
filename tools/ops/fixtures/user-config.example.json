@@ -1,0 +1,239 @@
+{
+  "_note": "Invented values for the tools/ops checks. Copy the autopilot section into ~/.fund-os/user-config.json and replace every value; nothing here belongs to a real fund.",
+  "masterData": {
+    "fundName": "Example Fund",
+    "stageFocus": "pre-seed and seed",
+    "sectors": [
+      "example sector"
+    ]
+  },
+  "crmFields": {
+    "dealList": "example_deal_list",
+    "dealStage": "example_stage",
+    "dealSource": "example_source",
+    "startupScore": "example_quality",
+    "startupSummary": "example_summary",
+    "thesisFit": "example_thesis_fit",
+    "thesisFitEvaluation": "example_thesis_evaluation",
+    "urgency": "example_urgency",
+    "urgencyEvaluation": "example_urgency_evaluation",
+    "urgencyAsOf": "example_urgency_as_of",
+    "investorList": "example_investor_list",
+    "investorStatus": "example_investor_status",
+    "investorStatusNotes": "example_investor_notes",
+    "investorFit": "example_investor_fit",
+    "investorFitEvaluation": "example_investor_fit_evaluation",
+    "investorTiming": "example_investor_timing",
+    "investorTimingEvaluation": "example_investor_timing_evaluation",
+    "archivedSlugs": [
+      "example_archived_slug"
+    ]
+  },
+  "autopilot": {
+    "inboxStore": "https://store.example.org/inbox",
+    "stores": {
+      "dealflow": "https://store.example.org/cockpit"
+    },
+    "defaultCap": 20,
+    "noRepeatDays": 7,
+    "purposes": {
+      "dealflow": [
+        "acknowledge",
+        "request-deck",
+        "schedule-call",
+        "pass"
+      ],
+      "investors": [
+        "lp-first-touch",
+        "lp-follow-up",
+        "schedule-call"
+      ],
+      "newsletter": [
+        "newsletter"
+      ],
+      "contacts": [
+        "contact-follow-up",
+        "task",
+        "record"
+      ]
+    },
+    "allowedUrlHosts": [
+      "example.org",
+      "calendar.example.org"
+    ],
+    "onRequiresPinnedSha": false,
+    "fund": {
+      "senderName": "Sam Partner, Example Fund",
+      "signature": [
+        "Sam Partner, Example Fund",
+        "Example Fund · example.org"
+      ],
+      "bookingLink": "https://calendar.example.org/book/sam",
+      "bookingHosts": [
+        "calendar.example.org"
+      ]
+    },
+    "inbound": {
+      "gmailQueries": [
+        "newer_than:2d in:inbox -from:me"
+      ],
+      "ownDomains": [
+        "example.org"
+      ],
+      "formSender": "forms.example.net",
+      "formSubjectPrefix": "New Pitch Deck Lead:",
+      "slaHours": 24
+    },
+    "crm": {
+      "companiesObjectId": "example-companies-object",
+      "dealSourceInbound": "Inbound",
+      "stages": {
+        "new": "New",
+        "screening": "Screening",
+        "committed": [
+          "Term sheet",
+          "Invested"
+        ]
+      },
+      "statuses": {
+        "target": "Target",
+        "outreach": "Outreach",
+        "callBooked": "Call booked",
+        "active": [
+          "Outreach",
+          "Call booked",
+          "In diligence"
+        ],
+        "passive": "Passive",
+        "committed": [
+          "Commitment",
+          "Closed"
+        ]
+      },
+      "stageList": [
+        "New",
+        "Screening",
+        "Initial contact",
+        "In diligence",
+        "Term sheet",
+        "Invested",
+        "Watchlist",
+        "Rejected",
+        "Lost"
+      ],
+      "statusList": [
+        "Target",
+        "Outreach",
+        "Call booked",
+        "In diligence",
+        "Passive",
+        "Commitment",
+        "Closed"
+      ]
+    },
+    "investors": {
+      "fitThreshold": 60,
+      "quietDays": 10,
+      "maxFollowUps": 3,
+      "deckLink": "https://example.org/decks/lp-deck",
+      "deckHosts": [
+        "decks.example.org"
+      ],
+      "thesisParagraph": "Example Fund is a pre-seed and seed fund for the example sector. We back founders early and work hands-on with them.",
+      "geographies": {
+        "core": [
+          "DE",
+          "AT",
+          "CH"
+        ],
+        "adjacent": [
+          "EU",
+          "UK"
+        ]
+      },
+      "searchQueries": [
+        "example family office Europe"
+      ],
+      "crmTextFields": [
+        "example_focus",
+        "example_thesis"
+      ],
+      "signalKeywords": {
+        "example-sector": [
+          "example sector",
+          "widgets"
+        ]
+      }
+    },
+    "newsletter": {
+      "themes": [
+        "Example theme one",
+        "Example theme two"
+      ],
+      "windowDays": 10,
+      "language": "en",
+      "template": "tools/ops/fixtures/newsletter/template.html",
+      "sources": {
+        "webSearchQueries": [
+          "example theme news"
+        ],
+        "pressPages": [],
+        "linkedinKeywords": [
+          "example theme"
+        ]
+      },
+      "service": "none",
+      "partnersTo": [
+        "partner@example.org"
+      ],
+      "crustdata": {
+        "enabled": false,
+        "maxCreditsPerRun": 0
+      }
+    },
+    "notes": {
+      "lookbackDays": 1,
+      "skipTitles": [
+        "standup",
+        "1:1",
+        "lunch"
+      ],
+      "internalDomains": [
+        "example.org"
+      ],
+      "taskAssignee": "sam@example.org",
+      "timezone": "Europe/Berlin"
+    },
+    "digest": {
+      "maxPicks": 7,
+      "language": "English",
+      "partnersTo": [
+        "partner@example.org"
+      ],
+      "ignoreStages": [],
+      "liveStages": [
+        "In diligence",
+        "Term sheet"
+      ],
+      "passedStages": [
+        "Rejected",
+        "Lost"
+      ],
+      "rejectedStage": "Rejected",
+      "fields": {
+        "sector": "example_sector",
+        "round": "example_round",
+        "raise": "example_raise",
+        "createdAt": "example_created_at"
+      }
+    },
+    "contactSourcing": {
+      "eventsFolderId": "example-events-folder",
+      "eventsLookbackDays": 14,
+      "lookbackDays": 2,
+      "maxNewPerRun": 15,
+      "partnersToInvestorsList": false,
+      "gmailQueryExtra": "in:sent -category:promotions -category:social"
+    }
+  }
+}

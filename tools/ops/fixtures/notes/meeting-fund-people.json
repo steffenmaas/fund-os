@@ -1,0 +1,13 @@
+{
+  "_note": "Invented. Two fund people (Sam is the note creator, Alex Example joined) and one external founder.",
+  "id": "meeting-0020",
+  "title": "Northwind Kayaks | Intro",
+  "date": "2026-10-02T08:00:00.000Z",
+  "url": "https://notes.granola.ai/d/meeting-0020",
+  "participants": [
+    { "name": "Alex Example", "email": "alex.example@example.com", "company": "Example Fund" },
+    { "name": "Sam Sample", "email": "sam.sample@example.com", "company": "Example Fund", "creator": true },
+    { "name": "Robin Founder", "email": "robin@northwind.example", "company": "Northwind Kayaks" }
+  ],
+  "summary": "Invented summary for the task routing checks."
+}

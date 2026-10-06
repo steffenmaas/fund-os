@@ -1,0 +1,699 @@
+<!--
+  Start · capabilities declared at publish (see README.md in this folder)
+  sample: none
+  user: none
+  db: none
+  mcp.servers:
+    {server: "Attio", tools: ["whoami", "list-tasks", "update-task"]}
+-->
+<title>Start</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: Seitenleiste links (auf dem Telefon hinter dem Burger); rechts zwei Spalten: die Kacheln aller Bereiche (zwei Drittel), daneben "Meine Aufgaben" nach Dringlichkeit. Auf dem Telefon: Kacheln, dann die Liste. */
+  :root {
+    --bg: #04121a; --panel: #0a1c26; --panel-2: #0e2431; --line: rgba(255,255,255,0.09);
+    --fg: #f1f6f8; --muted: rgba(241,246,248,0.58); --faint: rgba(241,246,248,0.36);
+    --accent: #4FD1C5; --accent-ink: #04121a; --alert: #E8384F; --warn: #F2A93B; --good: #5FD68A; --calm: #7FA7C9;
+    --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f3f7f8; --panel: #ffffff; --panel-2: #eaf1f3; --line: rgba(4,18,26,0.12);
+      --fg: #0b1f2a; --muted: rgba(11,31,42,0.62); --faint: rgba(11,31,42,0.4);
+      --accent: #0e9c90; --accent-ink: #ffffff; --alert: #c7233a; --warn: #b8780d; --good: #1f8a4c; --calm: #3f6f96;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f3f7f8; --panel: #ffffff; --panel-2: #eaf1f3; --line: rgba(4,18,26,0.12);
+    --fg: #0b1f2a; --muted: rgba(11,31,42,0.62); --faint: rgba(11,31,42,0.4);
+    --accent: #0e9c90; --accent-ink: #ffffff; --alert: #c7233a; --warn: #b8780d; --good: #1f8a4c; --calm: #3f6f96;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 14px; line-height: 1.45; }
+  a { color: var(--accent); text-decoration: none; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  .app { display: flex; min-height: 100dvh; }
+  .rail { width: 216px; flex: none; border-right: 1px solid var(--line); background: var(--panel); padding: 18px 12px; display: flex; flex-direction: column; gap: 6px; position: sticky; top: 0; height: 100dvh; }
+  .rail .brand { display: flex; align-items: center; gap: 8px; padding: 4px 8px 14px; }
+  .rail .brand svg { width: 18px; height: 18px; color: var(--accent); }
+  .rail .brand span { font-family: var(--mono); font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); line-height: 1.3; }
+  .rail .lbl { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); padding: 8px 8px 2px; font-weight: 600; }
+  .rail a.item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 9px; color: var(--muted); font-size: 13px; }
+  .rail a.item svg { width: 15px; height: 15px; flex: none; }
+  .rail a.item:hover { background: var(--panel-2); color: var(--fg); }
+  .rail a.item.on { background: var(--panel-2); color: var(--fg); font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
+  .rail .spacer { flex: 1; }
+  .rail .foot { font-size: 11px; color: var(--faint); padding: 6px 10px; font-family: var(--mono); }
+  .page { flex: 1; min-width: 0; padding: 18px 20px 40px; display: flex; flex-direction: column; gap: 16px; }
+  @media (max-width: 820px) {
+    .app { flex-direction: column; }
+    /* F017: the side menu is an off-canvas panel over the page, opened by the burger (aria-controls="rail"). */
+    .rail { position: fixed; top: 0; left: 0; bottom: 0; width: min(300px, 86vw); height: auto; z-index: 30; display: none; overflow-y: auto; border-right: 1px solid var(--line); padding-top: calc(18px + env(safe-area-inset-top, 0px)); box-shadow: 8px 0 32px rgba(0, 0, 0, 0.35); }
+    .rail.open { display: flex; }
+    .rail-scrim:not([hidden]) { display: block; z-index: 29; }
+    .page { padding-inline: 16px; padding-top: calc(12px + env(safe-area-inset-top, 0px)); }
+  }
+  .head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 12px; }
+  h1 { font-size: 26px; font-weight: 600; margin: 0; line-height: 1.1; text-wrap: balance; }
+  h2, h3 { margin: 0; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-family: var(--mono); font-size: 11.5px; color: var(--muted); background: var(--panel); white-space: nowrap; }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+  .pill.ok .dot { background: var(--good); } .pill.bad .dot { background: var(--alert); } .pill.wait .dot { background: var(--warn); }
+  .btn { border: 1px solid var(--line); background: var(--panel); border-radius: 9px; padding: 6px 12px; font-size: 12.5px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; color: var(--fg); }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  .btn.link { color: var(--accent); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn:focus-visible, .tile:focus-visible, .fchip:focus-visible, .burger:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .note { border: 1px solid var(--line); border-left: 3px solid var(--calm); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--muted); background: var(--panel); }
+  .note.bad { border-left-color: var(--alert); } .note.warn { border-left-color: var(--warn); } .note.ok { border-left-color: var(--good); }
+  .note b { color: var(--fg); }
+  .note[hidden] { display: none; }
+  .titlebar { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .burger { display: none; flex: none; width: 44px; height: 44px; padding: 0; align-items: center; justify-content: center; border: 1px solid var(--line); background: var(--panel); border-radius: 10px; }
+  .burger:hover { border-color: var(--accent); }
+  .burger svg { width: 22px; height: 22px; }
+  .rail-scrim { display: none; position: fixed; inset: 0; background: rgba(2,10,15,0.6); }
+
+  /* two columns: the tiles take two thirds, the task list one third (wide screens only) */
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+  @media (min-width: 1001px) { .cols { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); } .tasks { position: sticky; top: 18px; max-height: calc(100dvh - 36px); } }
+  .tilesec { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+  .tile { display: flex; flex-direction: column; gap: 4px; min-height: 96px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; color: var(--fg); min-width: 0; }
+  .tile:hover { border-color: var(--accent); }
+  .tile .ic { width: 26px; height: 26px; color: var(--accent); margin-bottom: 4px; }
+  .tile .ic svg { width: 26px; height: 26px; display: block; }
+  .tile .nm { font-size: 15px; font-weight: 600; }
+  .tile .ds { font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+  .tile.here { opacity: .55; }
+
+  .tasks { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .tasks .thead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .tasks .count { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .fchips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .fchip { border: 1px solid var(--line); background: var(--panel-2); border-radius: 999px; padding: 5px 12px; font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .fchip .n { font-family: var(--mono); font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .fchip[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); font-weight: 600; }
+  .tlist { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 0; padding-right: 2px; }
+  .grp { display: flex; align-items: center; gap: 8px; margin: 6px 0 0; }
+  .grp:first-child { margin-top: 0; }
+  .grp::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .grp .n { font-family: var(--mono); font-size: 11px; color: var(--faint); letter-spacing: 0; }
+  .grp.g-overdue { color: var(--alert); } .grp.g-today, .grp.g-week { color: var(--warn); }
+  .tk { display: flex; flex-direction: column; gap: 8px; background: var(--panel-2); border: 1px solid transparent; border-left: 3px solid var(--line); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+  .tk.b-overdue { border-left-color: var(--alert); } .tk.b-today, .tk.b-week { border-left-color: var(--warn); } .tk.b-later { border-left-color: var(--calm); }
+  .tk .crumb { font-size: 11.5px; color: var(--muted); overflow-wrap: anywhere; }
+  .tk .ttl { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; line-height: 1.35; }
+  .tk .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 11.5px; color: var(--faint); }
+  .dchip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+  .dchip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .d-overdue { color: var(--alert); background: color-mix(in srgb, var(--alert) 14%, transparent); }
+  .d-today, .d-week { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+  .d-later { color: var(--calm); background: color-mix(in srgb, var(--calm) 14%, transparent); }
+  .d-none { color: var(--faint); background: color-mix(in srgb, var(--faint) 12%, transparent); font-weight: 500; }
+  .tk .act { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .tk .ask { font-size: 12.5px; color: var(--muted); flex: 1 1 100%; }
+  .tk.busy { opacity: .6; }
+  .undo { display: flex; flex-direction: column; gap: 6px; }
+  .undo:empty { display: none; }
+  .undo .u { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; border: 1px solid var(--good); border-radius: 10px; padding: 8px 12px; font-size: 12.5px; background: color-mix(in srgb, var(--good) 8%, transparent); }
+  .undo .u span { overflow-wrap: anywhere; min-width: 0; flex: 1 1 140px; }
+  .empty { padding: 22px 8px; text-align: center; color: var(--muted); font-size: 13px; }
+  .hint { font-size: 12px; color: var(--muted); }
+  details.diag { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); font-size: 12.5px; color: var(--muted); }
+  details.diag summary { padding: 8px 12px; cursor: pointer; font-family: var(--mono); font-size: 11.5px; min-height: 44px; display: flex; align-items: center; }
+  details.diag .body { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 6px; }
+  details.diag code { font-family: var(--mono); font-size: 12px; color: var(--fg); }
+  details.diag pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-family: var(--mono); font-size: 12px; line-height: 1.5; background: var(--panel-2); border-radius: 10px; padding: 12px; color: var(--muted); max-height: 220px; overflow: auto; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  @media (max-width: 820px) {
+    .burger { display: inline-flex; }
+    .btn, .fchip { min-height: 44px; }
+    .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .tile { padding: 12px; min-height: 92px; }
+    .tile .nm { font-size: 14px; }
+    .tile .ds { font-size: 12px; }
+    .tk .act .btn { flex: 1 1 120px; }
+    h1 { font-size: 22px; }
+  }
+</style>
+
+<div class="app">
+  <div class="rail-scrim" id="railScrim" hidden></div>
+  <nav class="rail" aria-label="Bereiche" id="rail"></nav>
+  <div class="page">
+    <div class="head">
+      <div class="titlebar">
+        <button type="button" class="burger" id="burger" aria-label="Menü" aria-expanded="false" aria-controls="rail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+        <h1 title="Der Einstieg: eine Kachel je Bereich, daneben deine offenen Aufgaben aus dem CRM nach Dringlichkeit.">Start</h1>
+      </div>
+      <div class="status">
+        <span class="pill wait" id="conn"><span class="dot"></span><span id="connText">Verbinde mit Attio…</span></span>
+        <button class="btn" id="refresh" type="button" disabled>Aktualisieren</button>
+      </div>
+    </div>
+
+    <div class="note bad" id="banner" role="status" hidden></div>
+
+    <div class="cols">
+      <section class="tilesec" aria-label="Bereiche">
+        <h2>Bereiche</h2>
+        <div class="tiles" id="tiles"></div>
+      </section>
+
+      <section class="tasks" id="tasks" aria-label="Meine Aufgaben">
+        <div class="thead"><h2>Meine Aufgaben</h2><span class="count" id="count" aria-live="polite"></span></div>
+        <div class="fchips" id="fchips" role="group" aria-label="Aufgaben filtern"></div>
+        <div class="undo" id="undo" role="status" aria-live="polite"></div>
+        <div class="tlist" id="tlist"><div class="empty">Wird geladen…</div></div>
+        <div class="hint" id="more" hidden></div>
+      </section>
+    </div>
+
+    <details class="diag" id="diag"><summary>Diagnose</summary><div class="body"><div id="diagBody"></div><div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span id="cacheLine" class="hint"></span><button type="button" class="btn" id="cacheClear">Zwischenspeicher leeren</button></div></div></details>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  // ══ CONFIG ══ Everything that belongs to one fund. Fill it in before publishing (README.md); nothing below this block names a fund.
+  const CONFIG = {
+    fundName: "",            // shown in the side menu, e.g. "Example Fund"
+    links: {  // The seven side-menu URLs. Publish all screens first, then paste the seven URLs here in EVERY screen (README.md). start is this page's own address.
+      deals: "",
+      investors: "",
+      inbox: "",
+      knowledge: "",
+      newsletter: "",
+      profile: "",
+      start: "",
+    },
+  };
+  // ── Die anderen Domänen. Ein Artefakt je Domäne; die Links stehen in CONFIG.links und werden beim Publizieren gesetzt. ──
+  const LINKS = CONFIG.links;
+  const HERE = "start";
+  const ICONS = {
+    deals: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+    investors: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/></svg>',
+    inbox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13l3-8h12l3 8v6H3z M3 13h5l2 3h4l2-3h5"/></svg>',
+    knowledge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 012-2h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2z M8 7h8M8 11h8M8 15h5"/></svg>',
+    newsletter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
+    profile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>',
+    start: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>',
+  };
+  function rail() {
+    const item = (k, label) => `<a class="item ${k === HERE ? "on" : ""}" href="${LINKS[k].startsWith("http") ? LINKS[k] : "#"}" ${k === HERE ? 'aria-current="page"' : 'target="_blank" rel="noopener"'}>${ICONS[k]}${label}</a>`;
+    document.getElementById("rail").innerHTML = `
+      <div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 7c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg><span>${String(CONFIG.fundName || "Fund OS").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}<br>Operations</span></div>
+      ${item("start", "Start")}
+      <div class="lbl">Domänen</div>
+      ${item("deals", "Deal Cockpit")}${item("investors", "Investor Relations")}${item("inbox", "Agent Workbench")}${item("knowledge", "Knowledge")}${item("newsletter", "Content")}
+      <div class="spacer"></div>
+      ${item("profile", "Profil")}
+      <div class="foot">Fund OS · Operations</div>`;
+  }
+  rail();
+
+  // ── Menü: auf dem Telefon ein Burger oben links; das Menü liegt als Panel über der Seite (F017). Auf breiten Schirmen bleibt es die Seitenleiste. ──
+  const railEl = document.getElementById("rail"), railScrim = document.getElementById("railScrim"), burgerBtn = document.getElementById("burger");
+  const railIsOpen = () => railEl.classList.contains("open");
+  function setRail(open, restoreFocus) {
+    railEl.classList.toggle("open", open); railScrim.hidden = !open;
+    burgerBtn.setAttribute("aria-expanded", String(open));
+    if (open) railEl.querySelector("a.item")?.focus();
+    else if (restoreFocus) burgerBtn.focus();
+  }
+  burgerBtn.addEventListener("click", () => setRail(!railIsOpen(), true));
+  railScrim.addEventListener("click", () => setRail(false, true));
+  railEl.addEventListener("click", (e) => { const a = e.target.closest("a.item"); if (!a || !railIsOpen()) return; if (a.getAttribute("aria-current")) e.preventDefault(); setRail(false, false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && railIsOpen()) setRail(false, true); });
+  window.matchMedia("(max-width: 820px)").addEventListener?.("change", (e) => { if (!e.matches && railIsOpen()) setRail(false, false); });
+
+  // ── Kacheln: ein Bereich je Kachel; der Link ist die Adresse des Artefakts (LINKS). ──
+  const TILES = [
+    ["deals", "Deal Cockpit", "Deals nach Score und Urgency"],
+    ["investors", "Investor Relations", "LP-Pipeline, Board, Tickets"],
+    ["inbox", "Agent Workbench", "Aktivität der Agenten, Freigaben, Audit"],
+    ["newsletter", "Content", "Newsletter und PR-Ausgaben"],
+    ["knowledge", "Knowledge", "Dokumente, gegen die gescort wird"],
+    ["profile", "Einstellungen", "Profil, Connectoren, Werkzeuge"],
+  ];
+  const tilesHtml = () => TILES.map(([k, name, line]) => {
+    const live = LINKS[k].startsWith("http");
+    return `<a class="tile" href="${live ? LINKS[k] : "#"}" ${live ? 'target="_blank" rel="noopener"' : 'aria-disabled="true"'}><span class="ic">${ICONS[k]}</span><span class="nm">${name}</span><span class="ds">${line}</span></a>`;
+  }).join("");
+
+  // region:startlogic (F026: the task list of the Start page; pure: no DOM, no mcp, no globals; every value that reaches HTML goes through esc(); held still by tools/check-screen-templates.sh)
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const TASK_PAGE = 10;    // list-tasks answers at most 10 per call
+  const TASK_CAP = 300;    // open tasks read in total
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const SLUG = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
+  const tkText = (v) => (v === null || v === undefined || typeof v === "object" ? "" : String(v).trim());
+  const tkList = (v) => (Array.isArray(v) ? v : v === null || v === undefined || v === "" ? [] : [v]);
+  const tkSplit = (s) => String(s).split(",").map((x) => x.trim()).filter(Boolean);
+  // A compact table arrives as rows ({workspace_member_id} / {object_id, record_id}); a row that was not split by its header arrives as one comma-joined string.
+  const tkAssigneeIds = (v) => tkList(v).flatMap((r) => (r && typeof r === "object" ? [tkText(r.workspace_member_id ?? r.referenced_actor_id ?? r.id)] : tkSplit(r))).filter(Boolean);
+  const tkLinked = (v) => tkList(v).flatMap((r) => { if (r && typeof r === "object") return [{ objectId: tkText(r.object_id), recordId: tkText(r.record_id ?? r.id) }]; const p = tkSplit(r); return p.length > 1 ? [{ objectId: p[0], recordId: p[1] }] : p.length ? [{ objectId: "", recordId: p[0] }] : []; }).filter((l) => l.recordId);
+  // list-tasks answers a set deadline as an unquoted date-only value (2026-10-06); an ISO timestamp is accepted too. Both become YYYY-MM-DD (UTC day); null stays null.
+  function tkDay(v) {
+    const t = tkText(v);
+    if (/^\d{4}-\d{2}-\d{2}(?!\d)/.test(t)) return t.slice(0, 10);
+    const ms = Date.parse(t);
+    return t && Number.isFinite(ms) ? new Date(ms).toISOString().slice(0, 10) : null;
+  }
+  function parseTasks(payload) {
+    const list = Array.isArray(payload) ? payload : Array.isArray(payload?.tasks) ? payload.tasks : Array.isArray(payload?.data) ? payload.data : [];
+    return list.filter((t) => t && typeof t === "object").map((t) => ({
+      taskId: tkText(t.task_id ?? t.id?.task_id ?? t.id),
+      content: tkText(t.content ?? t.content_plaintext),
+      deadlineAt: tkDay(t.deadline_at),
+      isCompleted: t.is_completed === true || t.is_completed === "true",
+      assigneeIds: tkAssigneeIds(t.assignees),
+      linked: tkLinked(t.linked_records),
+      createdAt: tkText(t.created_at) || null,
+    })).filter((t) => t.taskId);
+  }
+
+  // "Fund I · Anchor LP · Investor evening · Fix the agenda" → the segments before the last are the breadcrumb, the last one is the title. One segment: no breadcrumb.
+  function splitContent(content) {
+    const text = tkText(content);
+    const parts = text.split(/\s+·\s+/).map((p) => p.trim()).filter(Boolean);
+    if (parts.length < 2) return { crumbs: [], title: text };
+    return { crumbs: parts.slice(0, -1), title: parts[parts.length - 1] };
+  }
+
+  const pad2 = (n) => String(n).padStart(2, "0");
+  const dayOf = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;   // the local day of a Date
+  const dayNum = (s) => Date.UTC(Number(s.slice(0, 4)), Number(s.slice(5, 7)) - 1, Number(s.slice(8, 10))) / 86400000;
+  const fmtDay = (s) => `${s.slice(8, 10)}.${s.slice(5, 7)}.${s.slice(0, 4)}`;
+  const WEEKDAYS = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+  const GROUPS = [["overdue", "Überfällig"], ["today", "Heute"], ["week", "Diese Woche"], ["later", "Später"], ["none", "Ohne Frist"]];
+  // A deadline is a day. Before today: overdue; today; up to 7 days ahead: this week (rolling, today excluded); further: later; no deadline: none.
+  function bucketOf(deadlineAt, now) {
+    if (!deadlineAt) return { key: "none", diff: null };
+    const diff = dayNum(deadlineAt) - dayNum(dayOf(now));
+    return { key: diff < 0 ? "overdue" : diff === 0 ? "today" : diff <= 7 ? "week" : "later", diff };
+  }
+  const tkTime = (s) => { const t = Date.parse(s ?? ""); return Number.isFinite(t) ? t : null; };
+  const cmpNull = (x, y) => (x === y ? 0 : x === null ? 1 : y === null ? -1 : x < y ? -1 : 1);
+  // Overdue first = earliest deadline first, then the coming days, then no deadline; the same day and all undated tasks by created_at, oldest first; the id decides the rest. Returns a new array.
+  function sortTasks(tasks) {
+    return tasks.slice().sort((a, b) => cmpNull(a.deadlineAt, b.deadlineAt) || cmpNull(tkTime(a.createdAt), tkTime(b.createdAt)) || cmpNull(a.taskId, b.taskId));
+  }
+  function countsOf(tasks, now) {
+    const c = { all: tasks.length, overdue: 0, week: 0, none: 0 };
+    for (const t of tasks) { const k = bucketOf(t.deadlineAt, now).key; if (k === "overdue") c.overdue++; else if (k === "today" || k === "week") c.week++; else if (k === "none") c.none++; }
+    return c;
+  }
+  function filterTasks(tasks, filter, now) {
+    const keys = { overdue: ["overdue"], week: ["today", "week"], none: ["none"] }[filter];
+    return keys ? tasks.filter((t) => keys.includes(bucketOf(t.deadlineAt, now).key)) : tasks;
+  }
+  function chipText(t, now) {
+    const { key, diff } = bucketOf(t.deadlineAt, now);
+    if (key === "none") return "ohne Frist";
+    if (key === "today") return "heute";
+    if (key === "overdue") return diff === -1 ? "überfällig · seit gestern" : `überfällig · seit ${-diff} Tagen`;
+    if (key === "week") return diff === 1 ? "morgen" : `${WEEKDAYS[new Date(dayNum(t.deadlineAt) * 86400000).getUTCDay()]} ${t.deadlineAt.slice(8, 10)}.${t.deadlineAt.slice(5, 7)}.`;
+    return fmtDay(t.deadlineAt);
+  }
+
+  // The link to Attio from the viewer's own workspace slug (whoami). The record when its object id is mapped to a slug (objectSlugs: Map objectId → slug), else the workspace's tasks view. No slug: no link.
+  function attioHref(slug, linked, objectSlugs) {
+    if (!SLUG.test(String(slug ?? ""))) return null;
+    const l = Array.isArray(linked) ? linked[0] : null, obj = l && typeof objectSlugs?.get === "function" ? objectSlugs.get(l.objectId) : null;
+    if (l && UUID.test(l.recordId) && typeof obj === "string" && /^[a-z0-9_-]{1,64}$/.test(obj)) return `https://app.attio.com/${slug}/${obj}/${l.recordId}/overview`;
+    return `https://app.attio.com/${slug}/tasks`;
+  }
+
+  // One row. o: { now, href (string | null), state: "idle" | "confirm" | "busy" }. Every task value is escaped.
+  function rowHtml(t, o) {
+    const { crumbs, title } = splitContent(t.content), key = bucketOf(t.deadlineAt, o.now).key, id = esc(t.taskId);
+    const created = tkTime(t.createdAt);
+    const act = o.state === "confirm"
+      ? `<div class="ask">Als erledigt in Attio abhaken?</div><button type="button" class="btn primary" data-do="${id}">Ja, erledigt</button><button type="button" class="btn" data-no="${id}">Abbrechen</button>`
+      : `${o.href ? `<a class="btn link" href="${esc(o.href)}" target="_blank" rel="noopener">In Attio</a>` : ""}<button type="button" class="btn" data-done="${id}" ${o.state === "busy" ? "disabled" : ""}>${o.state === "busy" ? "Wird abgehakt …" : "Erledigt"}</button>`;
+    return `<article class="tk b-${key}${o.state === "busy" ? " busy" : ""}" data-id="${id}">${crumbs.length ? `<div class="crumb">${crumbs.map(esc).join(" › ")}</div>` : ""}<div class="ttl">${esc(title || "(ohne Text)")}</div><div class="meta"><span class="dchip d-${key}">${esc(chipText(t, o.now))}</span>${created !== null ? `<span>angelegt ${esc(fmtDay(dayOf(new Date(created))))}</span>` : ""}</div><div class="act">${act}</div></article>`;
+  }
+  // The whole list under a filter, grouped Überfällig · Heute · Diese Woche · Später · Ohne Frist (an empty group is left out). tasks are expected sorted.
+  function listHtml(tasks, filter, o) {
+    const shown = filterTasks(tasks, filter, o.now);
+    if (!shown.length) return `<div class="empty">${tasks.length ? "Keine Aufgaben in diesem Filter." : "Keine offenen Aufgaben. Gut gemacht."}</div>`;
+    return GROUPS.map(([key, label]) => {
+      const rows = shown.filter((t) => bucketOf(t.deadlineAt, o.now).key === key);
+      return rows.length ? `<h3 class="grp g-${key}">${label} <span class="n">${rows.length}</span></h3>${rows.map((t) => rowHtml(t, { now: o.now, href: attioHref(o.slug, t.linked, o.objectSlugs), state: o.states?.get(t.taskId) ?? "idle" })).join("")}` : "";
+    }).join("");
+  }
+
+  // Pages list-tasks by offset while has_more, up to the cap. fetchPage(offset) → { tasks (already filtered), ids (every id of the page), hasMore }. Stops on has_more false, on an empty page, and on a page without a new id (the connector ignored the offset).
+  async function pageTasks(fetchPage, cap = TASK_CAP) {
+    const out = [], seen = new Set(), raw = new Set(); let offset = 0, truncated = false;
+    for (;;) {
+      const page = await fetchPage(offset);
+      const fresh = page.ids.filter((i) => !raw.has(i));
+      for (const i of page.ids) raw.add(i);
+      for (const t of page.tasks) if (!seen.has(t.taskId)) { seen.add(t.taskId); out.push(t); }
+      if (!page.hasMore || page.ids.length === 0 || fresh.length === 0) break;
+      offset += page.ids.length;
+      if (raw.size >= cap) { truncated = true; break; }
+    }
+    return { tasks: out.slice(0, cap), truncated };
+  }
+  // The one write: update-task with exactly { task_id, is_completed }.
+  async function setTaskDone(call, taskId, done) {
+    if (typeof taskId !== "string" || taskId === "") throw Object.assign(new Error("task_id fehlt"), { code: "bad_input" });
+    return call("update-task", { task_id: taskId, is_completed: done === true }, { cache: false });
+  }
+  // endregion:startlogic
+
+  const $ = (id) => document.getElementById(id);
+  $("tiles").innerHTML = tilesHtml();
+
+  // region:permhelp (F029: when use('mcp') is null, the built-in `permissions` capability tells why and offers the way out; never declared, read-only on load, request / manage only on a click; the namespace, esc, the Diagnose line and the reload come in as arguments; mirrored byte for byte in every page that resolves mcp, held still by tools/check-screen-templates.sh)
+  const PERM_TEXT = {
+    denied: "Connectoren sind für dieses Artefakt abgelehnt. Über ‚Berechtigungen öffnen‘ wieder einschalten.",
+    prompt: "Noch nicht erlaubt: ‚Connectoren anfragen‘.",
+    granted: "Connectoren sind erlaubt, aber diese Ansicht hat sie nicht geladen. Die Seite neu laden.",
+    unavailable: "Als Gast von außerhalb der Organisation bietet claude.ai in geteilten Artefakten keine Connectoren an. Abhilfe: Artefakt duplizieren oder gemeinsamer Team-Account.",
+  };
+  const PERM_MANAGE_FAIL = "Das Panel ließ sich nicht öffnen. Menü des Artefakts oben rechts → Berechtigungen.";
+  const PERM_REQUEST_FAIL = "Die Anfrage ist fehlgeschlagen. Menü des Artefakts oben rechts → Berechtigungen.";
+  const permKnown = (s) => (s === "granted" || s === "prompt" || s === "denied" ? s : "unavailable");
+  const permText = (s) => PERM_TEXT[permKnown(s)];
+  // The box under the "keine Connectoren" banner: the text for the state of "mcp" and the two buttons. Every text goes through the page's esc.
+  function permHtml(esc, state) {
+    const s = permKnown(state);
+    return `<div class="permhelp" data-perm-help="1" style="margin-top:8px"><div data-perm-text>${esc(permText(s))}</div><div class="row" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><button type="button" class="btn" data-perm="request"${s === "denied" ? " disabled" : ""}>Connectoren anfragen</button><button type="button" class="btn" data-perm="manage">Berechtigungen öffnen</button></div><div data-perm-msg aria-live="polite" style="margin-top:6px"></div></div>`;
+  }
+  // Reads without prompting and logs the answers verbatim: the full map, "mcp" and "sample". { mcp, sample, all } holds the raw answers.
+  async function permRead(permissions, say) {
+    const one = async (name) => { try { return await permissions.state(name); } catch (e) { say(`permissions.state("${name}") fehlgeschlagen: ${e?.code ?? "?"}`); return "unavailable"; } };
+    let all = null;
+    try { all = await permissions.state(); } catch (e) { say(`permissions.state() fehlgeschlagen: ${e?.code ?? "?"}`); }
+    const mcp = await one("mcp"), sample = await one("sample");
+    say(`permissions.state() = ${JSON.stringify(all) ?? "undefined"}`);
+    say(`permissions.state("mcp") = ${String(mcp)}`);
+    say(`permissions.state("sample") = ${String(sample)}`);
+    return { mcp, sample, all };
+  }
+  // What one click does. "request": one dialog for ["mcp"], branch on the returned state. "manage": open the panel, then read the state again. { state, reload, msg }: state null = unchanged; reload true only when mcp is granted. Never throws; never asks twice.
+  async function permAct(kind, permissions, say) {
+    if (kind === "request") {
+      try {
+        const res = await permissions.request(["mcp"]);
+        say(`permissions.request(["mcp"]) = ${JSON.stringify(res) ?? "undefined"}`);
+        const s = res && typeof res === "object" && "mcp" in res ? res.mcp : await permissions.state("mcp");
+        return { state: permKnown(s), reload: s === "granted", msg: "" };
+      } catch (e) { say(`permissions.request(["mcp"]) fehlgeschlagen: ${e?.code ?? "?"}`); return { state: null, reload: false, msg: PERM_REQUEST_FAIL }; }
+    }
+    if (kind === "manage") {
+      try { await permissions.manage(); } catch (e) { say(`permissions.manage() abgelehnt: ${e?.code ?? "?"}`); return { state: null, reload: false, msg: PERM_MANAGE_FAIL }; }
+      let s; try { s = await permissions.state("mcp"); } catch { s = "unavailable"; }
+      say(`permissions.state("mcp") nach manage() = ${String(s)}`);
+      return { state: permKnown(s), reload: s === "granted", msg: "" };
+    }
+    return { state: null, reload: false, msg: "" };
+  }
+  // The clicks of the box, delegated on the banner element (the box is repainted with it). One click at a time.
+  function permBind(root, permissions, { say, reload }) {
+    if (root.dataset.permBound === "1") return;
+    root.dataset.permBound = "1";
+    let busy = false;
+    root.addEventListener("click", async (e) => {
+      const b = e.target?.closest?.("[data-perm]"); if (!b || busy || !root.contains(b)) return;
+      busy = true;
+      const set = (sel, fn) => { const el = root.querySelector(sel); if (el) fn(el); };
+      root.querySelectorAll("[data-perm]").forEach((x) => { x.disabled = true; });
+      const r = await permAct(b.dataset.perm, permissions, say);
+      if (r.state) set("[data-perm-text]", (el) => { el.textContent = permText(r.state); });
+      set("[data-perm-msg]", (el) => { el.textContent = r.reload ? "Erlaubt. Die Seite lädt neu …" : r.msg; });
+      root.querySelectorAll("[data-perm]").forEach((x) => { x.disabled = x.dataset.perm === "request" && r.state === "denied"; });
+      busy = false;
+      if (r.reload) reload();
+    });
+  }
+  // The one call of a page whose use('mcp') came back null: reads the state, logs it, mounts the box under the banner (a hidden banner becomes this note), wires the buttons. Returns the read states, or null when the view has no `permissions` (then nothing is shown).
+  async function permInit(root, { claude, esc, say, reload }) {
+    let permissions = null;
+    try { permissions = claude?.use ? await claude.use("permissions") : null; } catch (e) { say(`use('permissions'): ${e?.code ?? "?"}`); }
+    if (!permissions || !root) { say("use('permissions') → null: keine Hilfe beim Erlauben von Connectoren in dieser Ansicht"); return null; }
+    const perm = await permRead(permissions, say), box = permHtml(esc, perm.mcp);
+    if (root.hidden) { root.className = "note warn"; root.innerHTML = `<b>Diese Ansicht erreicht keine Connectoren.</b> ${box}`; root.hidden = false; }
+    else root.insertAdjacentHTML("beforeend", box);
+    permBind(root, permissions, { say, reload });
+    return perm;
+  }
+  // endregion:permhelp
+
+  // region:localcache (a copy of a list in this browser's local storage; every access guarded; nothing is thrown, a missing, damaged or foreign entry reads as null; mirrored byte for byte in deal-cockpit.html, investors.html and start.html, held still by tools/check-screen-templates.sh)
+  function localCache(key, version) {
+    const MAX_CHARS = 4 * 1024 * 1024;
+    const store = () => { try { return typeof window !== "undefined" && window.localStorage ? window.localStorage : null; } catch { return null; } };
+    return {
+      // { savedAt, data } or null (no storage, nothing stored, damaged JSON, other version, wrong shape)
+      read() {
+        try {
+          const s = store(); if (!s) return null;
+          const raw = s.getItem(key); if (typeof raw !== "string") return null;
+          const o = JSON.parse(raw);
+          if (!o || typeof o !== "object" || Array.isArray(o) || o.v !== version || typeof o.savedAt !== "number" || !Number.isFinite(o.savedAt) || o.savedAt > Date.now() + 86400000 || o.data === undefined || o.data === null) return null;
+          return { savedAt: o.savedAt, data: o.data };
+        } catch { return null; }
+      },
+      // true when stored; false (never a throw) without storage, on a quota error, or above 4 MB serialised
+      write(data) {
+        try {
+          const s = store(); if (!s) return false;
+          const text = JSON.stringify({ v: version, savedAt: Date.now(), data });
+          if (typeof text !== "string" || text.length > MAX_CHARS) return false;
+          s.setItem(key, text); return true;
+        } catch { return false; }
+      },
+      clear() { try { const s = store(); if (s) s.removeItem(key); } catch { /* nothing to remove */ } },
+    };
+  }
+  // endregion:localcache
+
+  // ── State ────────────────────────────────────────────────────────────────────
+  const SERVER = "Attio";
+  const CACHE_STALE_MS = 7 * 86400000;
+  const OBJECT_SLUGS = new Map();   // object uuid → slug; empty: the connector gives no way to read the slugs, so a row links to the tasks view of the viewer's workspace
+  const taskCache = localCache("fundos.start.tasks", 1);
+  let mcp = null, me = null, tasks = [], truncated = false, filter = "all", loading = false, cacheAt = null, cacheSaved = null, cacheGen = 0, failed = false;
+  const states = new Map();   // taskId → "confirm" | "busy"
+  const undo = new Map();     // taskId → { task, timer }: completed in this visit, can be reopened for 10 seconds
+  const UNDO_MS = 10000;
+  const ageText = (ms) => { const m = Math.max(0, Math.round(ms / 60000)); return m < 1 ? "gerade eben" : m < 120 ? `vor ${m} Min` : m < 2880 ? `vor ${Math.round(m / 60)} Std` : `vor ${Math.round(m / 1440)} Tagen`; };
+
+  // ── Diagnose ─────────────────────────────────────────────────────────────────
+  const diag = [];
+  function log(kind, text, raw) {
+    diag.unshift({ at: new Date().toLocaleTimeString("de-DE"), kind, text, raw: raw === undefined ? null : (typeof raw === "string" ? raw : JSON.stringify(raw, null, 1)) });
+    if (diag.length > 30) diag.pop();
+    $("diagBody").innerHTML = diag.map((d) => `<div><code>${esc(d.at)}</code> <b style="color:${d.kind === "err" ? "var(--alert)" : d.kind === "ok" ? "var(--good)" : "var(--fg)"}">${esc(d.kind)}</b> ${esc(d.text)}${d.raw ? `<pre>${esc(d.raw.slice(0, 1200))}${d.raw.length > 1200 ? "\n…" : ""}</pre>` : ""}</div>`).join("");
+  }
+
+  // ── Antworten lesen: JSON-Objekt, JSON-Text oder Attios kompakte Textnotation ───
+  function parseAttioText(text) {
+    const raw = String(text).replace(/\r/g, "").split("\n").filter((l) => l.trim() !== "");
+    const lines = raw.map((l) => { const m = /^(\s*)(.*)$/.exec(l); return { ind: m[1].length, t: m[2] }; });
+    let i = 0;
+    const scalar = (s) => { s = s.trim(); if (s === "") return null; if (s[0] === '"') { try { return JSON.parse(s); } catch { return s.slice(1, -1); } } if (s === "true") return true; if (s === "false") return false; if (s === "null") return null; if (/^-?\d+(\.\d+)?$/.test(s)) return Number(s); return s; };
+    const splitCsv = (s) => { const out = []; let cur = "", q = false; for (const c of s) { if (c === '"') q = !q; else if (c === "," && !q) { out.push(cur); cur = ""; } else cur += c; } out.push(cur); return out.map(scalar); };
+    const keyOf = (k) => { const m = /^([^\[\]{}]*)(?:\[(\d+)\])?(?:\{([^}]*)\})?$/.exec(k.trim()); return m ? { name: m[1], arr: m[2] !== undefined, fields: m[3] ? m[3].split(",").map((x) => x.trim()) : null } : { name: k.trim(), arr: false, fields: null }; };
+    function block(ind) { if (i >= lines.length || lines[i].ind < ind) return null; return lines[i].t.startsWith("- ") ? sequence(ind) : mapping(ind); }
+    function sequence(ind) { const out = []; while (i < lines.length && lines[i].ind === ind && lines[i].t.startsWith("- ")) { lines[i] = { ind: ind + 2, t: lines[i].t.slice(2) }; out.push(block(ind + 2)); } return out; }
+    function mapping(ind) {
+      const obj = {};
+      while (i < lines.length && lines[i].ind === ind && !lines[i].t.startsWith("- ")) {
+        const line = lines[i].t; let depth = 0, cut = -1;
+        for (let k = 0; k < line.length; k++) { const ch = line[k]; if (ch === "{" || ch === "[") depth++; else if (ch === "}" || ch === "]") depth--; else if (ch === ":" && depth === 0) { cut = k; break; } }
+        if (cut < 0) { i++; continue; }
+        const key = keyOf(line.slice(0, cut)); const rest = line.slice(cut + 1); i++;
+        let val;
+        if (rest.trim() === "") {
+          if (key.fields) { val = []; while (i < lines.length && lines[i].ind > ind && !lines[i].t.startsWith("- ")) { const cells = splitCsv(lines[i].t); const o = {}; key.fields.forEach((f, n) => { o[f] = cells[n] ?? null; }); val.push(o); i++; } }
+          else if (i < lines.length && lines[i].ind > ind) val = block(lines[i].ind);
+          else val = key.arr ? [] : null;
+        } else if (key.arr) val = rest.trim()[0] === '"' ? [scalar(rest)] : splitCsv(rest);
+        else val = scalar(rest);
+        if (key.name === "") return val;
+        obj[key.name] = val;
+      }
+      return obj;
+    }
+    return block(lines[0]?.ind ?? 0);
+  }
+  function parsePayload(res) {
+    let p = res?.payload;
+    if (p === undefined && Array.isArray(res?.content)) p = res.content.find((c) => c.type === "text")?.text;
+    if (typeof p === "string") {
+      const s = p.trim();
+      if (s[0] === "{" || s[0] === "[") { try { return JSON.parse(s); } catch { /* fällt zur Textnotation durch */ } }
+      try { return parseAttioText(s); } catch { return null; }
+    }
+    return p ?? null;
+  }
+
+  // ── Connector ────────────────────────────────────────────────────────────────
+  function setConn(state, text) { $("conn").className = "pill " + state; $("connText").textContent = text; }
+  function banner(kind, html) { const b = $("banner"); if (!html) { b.hidden = true; return; } b.className = "note " + kind; b.innerHTML = html; b.hidden = false; }
+  function explain(err) {
+    const code = err?.code ?? "upstream_error";
+    switch (code) {
+      case "needs_reauth": return ["bad", `<b>Attio muss neu verbunden werden.</b> In claude.ai unter Einstellungen → Connectoren Attio neu verbinden, dann aktualisieren.`];
+      case "server_not_connected": case "selection_required": return ["bad", `<b>Kein Attio-Connector in dieser Ansicht.</b> Attio in claude.ai unter Einstellungen → Connectoren hinzufügen (oder einen auswählen, wenn es mehrere gibt), dann aktualisieren. Die Kacheln funktionieren trotzdem.`];
+      case "not_in_manifest": return ["bad", `<b>Attio ist für diese Seite nicht erlaubt.</b> Beim ersten Aufruf abgelehnt oder für dieses Artefakt abgeschaltet. Erlauben, um deine Aufgaben zu sehen.`];
+      case "blocked_by_policy": return ["bad", `<b>Von der Organisationsrichtlinie blockiert</b> für dieses Connector-Tool.`];
+      case "approval_required": return ["warn", `<b>Dieser Aufruf braucht eine Einzelfreigabe</b>, die Artefakte noch nicht einholen können.`];
+      case "server_unavailable": case "rate_limited": return ["warn", `<b>Attio hat nicht rechtzeitig geantwortet.</b> Gleich noch einmal versuchen.`];
+      case "tool_error": return ["bad", `<b>Der Connector (Attio) meldet einen Fehler:</b> ${esc(err.message ?? "")}`];
+      case "not_granted": case "capability_disabled": case "capability_removed": return ["bad", `<b>Diese Ansicht erreicht keine Connectoren.</b> Das Artefakt im Browser auf claude.ai öffnen, angemeldet, mit verbundenem Attio-Connector.`];
+      case "unknown_shape": return ["bad", `<b>Die Antwort von Attio wurde nicht erkannt</b> (${esc(err.message ?? "")}). Details stehen in der Diagnose.`];
+      case "cancelled": return ["warn", `<b>Abgebrochen.</b> Ausgang unbekannt; vor dem nächsten Versuch aktualisieren.`];
+      default: return ["bad", `<b>Bei Attio ist etwas fehlgeschlagen</b> (${esc(code)}). ${esc(err?.message ?? "")}`];
+    }
+  }
+  async function callAttio(tool, input, opts) {
+    const t0 = Date.now();
+    try {
+      const res = await mcp.callTool(SERVER, tool, input, opts);
+      const p = res?.payload;
+      log("ok", `${tool} · ${Date.now() - t0} ms · payload: ${p === undefined ? "undefined" : Array.isArray(p) ? "array" : typeof p}${res?.cache ? " · aus Cache" : ""}`, typeof p === "string" ? p.slice(0, 600) : (p ?? res));
+      return res;
+    } catch (err) { log("err", `${tool} · ${err?.code ?? "?"} · ${err?.message ?? ""}`, input); throw err; }
+  }
+
+  // ── Zeichnen ─────────────────────────────────────────────────────────────────
+  const FILTERS = [["all", "Alle"], ["overdue", "Überfällig"], ["week", "Diese Woche"], ["none", "Ohne Frist"]];
+  function paintPill() {
+    if (failed) return;
+    if (cacheAt !== null) setConn("wait", `Stand von ${ageText(Date.now() - cacheAt)}${Date.now() - cacheAt > CACHE_STALE_MS ? " (veraltet)" : ""} · aktualisiere …`);
+  }
+  function render() {
+    const now = new Date(), c = countsOf(tasks, now), shown = filterTasks(tasks, filter, now).length;
+    $("count").textContent = loading && !tasks.length ? "" : filter === "all" ? String(c.all) : `${shown} von ${c.all}`;
+    $("fchips").innerHTML = FILTERS.map(([k, label]) => `<button type="button" class="fchip" data-filter="${k}" aria-pressed="${filter === k}">${label}<span class="n">${c[k]}</span></button>`).join("");
+    $("tlist").innerHTML = loading && !tasks.length ? `<div class="empty">Wird geladen…</div>` : !mcp && !tasks.length ? `<div class="empty">Aufgaben brauchen den Attio-Connector.</div>` : failed && !tasks.length ? `<div class="empty">Die Aufgaben konnten nicht geladen werden.</div>` : listHtml(tasks, filter, { now, slug: me?.slug ?? null, objectSlugs: OBJECT_SLUGS, states });
+    $("more").hidden = !truncated; $("more").textContent = truncated ? `Es werden die ersten ${TASK_CAP} offenen Aufgaben gezeigt.` : "";
+    $("undo").innerHTML = [...undo.entries()].map(([id, u]) => `<div class="u" data-undo-row="${esc(id)}"><span>„${esc(splitContent(u.task.content).title)}“ erledigt</span><button type="button" class="btn" data-undo="${esc(id)}">Rückgängig</button></div>`).join("");
+  }
+  function paintCacheLine() { $("cacheLine").textContent = `Zwischenspeicher nur in diesem Browser (Stand ${cacheSaved ? new Date(cacheSaved).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" }) : "leer"})`; }
+
+  // ── Zwischenspeicher (F019): the list opens from a copy in this browser, the connector refreshes it in the background. Only connector data is written.
+  const CACHE_MAX = TASK_CAP;
+  function readTaskCache() {
+    const c = taskCache.read(), d = c?.data;
+    if (!d || !Array.isArray(d.tasks) || d.tasks.length > CACHE_MAX || !d.tasks.every((t) => t && typeof t === "object" && typeof t.taskId === "string" && t.taskId)) return null;
+    return {
+      savedAt: c.savedAt, slug: typeof d.slug === "string" && SLUG.test(d.slug) ? d.slug : null, truncated: d.truncated === true,
+      tasks: d.tasks.map((t) => ({ taskId: t.taskId, content: tkText(t.content), deadlineAt: tkDay(t.deadlineAt), isCompleted: false, assigneeIds: [], linked: tkLinked(t.linked), createdAt: tkText(t.createdAt) || null })),
+    };
+  }
+  const persist = () => { if (taskCache.write({ slug: me?.slug ?? null, truncated, tasks: tasks.map((t) => ({ taskId: t.taskId, content: t.content, deadlineAt: t.deadlineAt, linked: t.linked, createdAt: t.createdAt })) })) { cacheSaved = Date.now(); } paintCacheLine(); };
+
+  // ── Laden ────────────────────────────────────────────────────────────────────
+  async function loadWho() {
+    const res = await callAttio("whoami", {});
+    const p = parsePayload(res);
+    const id = tkText(p?.workspace_member_id), slug = tkText(p?.workspace_slug);
+    if (!UUID.test(id)) throw Object.assign(new Error("whoami nennt keine workspace_member_id"), { code: "unknown_shape" });
+    return { id, slug: SLUG.test(slug) ? slug : null };
+  }
+  async function loadAll() {
+    if (!mcp || loading) return;
+    loading = true; failed = false; let restart = false; const gen = cacheGen; $("refresh").disabled = true; banner(null);
+    if (cacheAt === null) setConn("wait", "Verbinde mit Attio…"); else paintPill();
+    render();
+    try {
+      me = await loadWho();
+      const fetchPage = async (offset) => {
+        const res = await callAttio("list-tasks", { assignee_workspace_member_id: me.id, is_completed: false, limit: TASK_PAGE, offset }, { staleTime: 0, refresh: true });
+        const p = parsePayload(res);
+        if (p === null || p === undefined) throw Object.assign(new Error("list-tasks lieferte keine lesbare Antwort"), { code: "unknown_shape" });
+        const all = parseTasks(p);
+        // The assignee filter is the connector's; a task that names other assignees and not this person is never shown here.
+        return { tasks: all.filter((t) => !t.isCompleted && (!t.assigneeIds.length || t.assigneeIds.includes(me.id))), ids: all.map((t) => t.taskId), hasMore: p.has_more === true || p.has_more === "true" };
+      };
+      const r = await pageTasks(fetchPage);
+      if (gen !== cacheGen) { restart = true; return; }   // the copy was cleared while this load ran: read again instead of writing a copy back
+      const doneNow = new Set(undo.keys());
+      tasks = sortTasks(r.tasks.filter((t) => !doneNow.has(t.taskId))); truncated = r.truncated; cacheAt = null;
+      setConn("ok", "Attio verbunden");
+      persist();
+      log("ok", `${tasks.length} offene Aufgaben${truncated ? " (gekappt)" : ""}`);
+    } catch (err) {
+      failed = true; const [kind, html] = explain(err); banner(kind, html); setConn("bad", "Attio nicht erreichbar");
+      log("err", `Laden fehlgeschlagen: ${err?.code ?? "?"}`);
+    } finally { loading = false; $("refresh").disabled = !mcp; render(); if (restart) loadAll(); }
+  }
+
+  // ── Erledigt / Rückgängig ────────────────────────────────────────────────────
+  const find = (id) => tasks.find((t) => t.taskId === id);
+  async function markDone(id) {
+    const t = find(id); if (!t || states.get(id) === "busy") return;
+    states.set(id, "busy"); render();
+    try { await setTaskDone(callAttio, id, true); }
+    catch (err) { states.delete(id); const [kind, html] = explain(err); banner(kind, `<b>Nicht abgehakt:</b> ${html}`); render(); return; }
+    states.delete(id); banner(null);
+    tasks = tasks.filter((x) => x.taskId !== id);
+    const timer = setTimeout(() => { undo.delete(id); render(); }, UNDO_MS);
+    undo.set(id, { task: t, timer });
+    try { await mcp.invalidate(SERVER, "list-tasks"); } catch { /* nichts im Cache ist in Ordnung */ }
+    persist(); render();
+  }
+  async function reopen(id) {
+    const u = undo.get(id); if (!u) return;
+    clearTimeout(u.timer); undo.delete(id); render();
+    try { await setTaskDone(callAttio, id, false); }
+    catch (err) {  // the task is still done in Attio: the undo row comes back so the next try is one click
+      const [kind, html] = explain(err); banner(kind, `<b>Nicht rückgängig gemacht:</b> ${html}`);
+      undo.set(id, { task: u.task, timer: setTimeout(() => { undo.delete(id); render(); }, UNDO_MS) }); render(); return;
+    }
+    banner(null); tasks = sortTasks([...tasks, u.task]);
+    try { await mcp.invalidate(SERVER, "list-tasks"); } catch { /* nichts im Cache ist in Ordnung */ }
+    persist(); render();
+  }
+
+  $("fchips").addEventListener("click", (e) => { const b = e.target.closest("[data-filter]"); if (!b) return; filter = b.dataset.filter; render(); });
+  $("tlist").addEventListener("click", (e) => {
+    const el = e.target.closest("[data-done],[data-do],[data-no]"); if (!el) return;
+    if (el.dataset.done) { states.set(el.dataset.done, "confirm"); render(); $("tlist").querySelector(`[data-do="${CSS.escape(el.dataset.done)}"]`)?.focus(); }
+    else if (el.dataset.no) { states.delete(el.dataset.no); render(); $("tlist").querySelector(`[data-done="${CSS.escape(el.dataset.no)}"]`)?.focus(); }
+    else if (el.dataset.do) markDone(el.dataset.do);
+  });
+  $("undo").addEventListener("click", (e) => { const b = e.target.closest("[data-undo]"); if (b) reopen(b.dataset.undo); });
+  $("refresh").addEventListener("click", () => loadAll());
+  $("cacheClear").addEventListener("click", () => { cacheGen++; taskCache.clear(); cacheAt = null; cacheSaved = null; paintCacheLine(); loadAll(); });
+  setInterval(() => { if (cacheAt !== null) paintPill(); }, 60000);
+
+  // ── Start: leer zeichnen, die gespeicherte Liste zeigen, dann den Connector fragen ───
+  paintCacheLine();
+  try {   // F019: the stored list first, before any connector call
+    const c = readTaskCache();
+    if (c) { tasks = sortTasks(c.tasks); truncated = c.truncated; me = c.slug ? { id: null, slug: c.slug } : null; cacheAt = c.savedAt; cacheSaved = c.savedAt; paintPill(); }
+    render(); paintCacheLine();
+  } catch (err) { tasks = []; me = null; cacheAt = null; cacheSaved = null; taskCache.clear(); try { render(); paintCacheLine(); } catch { /* nothing to paint */ } }  // a stored list that cannot be drawn is dropped; the live load below runs as if there were none
+  (async () => {
+    log("info", `window.claude ${window.claude ? "vorhanden" : "fehlt"} · use ${typeof window.claude?.use}`);
+    let cap = null;
+    try { cap = window.claude?.use ? await window.claude.use("mcp") : null; } catch (e) { log("err", `use('mcp'): ${e?.code ?? "?"} ${e?.message ?? ""}`); }
+    if (!cap) {
+      log("err", "use('mcp') → null: diese Ansicht liefert keine Connectoren");
+      failed = true; setConn("bad", "Keine Connectoren in dieser Ansicht");
+      const [kind, html] = explain({ code: "not_granted" }); banner(kind, html); render();
+      await permInit($("banner"), { claude: window.claude, esc, say: (t, raw) => log("info", t, raw), reload: () => location.reload() }); return;
+    }
+    mcp = cap; $("refresh").disabled = false; log("ok", "use('mcp') aufgelöst");
+    await loadAll();
+  })();
+})();
+</script>

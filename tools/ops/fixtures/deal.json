@@ -1,0 +1,12 @@
+{
+  "_note": "Invented company.",
+  "name": "Example Widgets GmbH",
+  "domain": "widgets.example.com",
+  "sector": "Example sector",
+  "stage": "New",
+  "round": "Pre-seed",
+  "raise": "EUR 1.0M",
+  "source": "Inbound",
+  "createdAt": "2026-10-04T08:00:00Z",
+  "notes": "Founder writes that the product is live with two paying pilots."
+}

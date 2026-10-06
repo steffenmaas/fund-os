@@ -1,0 +1,28 @@
+{
+  "_note": "Invented organisation.",
+  "name": "Example Family Office",
+  "domain": "family-office.example.com",
+  "country": "DE",
+  "investorType": "family office",
+  "status": "Target",
+  "fit": 75,
+  "lastInteraction": null,
+  "followUps": 0,
+  "replyReceived": false,
+  "doNotContact": false,
+  "contacts": [
+    {
+      "name": "Contact Person",
+      "title": "Investment Director",
+      "email": "investor@example.com"
+    }
+  ],
+  "focus": "Venture funds, real assets",
+  "targets": [
+    "Venture funds"
+  ],
+  "thesis": "Allocates to venture funds and backs first-time managers.",
+  "criteria": "Commitments of 1-3 M EUR.",
+  "portfolio": "Two venture fund commitments.",
+  "description": "A single family office in Germany."
+}

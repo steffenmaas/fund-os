@@ -1,0 +1,12 @@
+{
+  "title": "Intro call: Example Fund and Example Family Office",
+  "description": "Booking details: https://calendar.example.org/book/sam",
+  "start": {
+    "dateTime": "2026-10-12T10:00:00Z"
+  },
+  "attendees": [
+    {
+      "email": "investor@example.com"
+    }
+  ]
+}

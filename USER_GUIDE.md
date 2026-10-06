@@ -174,6 +174,8 @@ fund-os:lp-quarterly-report
 
 **Fund OS never sends or publishes anything without your explicit approval.** Every document that leaves the fund — LP reports, capital call notices, legal documents, audit trail entries — is produced as a **draft** and held for partner sign-off before delivery.
 
+The one exception is opt-in and per module: the Phase 09 autopilot skills run on a schedule and, only where a partner has switched a module to `on` in the Agent Workbench, send inside fixed guardrails with every act on record first (see `ops-autopilot-runbook`). Every module starts at `off`.
+
 ---
 
 ## 6. Skill quick reference
@@ -247,6 +249,20 @@ fund-os:lp-quarterly-report
 | Share deals with co-investors | `deal-co-investor-syndicate` | "Match this deal with co-investors" |
 | Curate the weekly watchlist | `deal-watchlist-curate` | "Curate this week's watchlist" |
 | Manage accelerator and partner relationships | `outreach-partner-manage` | "Update the partner overview" |
+
+### I'm running the autopilot (optional)
+
+| Task | Skill | What to say |
+|---|---|---|
+| Set up switches, guardrails and Routines | `ops-autopilot-runbook` | "Set up the autopilot" / "Write the autopilot ADR" |
+| Inbound founder mails, scheduled | `ops-dealflow-inbound` | fired by a Routine; by hand: "Run the inbound autopilot" |
+| Investor first touches and follow-ups, scheduled | `ops-investor-outreach` | fired by a Routine; by hand: "Run the investor autopilot" |
+| Weekly newsletter draft, scheduled | `ops-newsletter` | fired by a Routine; by hand: "Run the newsletter autopilot" |
+| Meeting notes filed in the CRM, scheduled | `ops-meeting-notes` | fired by a Routine; by hand: "Run the meeting-notes autopilot" |
+| People from meetings, mails and event lists filed in the CRM, scheduled | `ops-contact-sourcing` | fired by a Routine; by hand: "Run the contact sourcing" |
+| Monday deal digest as an approval, scheduled | `ops-weekly-digest` | fired by a Routine; by hand: "Run the weekly digest" |
+
+The module skills call the autopilot CLIs in `tools/ops/` of the Fund OS repository (scoring arithmetic, the deck, mail and invite checks, the switch and the store per module, the newsletter layout, meeting-note matching, contact sourcing, the digest ranking). They are not part of the plugin bundle: clone the repository and set `OPS_CLI` to that directory (`tools/ops/README.md` lists every subcommand). The partners' screens for the autopilot (Start, Deal Cockpit, Investor Relations, Agent Workbench, Knowledge, Profil, Content) are fund-neutral templates in `plugins/fund-os/templates/screens/`. Start is the entry page: a tile per screen and your own open CRM tasks by urgency. The Agent Workbench (formerly the Inbox) opens on **Aktivität**, the log of every agent run and action. Fund values that must not sit in a repository (the task assignee, the LP deck link, the booking link) can live in `fund-settings.md` in your Drive knowledge folder; the skills overlay it for one run. Under every proposal in the Agent Workbench a closed **Kontext** block shows the mail thread, the Drive documents of the deal and the CRM record, loaded from your own connectors when you open it; the Deal Cockpit and Investor Relations open at once from a copy of the last list that stays in your browser and refresh in the background ("Zwischenspeicher leeren" in the diagnostics clears it). The meeting-notes module assigns each next step to the member the notes name, else to the fund people in the call, else to `autopilot.notes.taskAssignee` (an address of a CRM member; leave it as a placeholder to create no task when nobody is named).
 
 ### Other
 

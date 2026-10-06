@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "modules": {
+    "notes": {
+      "mode": "on",
+      "maxOutboundPerDay": 20,
+      "purposes": [
+        "note",
+        "task",
+        "status-proposal"
+      ],
+      "updatedAt": "2026-10-05T08:30:00Z",
+      "updatedBy": "partner@example.org"
+    }
+  }
+}

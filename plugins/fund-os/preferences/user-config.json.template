@@ -58,6 +58,8 @@
     "dealStage": "",
     "investorFit": "",
     "investorFitEvaluation": "",
+    "investorTiming": "",
+    "investorTimingEvaluation": "",
     "archivedSlugs": []
   }
 }

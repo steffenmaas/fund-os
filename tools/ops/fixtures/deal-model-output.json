@@ -1,0 +1,126 @@
+{
+  "companySummary": "Example Widgets builds widget software for small operators. Two paying pilots.",
+  "screeningDepth": "First screening",
+  "quality": {
+    "dimensions": [
+      {
+        "name": "Team & Founder-Market Fit",
+        "points": 15,
+        "reason": "Fixture reason"
+      },
+      {
+        "name": "Market Opportunity",
+        "points": 10,
+        "reason": "Fixture reason"
+      },
+      {
+        "name": "Problem–Solution Fit",
+        "points": 10,
+        "reason": "Fixture reason"
+      },
+      {
+        "name": "Technology & Product",
+        "points": 7,
+        "reason": "Fixture reason"
+      },
+      {
+        "name": "Business Model",
+        "points": 7,
+        "reason": "Fixture reason"
+      },
+      {
+        "name": "Traction & Validation",
+        "points": 6,
+        "reason": "Fixture reason"
+      },
+      {
+        "name": "Competition & Differentiation",
+        "points": 3,
+        "reason": "Fixture reason"
+      },
+      {
+        "name": "Go-to-Market Strategy",
+        "points": 3,
+        "reason": "Fixture reason"
+      },
+      {
+        "name": "Financial Planning & Use of Funds",
+        "points": 3,
+        "reason": "Fixture reason"
+      },
+      {
+        "name": "Exit Potential",
+        "points": 3,
+        "reason": "Fixture reason"
+      }
+    ]
+  },
+  "thesis": {
+    "dimensions": [
+      {
+        "name": "Sector fit",
+        "points": 25,
+        "reason": "Fixture reason"
+      },
+      {
+        "name": "Stage fit",
+        "points": 20,
+        "reason": "Fixture reason"
+      },
+      {
+        "name": "Geography fit",
+        "points": 15,
+        "reason": "Fixture reason"
+      },
+      {
+        "name": "Business model fit",
+        "points": 10,
+        "reason": "Fixture reason"
+      },
+      {
+        "name": "Ticket & ownership fit",
+        "points": 8,
+        "reason": "Fixture reason"
+      }
+    ],
+    "hardFiltersFailed": [],
+    "why": "Inside the example sector at the right stage."
+  },
+  "urgency": {
+    "dimensions": [
+      {
+        "name": "Round status",
+        "points": 20,
+        "reason": "Fixture reason"
+      },
+      {
+        "name": "Time to close",
+        "points": 10,
+        "reason": "Fixture reason"
+      },
+      {
+        "name": "Allocation remaining",
+        "points": 8,
+        "reason": "Fixture reason"
+      },
+      {
+        "name": "Runway pressure",
+        "points": 5,
+        "reason": "Fixture reason"
+      },
+      {
+        "name": "Competitive tension",
+        "points": 5,
+        "reason": "Fixture reason"
+      }
+    ],
+    "basis": "inferred",
+    "source": "CRM target raise",
+    "closeDate": null,
+    "why": "Round stage suggests a close in a few months."
+  },
+  "impactFit": null,
+  "openQuestions": [
+    "Who are the two pilot customers?"
+  ]
+}

@@ -1,0 +1,13 @@
+results[3]:
+  - record_id: @@co-fernlea@@
+    attributes:
+      name: Fernlea Robotics
+      domains[1]: fernlea.example.com
+  - record_id: @@co-lakeside@@
+    attributes:
+      name: Lakeside Capital
+      domains[1]: lakeside-capital.example.net
+  - record_id: @@co-seaside@@
+    attributes:
+      name: Seaside Ventures
+      domains[2]: seaside.example.net,seaside-ventures.example.net

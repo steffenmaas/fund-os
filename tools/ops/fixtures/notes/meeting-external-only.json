@@ -1,0 +1,12 @@
+{
+  "_note": "Invented. Nobody of the fund in the call (the creator's address matches no workspace member).",
+  "id": "meeting-0021",
+  "title": "Northwind Kayaks | Follow-up",
+  "date": "2026-10-02T08:00:00.000Z",
+  "url": "https://notes.granola.ai/d/meeting-0021",
+  "participants": [
+    { "name": "Taylor Scribe", "email": "taylor.scribe@elsewhere.example", "creator": true },
+    { "name": "Robin Founder", "email": "robin@northwind.example", "company": "Northwind Kayaks" }
+  ],
+  "summary": "Invented summary for the task routing checks."
+}

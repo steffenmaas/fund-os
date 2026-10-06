@@ -1,6 +1,6 @@
 # Fund OS
 
-**43 Claude Skills for VC fund operations**, from first sourcing signal to wind-down, across eight
+**50 Claude Skills for VC fund operations**, from first sourcing signal to wind-down, across ten
 lifecycle phases. Built on the open [VC-Skills.md](https://github.com/luisschmitzheadline/vc-skills.md)
 community convention. Fund-side scope only — founder coaching is a separate bundle.
 
@@ -91,7 +91,7 @@ One-time welcome wizard and updater.
 Identify potential LPs, find paths to them, reach out, prepare a data room, manage commitment and KYC.
 
 - [`lp-database-scout`](./plugins/fund-os/skills/lp-database-scout/SKILL.md) — LP Database Scout
-- [`lp-investor-scoring`](./plugins/fund-os/skills/lp-investor-scoring/SKILL.md) — LP Investor Scoring — 8-dimension LP / co-investor scoring
+- [`lp-investor-scoring`](./plugins/fund-os/skills/lp-investor-scoring/SKILL.md) — LP Investor Scoring — seven-dimension LP / co-investor scoring
 - [`lp-network-intro-map`](./plugins/fund-os/skills/lp-network-intro-map/SKILL.md) — LP Network Intro Map
 - [`lp-outreach-draft`](./plugins/fund-os/skills/lp-outreach-draft/SKILL.md) — LP Outreach Draft
 - [`lp-data-room-build`](./plugins/fund-os/skills/lp-data-room-build/SKILL.md) — LP Data Room Build
@@ -166,6 +166,18 @@ Model exit scenarios and scan the secondary market.
 - [`exit-scenario-model`](./plugins/fund-os/skills/exit-scenario-model/SKILL.md) — Exit Scenario Model
 - [`exit-secondary-market-scan`](./plugins/fund-os/skills/exit-secondary-market-scan/SKILL.md) — Exit Secondary Market Scan
 
+### Phase 09 — Autopilot (human on the loop)
+
+Scheduled, switch-governed modules for inbound dealflow, investor outreach, the newsletter, meeting notes, contact sourcing and the Monday digest, and the runbook that governs them. Optional; see [Autopilot modules](#autopilot-modules). The module skills call the autopilot CLIs in [`tools/ops/`](./tools/ops/README.md) (scoring arithmetic and the deck, mail and invite checks, the switch and gate, the newsletter layout, meeting-note matching and checks, contact sourcing, the digest ranking), which read your `~/.fund-os/user-config.json` and are not part of the plugin bundle: clone the repository and set `OPS_CLI` to that directory.
+
+- [`ops-autopilot-runbook`](./plugins/fund-os/skills/ops-autopilot-runbook/SKILL.md) — Autopilot Runbook
+- [`ops-contact-sourcing`](./plugins/fund-os/skills/ops-contact-sourcing/SKILL.md) — Contact Sourcing Run
+- [`ops-dealflow-inbound`](./plugins/fund-os/skills/ops-dealflow-inbound/SKILL.md) — Inbound Dealflow Run
+- [`ops-investor-outreach`](./plugins/fund-os/skills/ops-investor-outreach/SKILL.md) — Investor Outreach Run
+- [`ops-meeting-notes`](./plugins/fund-os/skills/ops-meeting-notes/SKILL.md) — Meeting Notes Run
+- [`ops-newsletter`](./plugins/fund-os/skills/ops-newsletter/SKILL.md) — Newsletter Run
+- [`ops-weekly-digest`](./plugins/fund-os/skills/ops-weekly-digest/SKILL.md) — Weekly Digest Run
+
 ---
 
 ## Workflows
@@ -190,6 +202,14 @@ The skills compose into 18 cross-skill workflows you can wire up (cron / Agent S
 - **WF-16** Public Content Pipeline — `market-intelligence-scan, outreach-content-draft, outreach-newsletter-draft` — Turn the weekly market intel into a LinkedIn post or blog draft; queue the LP newsletter once per month.
 - **WF-17** Event Cycle — `outreach-event-manage, outreach-partner-manage` — Plan an event, run attendee briefings, capture follow-ups, update partnership register.
 - **WF-18** Exit Review — `exit-scenario-model, exit-secondary-market-scan` — Scenario modelling and secondary-market opportunity scan; output feeds the LPAC discussion.
+
+---
+
+## Autopilot modules
+
+The optional autopilot layer — switch per module, audit feed, human on the loop — described module by module, six of them with an explanatory graphic: [`docs/modules/README.md`](./docs/modules/README.md). The runbooks that implement it are the seven Phase 09 skills above; start with `ops-autopilot-runbook`.
+
+The partners' seven screens for it (Start with their own CRM tasks; deal cockpit with its tasks and in-page inbox and autopilot tabs; investor relations with a drag-and-drop board and the same tabs; the Agent Workbench with every agent's activity, the approvals with the context under each proposal and the audit feed; knowledge; profile with the tools per module and the content channels; Content with newsletter, articles and publishing; the lists open at once from a copy kept in the browser) ship as fund-neutral templates in [`plugins/fund-os/templates/screens/`](./plugins/fund-os/templates/screens/README.md); the executable guardrails the skills call are in [`tools/ops/`](./tools/ops/README.md).
 
 ---
 
@@ -235,6 +255,8 @@ Your configuration is never affected — it lives in `~/.fund-os/` and the knowl
 python3 tools/validate.py          # the plugin: paths, front matter, dashboard, secrets, neutrality
 python3 tools/check-knowledge.py   # your knowledge folder: manifest, placeholders, contradictions
 python3 tools/knowledge-map.py     # regenerate the index of which document each skill uses
+bash tools/check-ops-tools.sh      # the autopilot CLIs in tools/ops/: syntax, every subcommand against the fixtures
+bash tools/check-screen-templates.sh  # the seven Operations screens: parse, fund-neutral, mirrors against the CLIs and between pages (guards, autopilot, context, store tabs, tasks, local cache, permhelp, channels, the Start entry)
 ```
 
 `knowledge-map.py` writes `_KNOWLEDGE-MAP.md` into the knowledge folder: document → skills,
@@ -265,7 +287,7 @@ running version once drifted nine weeks ahead of git.
 |---|---|
 | `.claude-plugin/marketplace.json` | marketplace definition — name must match the repository |
 | `plugins/fund-os/` | the plugin: skills, knowledge templates, dashboard |
-| `tools/` | `validate.py`, `check-knowledge.py`, `build-plugin.sh`, `hooks/pre-commit` |
+| `tools/` | `validate.py`, `check-knowledge.py`, `check-ops-tools.sh`, `check-screen-templates.sh` (with the scoring and digest mirror guards), `build-plugin.sh`, `ops/` (autopilot CLIs), `hooks/pre-commit` |
 | `USER_GUIDE.md` | end-user guide — day-to-day usage, skill reference, troubleshooting |
 
 ### Before your first commit
