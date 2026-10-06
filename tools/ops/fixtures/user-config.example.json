@@ -23,6 +23,8 @@
     "investorStatusNotes": "example_investor_notes",
     "investorFit": "example_investor_fit",
     "investorFitEvaluation": "example_investor_fit_evaluation",
+    "investorTiming": "example_investor_timing",
+    "investorTimingEvaluation": "example_investor_timing_evaluation",
     "archivedSlugs": [
       "example_archived_slug"
     ]

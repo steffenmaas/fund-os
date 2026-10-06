@@ -489,7 +489,7 @@ def check_scoring_matrices() -> None:
         (SKILLS / "deal-startup-score" / "knowledge" / "startup-scoring-matrix.md",
          re.compile(r"^### \d+\. .+ — Weight: (\d+)%", re.M), 100, False),
         (SKILLS / "lp-investor-scoring" / "knowledge" / "lp-scoring-matrix.md",
-         re.compile(r"^## Dimension \d+ — .+ \(\d+–(\d+) pts\)", re.M), 120, True),
+         re.compile(r"^## Dimension \d+ — .+ \(\d+–(\d+) pts\)", re.M), 113, True),
     ]
     for path, pat, expected_raw, needs_norm in specs:
         if not path.exists():
@@ -515,6 +515,23 @@ def check_scoring_matrices() -> None:
                 bad.append(f"{rel(path)}: still says 'cap at 100' — capping hides the scale defect instead of fixing it")
         elif "raw" in text and re.search(r"round\(\s*raw\s*/", text):
             bad.append(f"{rel(path)}: caps already sum to 100, so it must not also normalise")
+    # The LP playbook template carries the same Fit rubric (seven dimensions, raw 113, normalised) and the Timing rubric (sum 100).
+    playbook = SKILLS / "lp-investor-scoring" / "knowledge" / "lp-fundraising-playbook.md"
+    if playbook.exists():
+        text = playbook.read_text(encoding="utf-8")
+        for label, section, want, pat in (
+            ("Scoring: Fit", "Scoring: Fit", 113, re.compile(r"^### Dimension \d+ — .+ \(0–(\d+)\)\s*$", re.M)),
+            ("Scoring: Timing", "Scoring: Timing", 100, re.compile(r"^### .+ \(0–(\d+)\)\s*$", re.M)),
+        ):
+            checked += 1
+            m = re.search(rf"^## {re.escape(section)}$(.*?)(?=^## |\Z)", text, re.M | re.S)
+            caps = [int(x) for x in pat.findall(m.group(1))] if m else []
+            if not caps:
+                bad.append(f"{rel(playbook)}: no '{label}' dimension caps found — the heading pattern may have changed")
+            elif sum(caps) != want:
+                bad.append(f"{rel(playbook)}: {label} has {len(caps)} caps summing to {sum(caps)}, expected {want}")
+            elif label == "Scoring: Fit" and not re.search(rf"round\(\s*raw\s*/\s*{want}\s*[×x*]\s*100\s*\)", m.group(1)):
+                bad.append(f"{rel(playbook)}: Fit caps sum to {want}, so the section must state 'round(raw / {want} × 100)'")
     # The startup matrix carries two further rubrics that also declare caps summing to 100.
     # They are scored, stored and sorted on exactly like the quality dimensions, so they get the
     # same arithmetic guarantee -- the defect this check exists for does not care which rubric

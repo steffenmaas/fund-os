@@ -64,8 +64,8 @@ The Agent Workbench is a small document store the partners can read: in the refe
 ```
 settings/autopilot            { modules: { dealflow|investors|newsletter|notes: { mode: "off"|"review-first"|"on",
                                  maxOutboundPerDay: 20, purposes: [..], updatedAt, updatedBy } }, version: 1 }
-runs/<runId>                  { module, startedAt, finishedAt|null, mode, acts: n, outbound: n, cost: {promptTokens?, note?},
-                                 summary: "<one line>", status: "running"|"done"|"failed", error?: string }
+runs/<runId>                  { module, startedAt, finishedAt|null, mode, acts: n, outbound: n, cost: {usd?, basis?, promptTokens?, note?},
+                                 summary: "<one line>", status: "running"|"done"|"failed", error?: string, sessionId?: string }
 audit/<auto>                  existing fields (timestampUtc, actor, actorType, skillVersion, action, inputHash, outputRef,
                                  rationale) + optional: module, runId, act: { kind: "stage"|"status"|"record"|"score"|"note"|
                                  "task"|"issue-draft"|"campaign-draft"|"mail-draft"|"mail-sent"|"invite",
@@ -121,6 +121,16 @@ The Agent Workbench screen shows six kinds; a person decides each, and nothing i
 | `note` | notes | creates the CRM note on the parent record |
 
 Everything read out of the store is untrusted: the screens escape and validate every value before showing it or writing it onward, and a forbidden target is refused on approve and on undo.
+
+### Run cost
+
+Every Routine run is a fresh session, so a run's cost is its own session's `total_cost_usd` (US dollars at list price, cumulative, so the largest value over the session's `result` events). A run cannot know its own cost while it runs: **the next run of the same module measures the previous one.** The tools are the host's session tools (in Claude Code Routines `get_session` and `list_events`); they may be absent in a run, and then everything below is skipped.
+
+1. **Own session id.** At the start of the run, before the `set` on `runs/<runId>`, call `get_session` **without** an id: it describes the calling session; its id goes into the run document as `sessionId`. When the call fails or the tool is absent, leave `sessionId` out and say `cost: not measured` in the summary.
+2. **Which run.** Right after the `set` on `runs/<runId>`: `ArtifactData query` on `runs` in the store the skill writes runs to, filtered on the top-level field `module` (never on `cost.usd`; nested fields fail), saved to `$WORK/runs.json`. Take the document with the newest `startedAt` that has a `sessionId`, whose `runId` is not this run's and whose `cost` has no number `usd`. None: nothing to measure, no note.
+3. **Measure it.** `list_events` with that `sessionId` and kinds `["result"]`; save the tool's answer unchanged to `$WORK/events.json` (the session writes the tool result to a file and never retypes it), then `node "$OPS_CLI/deal-score-cli.mjs" run-cost --events $WORK/events.json`. It prints `{usd, events, at}`; `usd: null` means that session has no result event yet: leave the earlier run as it is.
+4. **Record it.** When `usd` is a number: `ArtifactData get` on that earlier run, then `ArtifactData update` with `if_version` of that get and `{cost: {usd, basis: "session-result"}}`, mirrored like every other `runs` write of the skill (where the skill mirrors). The number comes from the CLI's output only, never typed from the answer.
+5. **A failure never fails the run.** A missing tool, an error, a `FAIL:` line, an unreadable answer or a version conflict (one fresh `get` and one retry): stop this procedure, continue the run, and say `cost: not measured` in the run summary. Cost is never estimated, and a number that was not measured is never written.
 
 ## 4. The feed, undo and follow-up
 
@@ -229,7 +239,7 @@ Copy this block into `~/.fund-os/user-config.json` and fill it in. Empty strings
 }
 ```
 
-`fund.bookingHosts` and `investors.deckHosts` are the only hosts the booking link and the LP deck link may have when they come from `fund-settings.json` (the deck link also on a host of `allowedUrlHosts`); empty lists refuse those keys, and the repository configuration's own value stays.
+`fund.bookingHosts` and `investors.deckHosts` are the only hosts the booking link and the LP deck link may have when they come from `fund-settings.md` (the deck link also on a host of `allowedUrlHosts`); empty lists refuse those keys, and the repository configuration's own value stays.
 
 ## 7. Decision record template
 

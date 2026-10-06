@@ -20,7 +20,8 @@
  *                 cockpit's // region:rank, held by tools/check-digest-mirror.mjs.
  *   digest-prompt --ranked <rank output json> --knowledge <dir> [--config <path>] [--today <iso>]
  *                 prints the drafting prompt: rules, the fund's knowledge documents (investment-thesis.md,
- *                 evaluation-criteria.md, tone-guide.md in <dir>; a missing one is skipped), the deal briefs inside a fenced
+ *                 evaluation-criteria.md, tone-guide.md in <dir>; a missing one is skipped; content-playbook.md there (else the older
+ *                 content-strategy.md) adds the fund's content strategy for the LinkedIn and co-investor texts), the deal briefs inside a fenced
  *                 untrusted-data block and the JSON shape {picks[{name, what, whyNow, next}], internal, coInvestor, linkedin, notes}
  *   check-digest  --digest <json> --ranked <rank output json> [--config <path>]
  *                 exit 0 + "OK", or exit 1 + one "FAIL:" line per reason: more picks than autopilot.digest.maxPicks (7), no
@@ -36,6 +37,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { allowedHosts, ap, die, fundName, loadConfig, need, parseArgs, readJson, strings, urlProblems } from "./lib/common.mjs";
 import { fold } from "./lib/text.mjs";
+import { parseStrategy, strategyBrief } from "./lib/strategy.mjs";
 
 const DEFAULT_MAX_PICKS = 7;
 const DEFAULT_LIMIT = 25;
@@ -256,7 +258,7 @@ function brief(r) {
   ].filter(Boolean).join("\n");
 }
 
-export function buildPrompt({ ranked, docs, cfg, today }) {
+export function buildPrompt({ ranked, docs, cfg, today, strategy = "" }) {
   const d = ap(cfg).digest ?? {};
   const maxPicks = Number.isInteger(d.maxPicks) && d.maxPicks > 0 ? d.maxPicks : DEFAULT_MAX_PICKS;
   const language = isStr(d.language) ? d.language : DEFAULT_LANGUAGE;
@@ -280,6 +282,7 @@ export function buildPrompt({ ranked, docs, cfg, today }) {
     `- coInvestor: for co-investors, qualified deals only; no scores or score numbers, no stage names (${stages.length ? stages.join(", ") : "no stage names"}), no amounts and no valuations, no internal opinion.`,
     `- linkedin: a public post draft, themes and market signals, not a pipeline. Never name a company whose stage is ${confidential.length ? confidential.join(", ") : "in diligence or later"}; naming none is the safe course.`,
     "",
+    ...(strategy ? ["## The fund's content strategy", "", "Written by the partners. The coInvestor and linkedin texts follow its audiences, principles and LinkedIn format where the briefs allow; the rules below always win.", "", strategy, ""] : []),
     "## Rules",
     "",
     "- Use only the briefs; invent nothing. Copy each pick's name exactly as the briefs write it.",
@@ -317,7 +320,15 @@ function cmdPrompt(args) {
     if (text) docs[k] = text.length > KNOWLEDGE_CAP ? `${text.slice(0, KNOWLEDGE_CAP)}\n[… cut at ${KNOWLEDGE_CAP} characters]` : text;
   }
   const today = typeof args.today === "string" ? todayOf(args.today).toISOString().slice(0, 10) : (input.today ?? new Date().toISOString().slice(0, 10));
-  process.stdout.write(buildPrompt({ ranked: input.ranked, docs, cfg, today }));
+  // content-playbook.md in the knowledge directory (the older content-strategy.md when it is missing) gives the strategy's brief for LinkedIn
+  // (goal, audiences, principles, LinkedIn formats); the playbook's newsletter sections are not part of it.
+  let strategy = "";
+  for (const name of ["content-playbook.md", "content-strategy.md"]) {
+    let t = null;
+    try { t = readFileSync(resolve(dir, name), "utf8"); } catch { /* missing: try the older file */ }
+    if (t !== null) { strategy = strategyBrief(parseStrategy(t), ["linkedin"]); break; }
+  }
+  process.stdout.write(buildPrompt({ ranked: input.ranked, docs, cfg, today, strategy }));
 }
 
 // ── check-digest ─────────────────────────────────────────────────────────────────

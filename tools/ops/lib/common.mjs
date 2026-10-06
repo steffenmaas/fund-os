@@ -131,12 +131,13 @@ export function urlProblems(text, hosts) {
 }
 
 // ── Knowledge documents from a directory ──────────────────────────────────────
-const SOURCE = { fund: "fund", bundled: "bundled", missing: "missing" };
+// "drive" is the label of a file read from the document store (the fund's knowledge folder); it counts as the fund's own document.
+const SOURCE = { fund: "fund", drive: "fund", bundled: "bundled", missing: "missing" };
 export const CAPS = [40000, 24000, 16000, 10000];
 export const PROMPT_MAX_BYTES = 60000;
 export const WRITE_TEXT_MAX = 20000;
 
-/** <dir>/<key>.md plus an optional <key>.meta.json {source: "fund"|"bundled"|"missing", title, modifiedTime}. */
+/** <dir>/<key>.md plus an optional <key>.meta.json {source: "fund"|"drive"|"bundled"|"missing", title, modifiedTime}. */
 export function loadDocs(dir, keys) {
   const docs = {};
   for (const key of keys) {

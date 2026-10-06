@@ -2,9 +2,9 @@
  * Fund OS autopilot CLIs: the arithmetic a model is not allowed to do.
  *
  * A model proposes per-dimension points with a reason each. Everything after that is computed here,
- * deterministically, from the Fund OS scoring matrices (startup-scoring-matrix v2, lp-scoring-matrix):
+ * deterministically, from the Fund OS scoring matrices (startup-scoring-matrix v2, lp-scoring-matrix v2):
  * totals are sums, bands come from fixed thresholds, the recommended action comes from the
- * Quality x Thesis Fit table, urgency expires after thirty days. Pure functions, no imports.
+ * Quality x Thesis Fit table, urgency expires after thirty days and the LP Timing reading after sixty. Pure functions, no imports.
  * tools/validate.py proves the caps below still sum to what the matrices declare.
  */
 
@@ -37,6 +37,10 @@ export const URGENCY_DIMENSIONS = [
   ["Competitive tension", 15],
 ];
 
+/**
+ * LP Fit: seven dimensions, raw maximum 113, normalised to 0-100. "Activity Signal" of the earlier eight-dimension matrix
+ * (raw 120) moved out of Fit: whether an investor is deploying now is Timing's question, a second score.
+ */
 export const LP_DIMENSIONS = [
   ["Fund of Funds Fit", 20],
   ["Emerging Manager Fit", 20],
@@ -45,10 +49,20 @@ export const LP_DIMENSIONS = [
   ["AuM / Ticket Size", 8],
   ["Investor Strength", 15],
   ["Network Proximity", 15],
-  ["Activity Signal", 7],
 ];
 
-export const LP_RAW_MAX = 120;
+export const LP_RAW_MAX = 113;
+
+/**
+ * LP Timing: is this investor deploying now? Four dimensions that sum to 100, so the total needs no normalisation. A reading
+ * is valid for TIMING_VALID_DAYS, like urgency's thirty: an allocation window moves.
+ */
+export const LP_TIMING_DIMENSIONS = [
+  ["Current commitments", 35],
+  ["Allocation window / fund cycle", 25],
+  ["Signals from conversations and meetings", 25],
+  ["Constraints", 15],
+];
 
 export const capSum = (dims) => dims.reduce((a, [, c]) => a + c, 0);
 
@@ -115,6 +129,35 @@ export const URGENCY_VALID_DAYS = 30;
 
 export function voidAfter(from) {
   return new Date(from.getTime() + URGENCY_VALID_DAYS * 86_400_000).toISOString().slice(0, 10);
+}
+
+export function timingBand(t) {
+  if (t >= 80) return "Deploying now";
+  if (t >= 60) return "Window open";
+  if (t >= 40) return "Possible window";
+  if (t >= 20) return "Not yet";
+  return "Closed";
+}
+
+export const TIMING_VALID_DAYS = 60;
+
+/** The last day a Timing reading counts, from the day it was made. */
+export function timingValidUntil(from) {
+  return new Date(from.getTime() + TIMING_VALID_DAYS * 86_400_000).toISOString().slice(0, 10);
+}
+
+/**
+ * A Timing evaluation starts with its own as-of date ("as of YYYY-MM-DD ..."); this reads it back. Anything that does not start
+ * that way is stale: a reading without a date cannot be trusted to still hold. A reading is valid through the end of its
+ * timingValidUntil day (as-of + 60 days, inclusive), whatever the time of day `today` carries.
+ */
+export function timingIsStale(evaluation, today) {
+  if (!evaluation) return true;
+  const m = /^\s*as of (\d{4}-\d{2}-\d{2})/.exec(evaluation);
+  if (!m) return true;
+  const asOf = new Date(`${m[1]}T00:00:00Z`).getTime();
+  const todayDay = Math.floor(today.getTime() / 86_400_000) * 86_400_000;
+  return !Number.isFinite(asOf) || todayDay - asOf > TIMING_VALID_DAYS * 86_400_000;
 }
 
 export const lpNormalise = (raw) => Math.round((raw / LP_RAW_MAX) * 100);

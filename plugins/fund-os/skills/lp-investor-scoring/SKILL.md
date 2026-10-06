@@ -1,6 +1,6 @@
 ---
 name: lp-investor-scoring
-description: Score LP, co-investor and strategic-partner prospects against the fund's LP thesis on eight dimensions, with relationship-type classification and the institutional asset owner override. Use this skill whenever the user wants to score investors, evaluate LP fit, rate a new investor, screen a prospect list, add scores to a CSV, or assess whether an investor is a good LP candidate. Also use proactively when working with investor CSVs, CRM LP lists, or database exports where the investor-fit field is missing. Trigger on phrases like "score these investors", "LP fit", "add scoring", "evaluate this investor", "who should we approach". Phase 01 (Fundraising & LP). Fund-side only.
+description: Score LP, co-investor and strategic-partner prospects against the fund's LP thesis on seven Fit dimensions plus a separate Timing reading, with relationship-type classification and the institutional asset owner override. Use this skill whenever the user wants to score investors, evaluate LP fit, rate a new investor, screen a prospect list, add scores to a CSV, or assess whether an investor is a good LP candidate. Also use proactively when working with investor CSVs, CRM LP lists, or database exports where the investor-fit field is missing. Trigger on phrases like "score these investors", "LP fit", "add scoring", "evaluate this investor", "who should we approach". Phase 01 (Fundraising & LP). Fund-side only.
 ---
 
 # LP Investor Scoring
@@ -9,7 +9,7 @@ Score investor and co-investor prospects against the fund's LP thesis. This cove
 
 The fund's identity, sector and positioning come from the **Fund Context** section of the scoring matrix and from `investment-thesis` — never from memory. In particular, apply the matrix's **positioning rule** verbatim: every fund has a phrase it always uses and one it never uses, and LP-facing output is exactly where getting it wrong costs the most.
 
-**No entity is ever scored 0 or disqualified.** Every scored entity is a potential relationship of some kind — see Investor Relationship Type below. All relationship types are scored on the same 8 dimensions with no separate multiplier or adjustment; Dimension 1 (Fund of Funds/LP Fit) naturally differentiates LPs from Co-Investors on its own.
+**No entity is ever scored 0 or disqualified.** Every scored entity is a potential relationship of some kind — see Investor Relationship Type below. All relationship types are scored on the same 7 Fit dimensions with no separate multiplier or adjustment; Dimension 1 (Fund of Funds/LP Fit) naturally differentiates LPs from Co-Investors on its own.
 
 ---
 
@@ -35,7 +35,8 @@ Apply `brandGuidelines.tone` to all prose output if present.
 The scoring matrix in `knowledge/lp-scoring-matrix.md` is the authoritative source for:
 - Investor Relationship Type classification (LP / Co-Investor / Strategic Partner) — a labeling and routing step only, not a scoring adjustment
 - Institutional Asset Owner Override (Pension Fund / Insurance / Sovereign Wealth Fund / large Endowment dampening)
-- All 8 dimension point tables
+- All 7 Fit dimension point tables
+- Where the fund keeps an `lp-fundraising-playbook` (knowledge folder; template in this skill's `knowledge/` folder), its sections "Scoring: Fit" and "Scoring: Timing" are the rubric and replace the matrix; the matrix is the fallback
 - Score tier thresholds and recommended actions (separate action wording for LP vs. Co-Investor, same score thresholds)
 - Validation reference scores
 - Misclassification warnings — the adjacent categories this fund is regularly mistaken for
@@ -58,17 +59,18 @@ The scoring matrix in `knowledge/lp-scoring-matrix.md` is the authoritative sour
 Apply in order:
 
 1. **Investor Relationship Type check** — classify as LP (default), Co-Investor, or Strategic Partner using the signals in the scoring matrix (e.g. "Vehicle: Startups" with no fund vehicle, "co-investor - NOT an LP", accelerator/advisor framing → Co-Investor or Strategic Partner). This only affects the label on the output and the Dimension 1 rationale — not the math. If the entity turns out not to be an investor at all (individual, duplicate CRM entry, unrelated business), flag it for removal in the evaluation notes instead of scoring it.
-2. **Institutional Asset Owner Override check** — if Investor Type = Pension Fund / Insurance / Sovereign Wealth Fund / Endowment >€1B AuM and there is no confirmed emerging-manager program evidence, apply the Dimension 2 / 6 / 8 caps from the scoring matrix before proceeding
-3. **Apply all 8 dimensions** — award points per scoring matrix tables, identical tables and identical math regardless of Relationship Type
-4. **Sum the eight dimensions (raw, 0–120), then normalise:** `final = round(raw / 120 × 100)`. Never cap — capping at 100 is what hid the scale defect before v8. Report both numbers.
-5. **Output evaluation block** (format below)
+2. **Institutional Asset Owner Override check** — if Investor Type = Pension Fund / Insurance / Sovereign Wealth Fund / Endowment >€1B AuM and there is no confirmed emerging-manager program evidence, apply the Dimension 2 / 6 caps from the scoring matrix before proceeding
+3. **Apply all 7 Fit dimensions** — award points per scoring matrix tables, identical tables and identical math regardless of Relationship Type
+4. **Sum the seven dimensions (raw, 0–113), then normalise:** `final = round(raw / 113 × 100)`. Never cap — capping at 100 is what hid the scale defect before v8. Report both numbers.
+5. **Timing (optional, a second score)** — is this investor deploying *now*? Four dimensions summing to 100 (no normalisation): Current commitments (0–35), Allocation window / fund cycle (0–25), Signals from conversations and meetings (0–25), Constraints (0–15). Judge it from dated facts only (notes, meeting notes, mail threads, documents, the CRM record), name each fact's date in the reason, and give a missing fact few points with the reason "No information available". Bands: 80–100 Deploying now, 60–79 Window open, 40–59 Possible window, 20–39 Not yet, 0–19 Closed. A reading is valid for 60 days and starts with its own "as of YYYY-MM-DD". Timing never changes Fit. The scheduled run (`fund-os:ops-investor-outreach`) writes it through the scoring CLI; here it is reported next to Fit when the user asks for it.
+6. **Output evaluation block** (format below)
 
 ### Evaluation output format
 
 Use this exact structure and alignment — labels padded so all `+` signs line up in one column:
 
 ```
-LP Fit Score: [SCORE]/100  (raw [RAW]/120)
+LP Fit Score: [SCORE]/100  (raw [RAW]/113)
 [🤝 Co-Investor / Strategic Partner — [1-line reason for classification]  ← only if not LP]
 [🏛 Institutional Asset Owner Override applied — [reason]  ← only if override applies]
 
@@ -80,7 +82,6 @@ Scoring breakdown:
 • AuM / Ticket Size:    +[pts]/8  — [1-line rationale]
 • Investor Strength:    +[pts]/15 — [1-line rationale]
 • Network Proximity:    +[pts]/15 — [1-line rationale]
-• Activity Signal:      +[pts]/7  — [1-line rationale]
 
 Fund of Funds Fit: [★★★★★] — [1-sentence summary]
 Thesis Fit: [★★★★★] — [1-sentence summary]
@@ -92,7 +93,7 @@ Evaluated: [YYYY-MM-DD] | [Fund] LP scoring v1
 **Worked example** (follow this formatting exactly — same label padding, same line breaks, same level of detail per rationale):
 
 ```
-LP Fit Score: 77/100  (raw 92/120)
+LP Fit Score: 77/100  (raw 87/113)
 
 Scoring breakdown:
 • Fund of Funds Fit:    +20/20 — fund-of-funds
@@ -102,7 +103,6 @@ Scoring breakdown:
 • AuM / Ticket Size:    +4/8  — ticket fit estimated from profile
 • Investor Strength:    +7/15 — Tier 3
 • Network Proximity:    +3/15 — identifiable decision-maker
-• Activity Signal:      +5/7  — recent activity
 
 Fund of Funds Fit: ★★★★★ — fund-of-funds (Dim 1 = 20/20)
 Thesis Fit: ★★★★★ — dedicated mandate in the fund's sector
@@ -126,8 +126,8 @@ Use when scoring a list. Output columns: `Name`, `Domain`, and the two slugs fro
    labeling purposes only; flag confirmed non-investors for removal instead of scoring them
 2. Parse each row — extract Name, Investor Type, HQ Country, AuM, thesis/description
 3. Institutional Asset Owner Override check — Pension Fund / Insurance / Sovereign Wealth Fund /
-   Endowment >€1B without confirmed EM program evidence → apply Dimension 2/6/8 caps
-4. Apply all 8 dimensions — award points, note rationale per dimension. Same math for every row.
+   Endowment >€1B without confirmed EM program evidence → apply Dimension 2/6 caps
+4. Apply all 7 Fit dimensions — award points, note rationale per dimension. Same math for every row.
 5. Write `crmFields.investorFit` (integer, never 0) and `crmFields.investorFitEvaluation` (full text). Slugs come from the configuration — never hardcode them.
 6. Sort descending by score
 7. Save checkpoint after every 300 rows — partial results are never lost
@@ -141,14 +141,14 @@ Use when scoring a list. Output columns: `Name`, `Domain`, and the two slugs fro
 ### Dealroom thesis string parsing
 
 When `Investment thesis` contains a Dealroom longlist string, extract:
-- `rank N` → Dimension 6 (Investor Strength) and Dimension 8 (Activity proxy) — subject to the fund-count-vs-rank conflict rule and Institutional Asset Owner Override
+- `rank N` → Dimension 6 (Investor Strength) — subject to the fund-count-vs-rank conflict rule and Institutional Asset Owner Override
 - `AuM: $XM/B` → Dimension 5 (AuM/Ticket Size)
 - `VC AuM: $XM/B` → fallback for Dimension 5
 - `VC firms backed: N` → fallback for Dimension 6, and the primary signal used against `rank N` in the conflict rule
 - `Type: [type]` → input for Dimension 1 (Fund of Funds Fit) and for triggering the Institutional Asset Owner Override
 - `HQ: [country]` → input for Dimension 4 (Geography)
 
-Relationship Type routing: if thesis contains `"EQUITY-INVESTOR LEAD"`, `"startup investor, NOT a fund LP"`, or `"co-investor - NOT an LP"` → classify as Co-Investor and label the output accordingly, but score all 8 dimensions exactly as for any other entity. Do not zero the score, and do not apply any multiplier.
+Relationship Type routing: if thesis contains `"EQUITY-INVESTOR LEAD"`, `"startup investor, NOT a fund LP"`, or `"co-investor - NOT an LP"` → classify as Co-Investor and label the output accordingly, but score all 7 dimensions exactly as for any other entity. Do not zero the score, and do not apply any multiplier.
 
 ---
 

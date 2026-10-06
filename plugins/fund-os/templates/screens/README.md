@@ -73,7 +73,7 @@ The side menu links the seven screens to each other, and each URL exists only af
 
 The Start entry is the first item of every side menu, above the areas, and the Start page shows one tile per area from the same URLs. An empty link renders as a disabled entry marked "folgt" in the Profil screen, a dead link in the side menu and a disabled tile on Start; nothing breaks.
 
-Once the pages run, the fund's own values that must not sit in a repository (a task assignee, the LP deck link, the booking link) belong in the file `fund-settings.json` in the Drive knowledge folder, which the autopilot skills overlay on the configuration for one run (`deal-score-cli.mjs fund-settings`, see `tools/ops/README.md`); the pages do not read it.
+Once the pages run, the fund's own values that must not sit in a repository (a task assignee, the LP deck link, the booking link) belong in the file `fund-settings.md` in the Drive knowledge folder, which the autopilot skills overlay on the configuration for one run (`deal-score-cli.mjs fund-settings`, see `tools/ops/README.md`); the pages do not read it.
 
 ## What must not drift
 

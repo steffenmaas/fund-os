@@ -1,0 +1,72 @@
+{
+  "goal": "Example Fund I raises 20 M EUR; the first closing is in spring with 6 M EUR.\n\nSecond paragraph of the goal.",
+  "who": "- LPs: family offices, funds of funds and foundations with room for first funds <img src=x onerror=alert(1)>\n- Co-investors: venture funds that go into rounds next to us. A co-investor may become an LP later, but need not.",
+  "searchProfiles": [
+    {
+      "tag": "family office",
+      "type": "family office"
+    },
+    {
+      "tag": "fund of funds",
+      "type": "fund of funds"
+    },
+    {
+      "tag": "example foundation",
+      "type": "institutional"
+    },
+    {
+      "tag": "example venture",
+      "type": "Co-Investor"
+    },
+    {
+      "tag": "Pension Fund",
+      "type": "Institutional"
+    },
+    {
+      "tag": "Seed Investor",
+      "type": "co-investor"
+    }
+  ],
+  "regions": {
+    "core": [
+      "DE",
+      "AT",
+      "CH",
+      "NL"
+    ],
+    "adjacent": [
+      "EU",
+      "UK"
+    ]
+  },
+  "sources": [
+    "A data provider for new candidates",
+    "Our own network and the partners' referrals"
+  ],
+  "exclusions": [
+    "Operating companies without an investment mandate",
+    "Individuals without a firm"
+  ],
+  "fit": "Seven dimensions, raw maximum 113.\n\n### Dimension 1 — Fund investor (0–20)\n\n| Signal | Points |\n|---|---|\n| Core business is fund commitments | 20 |\n| Unclear | 6 |\n\n### Dimension 2 — First-fund openness (0–20)\n\nOpen to first funds: 20. Asks for a track record: 2.\n\nIt also counts whether the investor has signed at least one first fund in the last three years; a single hint is not enough, it takes a documented example with date and fund name from a public or the fund's own source.",
+  "timing": "Four dimensions, sum 100. Valid for 60 days.\n\n| Dimension | Points |\n|---|---|\n| Current commitments | 0–35 |\n| Allocation window / fund cycle | 0–25 |\n\nA window counts only when a statement of the investor or a dated source supports it; without a date the statement is no evidence and the window counts as closed until a newer source says otherwise.",
+  "inputs": [
+    "The CRM record",
+    "Notes, meeting notes included",
+    "Mail threads of the last 12 months",
+    "Documents that name the investor"
+  ],
+  "pipeline": "After the first call the path leads to the fund operations platform: <enter link>.",
+  "principles": [
+    "Fit first, then speed."
+  ],
+  "unknown": [
+    "Notes"
+  ],
+  "stray": [
+    "search profile without a type: without a type",
+    "region XX is no ISO country code",
+    "region Atlantis is no ISO country code",
+    "Other: JP",
+    "Free sentence without a list bullet."
+  ]
+}

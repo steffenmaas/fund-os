@@ -1,5 +1,9 @@
 # LP Investor Scoring Matrix — TEMPLATE
-# Version: 1.0
+# Version: 2.0 — seven Fit dimensions; "Activity Signal" moved to the separate Timing score
+#
+# This template is the FALLBACK. The fund's own `lp-fundraising-playbook` (sections "Scoring: Fit" and
+# "Scoring: Timing"; template in this folder) replaces it wherever that document exists; this file
+# is read only when the playbook is missing.
 #
 # HOW TO USE: this is the shipped template, not a fund's actual matrix. The structure, the
 # dimensions, the override rules and the normalisation are the methodology and are meant to be
@@ -36,9 +40,9 @@ only LP prospects.
 
 | Type | Definition | Scoring treatment |
 |---|---|---|
-| **LP** (default) | Fund-of-funds, DFI, institutional / family-office / corporate allocator — invests capital INTO funds | Score all 8 dimensions normally |
-| **Co-Investor** | Confirmed direct investor — VC, corporate VC, peer fund, accelerator with a vehicle — invests into startups, not structured to commit as a fund LP | Score all 8 dimensions normally. Dimension 1 naturally lands low; that is the only differentiation needed |
-| **Strategic Partner** | Ecosystem node with no direct capital-deployment role — industry body, accelerator without a vehicle, introducer | Score all 8 dimensions normally |
+| **LP** (default) | Fund-of-funds, DFI, institutional / family-office / corporate allocator — invests capital INTO funds | Score all 7 dimensions normally |
+| **Co-Investor** | Confirmed direct investor — VC, corporate VC, peer fund, accelerator with a vehicle — invests into startups, not structured to commit as a fund LP | Score all 7 dimensions normally. Dimension 1 naturally lands low; that is the only differentiation needed |
+| **Strategic Partner** | Ecosystem node with no direct capital-deployment role — industry body, accelerator without a vehicle, introducer | Score all 7 dimensions normally |
 
 Detection signals for Co-Investor / Strategic Partner: "equity-investor lead", "startup investor,
 not a fund LP", "not structured to be a fund LP", a startup-only vehicle with no fund vehicle
@@ -61,12 +65,15 @@ For Investor Type = Pension Fund / Insurance / Sovereign Wealth Fund / Endowment
    record" tier, not the neutral default.
 2. **Dimension 6 (Investor Strength)** — apply the fund-count-vs-rank conflict rule below. Do not
    award a top tier on raw database rank alone.
-3. **Dimension 8 (Activity Signal) caps at 1/7** — the rank proxy is disabled for this group.
 
-**Why this exists:** Dimensions 6 and 8 both draw on the same "how big and prominent is this
-institution" signal, which for asset owners tracks AUM rather than fund-investment activity.
-Without the override, a statutory pension fund that has never written a cheque into a first-time
-niche vehicle scores like an active emerging-manager backer.
+**Why this exists:** Dimension 6 draws on a "how big and prominent is this institution" signal,
+which for asset owners tracks AUM rather than fund-investment activity. Without the override, a
+statutory pension fund that has never written a cheque into a first-time niche vehicle scores
+like an active emerging-manager backer.
+
+Whether an investor is deploying *now* is not part of Fit. It is the separate Timing score
+(four dimensions summing to 100, valid 60 days; ladders in the playbook's "Scoring: Timing",
+built-in guide in the scoring CLI).
 
 ---
 
@@ -185,7 +192,7 @@ sovereign wealth funds, whose rank is driven by AUM rather than VC activity.
 
 **Note for output clarity:** a high score here reflects general market prominence, not
 fund-of-funds or emerging-manager fit. A "Tier 1" tag is not an indicator that the institution is
-likely to invest — that is what Dimensions 1, 2 and 8 are for.
+likely to invest — that is what Dimensions 1 and 2 are for.
 
 ---
 
@@ -201,37 +208,16 @@ likely to invest — that is what Dimensions 1, 2 and 8 are for.
 
 ---
 
-## Dimension 8 — Activity Signal (0–7 pts)
-
-Is this investor actively deploying? Into funds for LPs; into deals for Co-Investors.
-
-| Signal | Pts |
-|---|---|
-| Active — new commitments or deals in the last 12 months | 7 |
-| Recent — commitments or deals in the last 2–3 years | 5 |
-| Moderate — some recent moves, irregular | 3 |
-| Low — last known activity 3–5 years ago | 1 |
-| Dormant / wind-down / harvest mode | 0 |
-
-Database-rank proxy (default, LPs only): rank ≤150 → 7 | rank ≤300 → 5 | rank 300+ → 3
-
-**Rule:** the rank proxy is **disabled** for Pension Fund / Insurance / Sovereign Wealth Fund /
-Endowment. Rank measures prominence, not confirmed fund-commitment cadence. For these types
-default to **1 pt**, unless there is confirmed evidence of a *direct* fund commitment — not routed
-via a consultant, FoF or platform — within the last three years.
-
----
-
 ## Score Tiers & Recommended Actions
 
-The eight dimension caps sum to a **raw maximum of 120** (20+20+20+15+8+15+15+7). The final score
+The seven dimension caps sum to a **raw maximum of 113** (20+20+20+15+8+15+15). The final score
 is that raw sum normalised to a 0–100 scale:
 
 ```
-final = round(raw / 120 × 100)
+final = round(raw / 113 × 100)
 ```
 
-Always report both, so a score can be audited back to its dimensions: `77/100 (raw 92/120)`.
+Always report both, so a score can be audited back to its dimensions: `77/100 (raw 87/113)`.
 
 Never cap the raw sum at 100. Capping hides a scale defect instead of fixing it — that is exactly
 how the declared range and the actual range drifted apart in the first place.
@@ -247,8 +233,8 @@ Same math for every Relationship Type. Tier and recommended action are assigned 
 | 20–39 | 👁 Watchlist | Monitor; revisit for the next fund | Ecosystem-map only; light-touch relationship |
 | 1–19 | ❌ Low Fit | Do not prioritise for LP outreach | Not a near-term priority; keep on file |
 
-No score is ever 0 or "disqualified" by policy — the floor across all 8 dimensions
-(2+1+0+1+1+2+0+0 = 7 raw → 6/100) means even a weak-fit entity lands with a nonzero score.
+No score is ever 0 or "disqualified" by policy — the floor across all 7 dimensions
+(2+1+0+1+1+2+0 = 7 raw → 6/100) means even a weak-fit entity lands with a nonzero score.
 
 ---
 

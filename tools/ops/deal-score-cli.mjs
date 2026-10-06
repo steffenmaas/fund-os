@@ -77,13 +77,16 @@
  *                 UTF-8, a NUL byte, or, with --expect-title, a `title` whose key differs (lower case, .md/.markdown/.txt cut,
  *                 separators to hyphens, as the screens' keyOf()). The skill then uses the bundled copy and names it.
  *
- *   fund-settings --settings <decoded fund-settings.json> --out <config.json> [--config <path>]
- *                 overlays the fund's own values, kept in the Knowledge folder in the Drive file fund-settings.json, on the
+ *   fund-settings --settings <decoded fund-settings.md (or the older .json form)> --out <config.json> [--config <path>]
+ *                 overlays the fund's own values, kept in the knowledge folder in the file fund-settings.md (Markdown the partners edit:
+ *                 "## Fund" / "## Investors" / "## Meeting notes" with "- Booking link: ...", "- Deck link: ...", "- Task fallback: ...";
+ *                 German names work too; a file that starts with { or [ is read as the older JSON form), on the
  *                 configuration for this run and writes the merged configuration to <out> (the other CLIs take it as --config);
  *                 prints `OK <n> keys` and one `REFUSED <key>: <reason>` line per refused key on stderr. Exit 1 + `FAIL:`
- *                 (nothing written) when either file is unreadable or not a JSON object. The file's shape is
+ *                 (nothing written) when either file is unreadable or not a JSON object. The JSON form's shape is
  *                 {"notes": {"taskAssignee": ...}, "investors": {"deckLink": ...}, "fund": {"bookingLink": ...}}, plus the
- *                 free-text keys _about, updatedAt and updatedBy, which are ignored. Allowed keys only, written to
+ *                 free-text keys _about, updatedAt and updatedBy, which are ignored; the Markdown form maps to the same keys, and
+ *                 an unknown heading or key passes through under its own name, so it is refused by name. Allowed keys only, written to
  *                 autopilot.<group>.<key> of the configuration:
  *                   notes.taskAssignee   a plain address (the workspace member who gets a next step nobody owns)
  *                   investors.deckLink   an https link on a host the repository configuration lists in autopilot.investors.deckHosts or
@@ -94,8 +97,15 @@
  *                 Anything else (an unknown key, a wrong type, a placeholder starting with "<", a value over 500 characters or with
  *                 a control character, another host) is refused with its reason and the configuration's own value stays.
  *
+ *   run-cost      --events <saved list_events answer of the session tool (kinds ["result"])>
+ *                 Prints one JSON line {usd, events, at}: usd = the largest finite total_cost_usd >= 0 among the result events (a fresh
+ *                 session is one run; the value is cumulative, so the largest is the run's), at = that event's created_at. Read from
+ *                 result.internal_anthropic_catchall.total_cost_usd or result.total_cost_usd; a negative, NaN or string value is
+ *                 ignored. No result event: {usd: null, events: 0}, exit 0 (events counts the events seen when none carries a cost).
+ *                 Invalid JSON or a shape without an event list: one `FAIL:` line, exit 1. The caller treats any failure as unmeasured.
+ *
  * <dir> holds <key>.md (investment-thesis, evaluation-criteria, startup-scoring-matrix) plus an optional
- * <key>.meta.json ({source: "fund"|"bundled"|"missing", title, modifiedTime}).
+ * <key>.meta.json ({source: "fund"|"drive"|"bundled"|"missing", title, modifiedTime}; "drive" is the fund's own file from the document store).
  * deal.json: {name, domain, sector, stage, round, raise, source, createdAt, notes?, summary?, thesisEval?, urgencyEval?}.
  */
 
@@ -982,12 +992,36 @@ export function mergeFundSettings(config, settings) {
   return { config: merged, taken, refused };
 }
 
+// The Markdown form partners edit in the knowledge folder: "## Fund" / "## Investors" / "## Meeting notes" (German names work too) with
+// "- Booking link: ...", "- Deck link: ...", "- Task fallback: ...". Unknown headings and keys pass through under their own name, so
+// mergeFundSettings refuses them by name; text outside list items is ignored.
+const FS_SECTIONS = [[/^(fund|fonds)$/, "fund"], [/^(investors|investoren|lp|lps)$/, "investors"], [/^(meeting[- ]notes|meeting[- ]notizen|notes|notizen)$/, "notes"]];
+const FS_KEYS = [[/^(booking[- ]?link|bookinglink|buchungslink)$/, "bookingLink"], [/^(deck[- ]?link|decklink|deck)$/, "deckLink"], [/^(task[- ]?fallback|task[- ]?assignee|taskassignee|aufgaben[- ]fallback|fallback)$/, "taskAssignee"]];
+export function parseFundSettingsMarkdown(text) {
+  const out = {};
+  const blocks = String(text ?? "").replace(/\r\n?/g, "\n").split(/^##[ \t]+(?!#)/m).slice(1);
+  for (const block of blocks) {
+    const nl = block.indexOf("\n");
+    const heading = (nl < 0 ? block : block.slice(0, nl)).replace(/#+\s*$/, "").trim();
+    const sec = FS_SECTIONS.find(([re]) => re.test(heading.toLowerCase()))?.[1] ?? heading.slice(0, 60);
+    for (const line of (nl < 0 ? "" : block.slice(nl + 1)).split("\n")) {
+      const m = /^\s*[-*+]\s+([^:]{1,60}):\s*(.*\S)\s*$/.exec(line);
+      if (!m) continue;
+      const key = FS_KEYS.find(([re]) => re.test(m[1].trim().toLowerCase()))?.[1] ?? m[1].trim();
+      // Own properties only, as JSON.parse makes them: "## __proto__" stays a key that mergeFundSettings refuses by name.
+      if (!Object.hasOwn(out, sec) || !out[sec] || typeof out[sec] !== "object") Object.defineProperty(out, sec, { value: {}, enumerable: true, writable: true, configurable: true });
+      Object.defineProperty(out[sec], key, { value: m[2].replace(/^<(https:\/\/[^>]+)>$/, "$1").replace(/^`(.*)`$/, "$1"), enumerable: true, writable: true, configurable: true });
+    }
+  }
+  return out;
+}
+
 function cmdFundSettings(args) {
   const cfgPath = configPath(args), setPath = need(args, "settings"), out = need(args, "out");
   const unreadable = (what, p, why) => die(`FAIL: cannot read ${what} ${p}: ${why}`);
   let cfg, settings;
   try { cfg = JSON.parse(readFileSync(cfgPath, "utf8")); } catch (e) { unreadable("config", cfgPath, e.message); }
-  try { settings = JSON.parse(readFileSync(resolve(setPath), "utf8")); } catch (e) { unreadable("settings", setPath, e.message); }
+  try { const raw = readFileSync(resolve(setPath), "utf8"); settings = /^[[{"]/.test(raw.trimStart()) ? JSON.parse(raw) : parseFundSettingsMarkdown(raw); } catch (e) { unreadable("settings", setPath, e.message); }
   if (cfg === null || typeof cfg !== "object" || Array.isArray(cfg)) unreadable("config", cfgPath, "not a JSON object");
   if (settings === null || typeof settings !== "object" || Array.isArray(settings)) unreadable("settings", setPath, "not a JSON object");
   const r = mergeFundSettings(cfg, settings);
@@ -997,12 +1031,52 @@ function cmdFundSettings(args) {
   process.stdout.write(`OK ${r.taken.length} keys\n`);
 }
 
+// ── run-cost ──────────────────────────────────────────────────────────────────
+/** The event list of a saved list_events answer: {ccr:{data:[..]}}, {data:[..]}, {events:[..]}, a bare array, or the harness's [{type:"text",text:"<json>"}] wrapper. */
+export function eventList(doc, depth = 0) {
+  if (Array.isArray(doc)) {
+    if (doc.length >= 1 && depth === 0 && doc.every((p) => p && typeof p === "object" && p.type === "text" && typeof p.text === "string")) {
+      try { return eventList(JSON.parse(doc.map((p) => p.text).join("")), 1); } catch { return null; }
+    }
+    return doc;
+  }
+  if (!doc || typeof doc !== "object") return null;
+  for (const v of [doc.ccr?.data, doc.data, doc.events]) if (Array.isArray(v)) return v;
+  return null;
+}
+
+const costOf = (v) => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : null);
+
+/** {usd, events, at} of a list of events: the largest finite cost of a result event; usd null when none carries one. */
+export function runCost(list) {
+  let best = null, at = null, events = 0;
+  for (const e of list) {
+    const r = e && typeof e === "object" ? e.result : null;
+    if (!r || typeof r !== "object") continue;
+    events++;
+    for (const v of [costOf(r.internal_anthropic_catchall?.total_cost_usd), costOf(r.total_cost_usd)]) {
+      if (v !== null && (best === null || v > best)) { best = v; at = typeof e.created_at === "string" ? e.created_at : null; }
+    }
+  }
+  return best === null ? { usd: null, events } : { usd: best, events, at };
+}
+
+function cmdRunCost(args) {
+  const file = need(args, "events");
+  let doc;
+  try { doc = JSON.parse(readFileSync(resolve(file), "utf8")); }
+  catch (e) { die(`FAIL: cannot read ${file} as JSON: ${e.message}`); }
+  const list = eventList(doc);
+  if (!list) die("FAIL: the answer has no event list (expected ccr.data, data, events or an array)");
+  process.stdout.write(`${JSON.stringify(runCost(list))}\n`);
+}
+
 // ── Dispatch ──────────────────────────────────────────────────────────────────
 const COMMANDS = {
   prompt: cmdPrompt, assemble: cmdAssemble, "reply-prompt": cmdReplyPrompt, "check-mail": cmdCheckMail,
   "extract-recipient": cmdExtractRecipient, "extract-deck": cmdExtractDeck, "deck-text": cmdDeckText,
   switch: cmdSwitch, gate: cmdGate, "check-write": cmdCheckWrite, "store-url": cmdStoreUrl,
-  "mirror-plan": cmdMirrorPlan, "drive-text": cmdDriveText, "fund-settings": cmdFundSettings,
+  "mirror-plan": cmdMirrorPlan, "drive-text": cmdDriveText, "fund-settings": cmdFundSettings, "run-cost": cmdRunCost,
 };
 
 // Run as a command, not when another CLI imports mailProblems().
